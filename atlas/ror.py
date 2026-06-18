@@ -63,7 +63,6 @@ class RorResolver:
         # ROR v1 nests geo under addresses; be defensive across schema versions.
         addr = (org.get("addresses") or [{}])[0]
         geo = addr.get("geonames_city") or {}
-        links = org.get("links") or []
         return {
             "ror_id": ror_id,
             "name": org.get("name"),
@@ -71,5 +70,25 @@ class RorResolver:
             "city": addr.get("city") or geo.get("city"),
             "lat": addr.get("lat"),
             "lon": addr.get("lng"),
-            "homepage": links[0] if links else None,
+            "homepage": RorResolver._homepage(org.get("links")),
         }
+
+    @staticmethod
+    def _homepage(links) -> str | None:
+        """Extract the website URL string from ROR ``links``.
+
+        ROR v1 returns ``links`` as a list of URL strings; ROR v2 returns a list
+        of ``{"type": "website"|"wikipedia", "value": <url>}`` dicts. Always
+        return a plain string (or None) so the ``homepage`` column stays scalar.
+        """
+        for link in (links or []):
+            if isinstance(link, str):
+                return link
+            if isinstance(link, dict):
+                if link.get("type") == "website" and link.get("value"):
+                    return link["value"]
+        # fall back to the first dict value if no explicit website type
+        for link in (links or []):
+            if isinstance(link, dict) and link.get("value"):
+                return link["value"]
+        return None

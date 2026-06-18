@@ -11,6 +11,15 @@ It is source-agnostic: every data source (NSF, OpenAlex, NIH RePORTER, CORDIS,
 ROR, ORCID, …) is a **connector** that maps that source's records onto one
 canonical schema, with full provenance on every row.
 
+### Connectors
+
+| Source | Connector | What | Currency → USD |
+|--------|-----------|------|----------------|
+| **NSF** | `atlas/connectors/nsf.py` | NSF Award Search API (reference connector) | USD (1.0) |
+| **UKRI / GtR** | `atlas/connectors/ukri.py` | UK Gateway to Research API; Funder = UKRI + lead council (EPSRC, BBSRC, …) | GBP → USD @ 1.27 (`fx_as_of` stamped) |
+| **ERC** | `atlas/connectors/erc.py` | European Research Council grants via CORDIS bulk exports (H2020 + Horizon Europe) | EUR → USD @ 1.08 (`fx_as_of` stamped) |
+| **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached HTML scrape; sitemap-discovered) | EUR (amount not published by GEPRIS → `null`) |
+
 - **Code:** MIT · **Published datasets:** CC-BY-4.0
 - **Author:** Gianangelo Dichio · **Publisher:** bucket-foundation
 
@@ -91,8 +100,14 @@ atlas/
   connectors/
     base.py            Connector ABC + polite HttpClient (fetch/normalize/emit)
     nsf.py             reference connector: NSF Award Search
+    ukri.py            UKRI / Gateway to Research (GBP→USD)
+    erc.py             ERC via CORDIS bulk exports (EUR→USD)
+    dfg.py             DFG via GEPRIS (cached HTML scrape)
 scripts/
   ingest_nsf.py        run the NSF connector (sample-friendly)
+  ingest_ukri.py       run the UKRI connector
+  ingest_erc.py        run the ERC/CORDIS connector
+  ingest_dfg.py        run the DFG/GEPRIS connector (polite, small samples)
   build_db.py          parquet → research_atlas.duckdb (keys + indexes)
   build_sample.py      write a small committable slice under data/processed/sample/
 docs/

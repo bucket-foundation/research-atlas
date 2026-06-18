@@ -2,7 +2,7 @@
   "name": "research-atlas",
   "description": "Normalized graph of the global research economy.",
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-18T16:53:16Z",
+  "generated_at": "2026-06-18T17:13:11Z",
   "license": "MIT (code) / CC-BY-4.0 (data)",
   "publisher": "bucket-foundation",
   "datasets": [
@@ -11,7 +11,7 @@
       "kind": "entity",
       "path": "data/processed/sample/funder.parquet",
       "schema_version": "0.1.0",
-      "row_count": 1,
+      "row_count": 9,
       "columns": [
         "atlas_id",
         "name",
@@ -27,16 +27,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "grant",
       "kind": "entity",
       "path": "data/processed/sample/grant.parquet",
       "schema_version": "0.1.0",
-      "row_count": 100,
+      "row_count": 83,
       "columns": [
         "atlas_id",
         "title",
@@ -56,16 +59,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "organization",
       "kind": "entity",
       "path": "data/processed/sample/organization.parquet",
       "schema_version": "0.1.0",
-      "row_count": 76,
+      "row_count": 71,
       "columns": [
         "atlas_id",
         "name",
@@ -83,16 +89,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "person",
       "kind": "entity",
       "path": "data/processed/sample/person.parquet",
       "schema_version": "0.1.0",
-      "row_count": 165,
+      "row_count": 174,
       "columns": [
         "atlas_id",
         "full_name",
@@ -106,16 +115,18 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "field",
       "kind": "entity",
       "path": "data/processed/sample/field.parquet",
       "schema_version": "0.1.0",
-      "row_count": 19,
+      "row_count": 143,
       "columns": [
         "atlas_id",
         "name",
@@ -128,16 +139,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "funder_grant",
       "kind": "edge",
       "path": "data/processed/sample/funder_grant.parquet",
       "schema_version": "0.1.0",
-      "row_count": 100,
+      "row_count": 83,
       "columns": [
         "src_id",
         "dst_id",
@@ -148,16 +162,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "grant_org",
       "kind": "edge",
       "path": "data/processed/sample/grant_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 100,
+      "row_count": 82,
       "columns": [
         "src_id",
         "dst_id",
@@ -168,16 +185,19 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "erc",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "grant_person",
       "kind": "edge",
       "path": "data/processed/sample/grant_person.parquet",
       "schema_version": "0.1.0",
-      "row_count": 165,
+      "row_count": 174,
       "columns": [
         "src_id",
         "dst_id",
@@ -188,16 +208,18 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     },
     {
       "table": "person_org",
       "kind": "edge",
       "path": "data/processed/sample/person_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 166,
+      "row_count": 159,
       "columns": [
         "src_id",
         "dst_id",
@@ -208,13 +230,15 @@
         "as_of"
       ],
       "sources": [
-        "nsf"
+        "dfg",
+        "nsf",
+        "ukri"
       ],
-      "as_of": "2026-06-18T16:51:15Z"
+      "as_of": "2026-06-18T17:12:56Z"
     }
   ],
   "totals": {
     "tables": 9,
-    "rows": 892
+    "rows": 978
   }
 }
