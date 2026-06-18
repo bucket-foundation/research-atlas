@@ -169,6 +169,39 @@ class UkriConnector(Connector):
             if len(projects) < s:
                 break
 
+    def fetch_all(self, page_size: int = PAGE_SIZE,
+                  max_pages: int | None = None) -> Iterable[dict]:
+        """Page through the ENTIRE GtR project set, caching each page.
+
+        Unlike ``fetch`` (sample-capped by ``limit``), this walks to
+        ``totalPages`` (the full ~174k-project corpus). Resumable: pages already
+        cached are not re-fetched. ``max_pages`` caps for testing.
+        """
+        s = max(10, min(page_size, 100))
+        page = 1
+        total_pages = None
+        while True:
+            page_key = f"all_p{page}_s{s}"
+            data = self.load_raw(page_key)
+            if data is None:
+                data = self._get_json(GTR_PROJECTS_URL, params={"p": page, "s": s})
+                if data is None:
+                    break
+                self.cache_raw(page_key, data)
+            projects = data.get("project", [])
+            if not projects:
+                break
+            yield data
+            if total_pages is None:
+                total_pages = data.get("totalPages") or 0
+            page += 1
+            if max_pages and page > max_pages:
+                break
+            if total_pages and page > total_pages:
+                break
+            if len(projects) < s:
+                break
+
     def _fetch_person(self, href: str) -> dict | None:
         """Resolve a GtR person link to its name/orcid (cached)."""
         pid = href.rstrip("/").rsplit("/", 1)[-1]

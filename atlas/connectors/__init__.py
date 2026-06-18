@@ -1,26 +1,41 @@
 """Connector registry for research-atlas.
 
 Every source connector subclasses :class:`atlas.connectors.base.Connector` and
-registers here so the CLI / build scripts can discover it by its ``source`` key.
+registers here so the CLI / build scripts can discover it by a registry key.
+
+Note: several connectors share a provenance ``source`` key on purpose so their
+rows merge into the same node namespace (e.g. ``nsf.py`` is the small-sample
+reference connector and ``nsf_bulk.py`` is the full-scale connector -- both emit
+``source="nsf"``). The REGISTRY is therefore keyed by an explicit *registry name*
+(which may differ from ``.source``) so both are discoverable.
 """
 
 from atlas.connectors.base import Connector
+from atlas.connectors.cordis import CordisConnector
 from atlas.connectors.dfg import DfgConnector
 from atlas.connectors.erc import ErcConnector
+from atlas.connectors.nih import NihConnector
 from atlas.connectors.nsf import NsfConnector
+from atlas.connectors.nsf_bulk import NsfBulkConnector
 from atlas.connectors.ukri import UkriConnector
 
-# source key -> connector class
+# registry name -> connector class
 REGISTRY: dict[str, type[Connector]] = {
-    NsfConnector.source: NsfConnector,
-    UkriConnector.source: UkriConnector,
-    ErcConnector.source: ErcConnector,
-    DfgConnector.source: DfgConnector,
+    "nsf": NsfConnector,
+    "nsf_bulk": NsfBulkConnector,
+    "nih": NihConnector,
+    "cordis": CordisConnector,
+    "ukri": UkriConnector,
+    "erc": ErcConnector,
+    "dfg": DfgConnector,
 }
 
 __all__ = [
     "Connector",
     "NsfConnector",
+    "NsfBulkConnector",
+    "NihConnector",
+    "CordisConnector",
     "UkriConnector",
     "ErcConnector",
     "DfgConnector",

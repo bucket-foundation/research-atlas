@@ -41,7 +41,18 @@ def main() -> int:
         print("No grant.parquet -- run an ingest first.")
         return 1
 
-    grants = pd.read_parquet(grant_path).head(args.max_grants).copy()
+    # Stratified slice: take an even share per source so the sample shows every
+    # funder's shape (CORDIS/NSF/NIH/UKRI), not just whichever wrote first.
+    all_grants = pd.read_parquet(grant_path)
+    if "source" in all_grants.columns:
+        sources = sorted(all_grants["source"].dropna().unique())
+        per = max(1, args.max_grants // max(1, len(sources)))
+        grants = pd.concat(
+            [all_grants[all_grants["source"] == s].head(per) for s in sources],
+            ignore_index=True,
+        ).copy()
+    else:
+        grants = all_grants.head(args.max_grants).copy()
     if "abstract" in grants.columns:
         grants["abstract"] = grants["abstract"].astype("string").str.slice(
             0, ABSTRACT_CAP

@@ -10,6 +10,22 @@ data/raw/
 data/processed/*.parquet
 !data/processed/sample/*.parquet
 
+# Partitioned shard directories written by the bulk scale path
+# (data/processed/<table>/source=.../year=.../part-*.parquet). Rebuilt from raw
+# via scripts/ingest_*.py + scripts/consolidate.py; never committed.
+data/processed/funder/
+data/processed/grant/
+data/processed/organization/
+data/processed/person/
+data/processed/work/
+data/processed/field/
+data/processed/funder_grant/
+data/processed/grant_org/
+data/processed/grant_person/
+data/processed/grant_work/
+data/processed/person_org/
+data/processed/work_field/
+
 # Secrets / env
 .env
 .env.*

@@ -15,10 +15,17 @@ canonical schema, with full provenance on every row.
 
 | Source | Connector | What | Currency → USD |
 |--------|-----------|------|----------------|
-| **NSF** | `atlas/connectors/nsf.py` | NSF Award Search API (reference connector) | USD (1.0) |
-| **UKRI / GtR** | `atlas/connectors/ukri.py` | UK Gateway to Research API; Funder = UKRI + lead council (EPSRC, BBSRC, …) | GBP → USD @ 1.27 (`fx_as_of` stamped) |
-| **ERC** | `atlas/connectors/erc.py` | European Research Council grants via CORDIS bulk exports (H2020 + Horizon Europe) | EUR → USD @ 1.08 (`fx_as_of` stamped) |
-| **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached HTML scrape; sitemap-discovered) | EUR (amount not published by GEPRIS → `null`) |
+| **CORDIS (EU)** | `atlas/connectors/cordis.py` | **Full** EU framework-programme feed (Horizon Europe + H2020): every funding scheme, every participant org, every euroSciVoc field. Funder = European Commission (+ ERC for ERC schemes). | EUR → USD @ 1.08 (`fx_as_of` stamped) |
+| **NSF (US)** | `atlas/connectors/nsf_bulk.py` | **Full** NSF awards via the research.gov API, windowed by month to dodge the 10k/query cap (`nsf.py` is the small-sample reference connector). | USD (1.0) |
+| **NIH (US)** | `atlas/connectors/nih.py` | **Full** NIH RePORTER v2 feed (the largest single funder), windowed by (fiscal year, IC) under the 15k offset cap. Funder = NIH + awarding IC (NCI, NIAID, …). | USD (1.0) |
+| **UKRI / GtR** | `atlas/connectors/ukri.py` | **Full** UK Gateway to Research corpus (`fetch_all`); Funder = UKRI + lead council (EPSRC, BBSRC, …). | GBP → USD @ 1.27 (`fx_as_of` stamped) |
+| **ERC** | `atlas/connectors/erc.py` | Legacy ERC-only CORDIS slice (superseded by the full CORDIS connector; kept for back-compat). | EUR → USD @ 1.08 |
+| **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached HTML scrape; small sample). | EUR (amount not published by GEPRIS → `null`) |
+
+**Current full-scale ingest** (see [`docs/LANDSCAPE.md`](docs/LANDSCAPE.md) for the
+full report): **~887k grants · ~99.6k organizations · ~170k people · 69 funders ·
+~$532B funded (USD-normalized) · ~4.17M total graph rows** across NIH (FY2018-25),
+NSF (FY2015-25), UKRI (full), and CORDIS (full H2020 + Horizon Europe).
 
 - **Code:** MIT · **Published datasets:** CC-BY-4.0
 - **Author:** Gianangelo Dichio · **Publisher:** bucket-foundation
@@ -60,14 +67,33 @@ Unknown money is `null` — never a silent `0`.
 ```bash
 pip install -r requirements.txt          # or: pip install -e ".[dev]"
 
-# 1. Ingest a sample (idempotent + resumable; caches raw under data/raw/)
+# --- small sample (fast) ---
 python scripts/ingest_nsf.py --keyword biophysics --limit 300
-
-# 2. Build the DuckDB graph database
 python scripts/build_db.py               # → research_atlas.duckdb
+python scripts/build_sample.py --max-grants 240
+```
 
-# 3. (optional) refresh the small committed sample
-python scripts/build_sample.py --max-grants 100
+### Full-scale ingestion (the real funding landscape)
+
+The bulk path streams every record through a memory-bounded `BulkWriter` into
+partitioned parquet shards (`data/processed/<table>/source=.../year=.../`), then
+`consolidate.py` folds them into the flat published parquet with out-of-core
+DuckDB de-dup. Each step is idempotent + resumable (raw pages + shards are
+cached, so a re-run converges and an interrupted run resumes for free).
+
+```bash
+# 1. Ingest each funder at full scale (run in parallel; all cache raw + resume)
+python scripts/ingest_cordis.py                              # full EU (~56k)
+python scripts/ingest_nsf_bulk.py  --year-start 2015 --year-end 2025   # ~132k
+python scripts/ingest_nih.py       --year-start 2018 --year-end 2025   # ~624k
+python scripts/ingest_ukri_full.py                           # full UKRI (~174k)
+
+# 2. Fold shards → flat parquet (deduped, out-of-core) + rebuild the manifest
+python scripts/consolidate.py --memory-limit 6GB --temp-dir /tmp/atlas_duck
+
+# 3. Build the DuckDB graph DB and the landscape report
+python scripts/build_db.py
+python scripts/landscape_report.py                           # → docs/LANDSCAPE.md
 ```
 
 ### Example graph query (DuckDB)
@@ -95,28 +121,36 @@ locally).
 ```
 atlas/
   schema.py            canonical schema + surrogate keys + coerce() (source of truth)
-  manifest.py          (re)builds data/MANIFEST.json
+  manifest.py          (re)builds data/MANIFEST.json (+ per-source $ breakdown)
+  bulkwrite.py         memory-bounded, partitioned parquet writer (the scale path)
+  consolidate.py       fold shards → flat parquet, out-of-core DuckDB de-dup
   ror.py               conservative cached name → ROR resolver
   connectors/
     base.py            Connector ABC + polite HttpClient (fetch/normalize/emit)
-    nsf.py             reference connector: NSF Award Search
-    ukri.py            UKRI / Gateway to Research (GBP→USD)
-    erc.py             ERC via CORDIS bulk exports (EUR→USD)
-    dfg.py             DFG via GEPRIS (cached HTML scrape)
+    nsf.py             reference connector: NSF Award Search (small sample)
+    nsf_bulk.py        FULL NSF: research.gov API, monthly-windowed
+    nih.py             FULL NIH RePORTER v2 (largest funder), (FY, IC)-windowed
+    cordis.py          FULL CORDIS EU: all schemes, all orgs, all euroSciVoc
+    ukri.py            UKRI / GtR (GBP→USD); fetch_all() walks the full corpus
+    erc.py             ERC-only CORDIS slice (legacy; superseded by cordis.py)
+    dfg.py             DFG via GEPRIS (cached HTML scrape, small sample)
 scripts/
-  ingest_nsf.py        run the NSF connector (sample-friendly)
-  ingest_ukri.py       run the UKRI connector
-  ingest_erc.py        run the ERC/CORDIS connector
-  ingest_dfg.py        run the DFG/GEPRIS connector (polite, small samples)
+  ingest_nsf.py        small NSF sample            ingest_nsf_bulk.py   FULL NSF
+  ingest_ukri.py       small UKRI sample           ingest_ukri_full.py  FULL UKRI
+  ingest_erc.py        ERC-only slice              ingest_cordis.py     FULL CORDIS
+  ingest_dfg.py        DFG sample                  ingest_nih.py        FULL NIH
+  consolidate.py       shards → flat parquet (deduped) + rebuild manifest
   build_db.py          parquet → research_atlas.duckdb (keys + indexes)
-  build_sample.py      write a small committable slice under data/processed/sample/
+  build_sample.py      stratified committable slice under data/processed/sample/
+  landscape_report.py  query the graph → docs/LANDSCAPE.md (real totals)
 docs/
   SCHEMA.md            the canonical schema, in prose
   ARCHITECTURE.md      data flow, idempotency, money, Publish-to-Bucket seam
-tests/                 schema invariants + NSF normalizer (no network)
+  LANDSCAPE.md         the full funding-landscape report (real numbers)
+tests/                 schema invariants + per-connector normalizers + scale path (no network)
 data/
   raw/                 raw source caches (gitignored)
-  processed/           entity/edge parquet (gitignored except sample/)
+  processed/           flat + sharded entity/edge parquet (gitignored except sample/)
   MANIFEST.json        authoritative index of published datasets
 ```
 

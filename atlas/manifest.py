@@ -47,6 +47,25 @@ def build_manifest(processed_dir: Path | None = None,
             "as_of": as_of,
         })
 
+    # Per-source grant + $ breakdown (real funder totals) when a grant parquet
+    # is present. Money is USD-normalized; unknown amounts contribute null.
+    by_source: dict = {}
+    grant_path = processed_dir / "grant.parquet"
+    if grant_path.exists():
+        g = pd.read_parquet(grant_path, columns=["source", "amount_usd"])
+        agg = g.groupby("source").agg(
+            grants=("source", "size"),
+            usd_funded=("amount_usd", "sum"),
+            grants_with_amount=("amount_usd", "count"),
+        )
+        for src, row in agg.iterrows():
+            usd = row["usd_funded"]
+            by_source[str(src)] = {
+                "grants": int(row["grants"]),
+                "grants_with_amount": int(row["grants_with_amount"]),
+                "usd_funded": float(usd) if pd.notna(usd) else None,
+            }
+
     manifest = {
         "name": "research-atlas",
         "description": "Normalized graph of the global research economy.",
@@ -58,6 +77,7 @@ def build_manifest(processed_dir: Path | None = None,
         "totals": {
             "tables": len(datasets),
             "rows": sum(d["row_count"] for d in datasets),
+            "by_source": by_source,
         },
     }
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
