@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "research-atlas"
+version = "0.1.0"
+description = "A normalized, citable graph of the global research economy."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Gianangelo Dichio" }]
+maintainers = [{ name = "bucket-foundation" }]
+keywords = ["research", "funding", "grants", "openalex", "ror", "open-data", "graph"]
+dependencies = [
+    "requests>=2.31",
+    "pandas>=2.0",
+    "pyarrow>=14.0",
+    "duckdb>=0.10",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4"]
+
+[project.urls]
+Homepage = "https://github.com/bucket-foundation/research-atlas"
+"Bucket Foundation" = "https://bucket.foundation"
+
+[tool.setuptools]
+packages = ["atlas", "atlas.connectors"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

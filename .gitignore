@@ -1,0 +1,35 @@
+# Raw source caches (idempotent re-downloads -- never commit)
+data/raw/
+
+# DuckDB build artifact (rebuilt from parquet)
+*.duckdb
+*.duckdb.wal
+
+# Large processed parquet -- commit only small published samples.
+# Sample datasets are force-added explicitly (see scripts/commit_sample.sh).
+data/processed/*.parquet
+!data/processed/sample/*.parquet
+
+# Secrets / env
+.env
+.env.*
+*.pem
+*.key
+secrets/
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+build/
+dist/
+
+# OS / editor
+.DS_Store
+*.swp
+.idea/
+.vscode/

@@ -1,0 +1,24 @@
+research-atlas
+==============
+
+A normalized, citable graph of the global research economy.
+
+Author:    Gianangelo Dichio
+Publisher: bucket-foundation (https://bucket.foundation)
+License:   MIT (code) / CC-BY-4.0 (published datasets)
+
+This project generalizes prior private research-landscape work into an open,
+source-agnostic atlas of research funding and output.
+
+Data sources retain their own terms; research-atlas stores provenance
+(source, source_id, source_url, as_of) on every row so each fact is
+attributable to its origin. Source attributions:
+
+  - NSF Award Search API  -- U.S. National Science Foundation (public domain)
+  - ROR                   -- Research Organization Registry (CC0)
+  - OpenAlex              -- OpenAlex / OurResearch (CC0)        [planned]
+  - NIH RePORTER          -- U.S. National Institutes of Health  [planned]
+  - CORDIS                -- European Commission (CC-BY)          [planned]
+
+Published datasets are intended to become citable Bucket Foundation canon
+artifacts. See docs/ARCHITECTURE.md ("Publish-to-Bucket seam").
