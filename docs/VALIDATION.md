@@ -1,6 +1,6 @@
 # research-atlas — Validation Report
 
-_Generated 2026-06-19T00:58:44Z_
+_Generated 2026-06-19T01:01:54Z_
 
 **Status: PASS** — 36/36 hard checks passed, 0 failed.
 
@@ -26,18 +26,18 @@ _Generated 2026-06-19T00:58:44Z_
 | person.atlas_id unique | PASS | 1,193,750 rows / 1,193,750 distinct |
 | work.atlas_id unique | PASS | 226,785 rows / 226,785 distinct |
 | field.atlas_id unique | PASS | 5,308 rows / 5,308 distinct |
-| funder_grant provenance (source+as_of) | PASS | all rows carry provenance |
 | work provenance (source+as_of) | PASS | all rows carry provenance |
-| funder provenance (source+as_of) | PASS | all rows carry provenance |
-| work_field provenance (source+as_of) | PASS | all rows carry provenance |
+| person_org provenance (source+as_of) | PASS | all rows carry provenance |
 | field provenance (source+as_of) | PASS | all rows carry provenance |
 | organization provenance (source+as_of) | PASS | all rows carry provenance |
+| funder provenance (source+as_of) | PASS | all rows carry provenance |
 | grant_work provenance (source+as_of) | PASS | all rows carry provenance |
-| person provenance (source+as_of) | PASS | all rows carry provenance |
-| grant_org provenance (source+as_of) | PASS | all rows carry provenance |
-| grant_person provenance (source+as_of) | PASS | all rows carry provenance |
-| person_org provenance (source+as_of) | PASS | all rows carry provenance |
 | grant provenance (source+as_of) | PASS | all rows carry provenance |
+| funder_grant provenance (source+as_of) | PASS | all rows carry provenance |
+| grant_person provenance (source+as_of) | PASS | all rows carry provenance |
+| grant_org provenance (source+as_of) | PASS | all rows carry provenance |
+| person provenance (source+as_of) | PASS | all rows carry provenance |
+| work_field provenance (source+as_of) | PASS | all rows carry provenance |
 | grant.amount_usd > 0 or null | PASS | ok |
 | grant amount/currency consistent | PASS | ok |
 | grant FX columns consistent | PASS | ok |

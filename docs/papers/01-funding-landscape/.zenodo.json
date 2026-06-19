@@ -1,0 +1,55 @@
+{
+  "title": "The structure of public research funding, 2015-2025: concentration, cross-funder co-funding, and the funding-to-output relationship in a reconciled NIH/NSF/EC/UKRI grant graph",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "description": "<p>We assemble a reconciled graph of the global public-research economy &mdash; 887,016 grants from NIH, NSF, the European Commission (CORDIS) and UKRI, 2015-2025 &mdash; with recipient organizations merged on ROR, investigators on ORCID, and 156,877 research outputs linked to the grants that funded them via 285,604 OpenAlex acknowledgement edges. Using only statistics robust to known entity-resolution noise (grant/work counts, country- and funder-level aggregates, the ROR-resolved subset), we characterize three structural features of the funding system: (1) extreme institutional concentration (grant Gini = 0.929, 95% CI [0.919, 0.936]; top 1% of institutions hold 53.6% of grants); (2) cross-funder co-funding (26.3% of funded works acknowledge two or more funders, led by intra-European ERC-EC ties); and (3) a 20-fold spread in funding-to-output rate across funders that tracks mission (basic vs. translational) rather than efficiency. All code, the published graph, and a validation suite pinning every headline number are released open-source.</p>",
+  "creators": [
+    {
+      "name": "Dichio, Gianangelo",
+      "affiliation": "Bucket Foundation"
+    }
+  ],
+  "keywords": [
+    "metascience",
+    "science of science",
+    "research funding",
+    "grant concentration",
+    "Gini coefficient",
+    "co-funding",
+    "OpenAlex",
+    "ROR",
+    "ORCID",
+    "NIH",
+    "NSF",
+    "European Commission",
+    "UKRI",
+    "open data",
+    "knowledge graph"
+  ],
+  "license": "cc-by-4.0",
+  "access_right": "open",
+  "language": "eng",
+  "version": "1.0",
+  "communities": [
+    { "identifier": "metascience" },
+    { "identifier": "open-science" }
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isSupplementTo",
+      "identifier": "https://github.com/bucket-foundation/research-atlas",
+      "resource_type": "software"
+    },
+    {
+      "relation": "isDerivedFrom",
+      "identifier": "https://openalex.org",
+      "resource_type": "dataset"
+    },
+    {
+      "relation": "isDerivedFrom",
+      "identifier": "https://ror.org",
+      "resource_type": "dataset"
+    }
+  ],
+  "notes": "Reproducibility: every headline number is emitted by analysis/run.py into analysis/results.json and pinned by tests/test_funding_landscape.py. Data sources: NIH RePORTER, NSF Awards, EC CORDIS, UKRI Gateway, OpenAlex, ROR, ORCID. DOI is intentionally absent: minting requires the depositor's Zenodo account/token (see SUBMISSION.md). Do not cite a DOI until one is issued on deposit."
+}

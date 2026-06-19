@@ -175,11 +175,17 @@ scripts/
   build_db.py          parquet → research_atlas.duckdb (keys + indexes)
   build_sample.py      stratified committable slice under data/processed/sample/
   landscape_report.py  query the graph → docs/LANDSCAPE.md (real totals)
+analysis/
+  funding_landscape.py queries + statistics (Gini/HHI/bootstrap) — read-only
+  run.py               recompute results.json + figures (idempotent)
+  results.json         machine-readable results (paper + tests read this)
+  figures/             the 5 paper figures (PNG)
 docs/
   SCHEMA.md            the canonical schema, in prose
   ARCHITECTURE.md      data flow, idempotency, money, Publish-to-Bucket seam
   LANDSCAPE.md         the full funding-landscape report (real numbers)
-tests/                 schema invariants + per-connector normalizers + scale path (no network)
+  papers/01-funding-landscape/   first preprint: paper.md + paper.pdf + .zenodo.json
+tests/                 schema invariants + per-connector normalizers + scale path + paper-vs-data (no network)
 data/
   raw/                 raw source caches (gitignored)
   processed/           flat + sharded entity/edge parquet (gitignored except sample/)

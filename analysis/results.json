@@ -1,0 +1,751 @@
+{
+  "generated_at": "2026-06-19T01:15:31+00:00",
+  "coverage": {
+    "year_from": 2015,
+    "year_to": 2025,
+    "grants_in_window": 618367,
+    "recipient_edges_in_window": 617737,
+    "recipient_edges_ror_resolved": 416060,
+    "ror_recipient_coverage": 0.6735228746214004,
+    "grant_work_links": 285604,
+    "linked_works": 156877,
+    "output_funder_sources": [
+      "nih",
+      "nsf",
+      "cordis"
+    ],
+    "work_year_from": 2016,
+    "work_year_to": 2024
+  },
+  "org_concentration": {
+    "n_orgs": 4840,
+    "total_grants": 416060,
+    "gini_grants": 0.9288085227297557,
+    "gini_grants_ci95": [
+      0.9189825146561806,
+      0.9358860704609374
+    ],
+    "hhi_grants": 0.00821660931307379,
+    "top1pct_share": 0.5358818439648128,
+    "top5pct_share": 0.8513651877133106,
+    "top10pct_share": 0.9204225352112676
+  },
+  "org_concentration_dollars_sensitivity": {
+    "n_orgs": 4837,
+    "gini_dollars": 0.9061415823387687,
+    "gini_dollars_ci95": [
+      0.8947896555869758,
+      0.9147606367129857
+    ],
+    "note": "dollar column carries fuzzy-match + shared-grant double-count noise; reported only as a sensitivity comparison vs the robust count-based Gini"
+  },
+  "geography": {
+    "countries": [
+      {
+        "country_code": "US",
+        "grants": 560304,
+        "usd": 291606870185.75
+      },
+      {
+        "country_code": "ES",
+        "grants": 6511,
+        "usd": 15520223073.93991
+      },
+      {
+        "country_code": "DE",
+        "grants": 6236,
+        "usd": 17945650291.31995
+      },
+      {
+        "country_code": "FR",
+        "grants": 5189,
+        "usd": 14112174777.56997
+      },
+      {
+        "country_code": "IT",
+        "grants": 4924,
+        "usd": 10891445760.610027
+      },
+      {
+        "country_code": "NL",
+        "grants": 3882,
+        "usd": 10619084177.369974
+      },
+      {
+        "country_code": "GB",
+        "grants": 3273,
+        "usd": 4452614353.240028
+      },
+      {
+        "country_code": "UK",
+        "grants": 2878,
+        "usd": 3886691056.5600166
+      },
+      {
+        "country_code": "BE",
+        "grants": 2365,
+        "usd": 8085703175.27998
+      },
+      {
+        "country_code": "DK",
+        "grants": 1939,
+        "usd": 3367236722.6600013
+      },
+      {
+        "country_code": "SE",
+        "grants": 1737,
+        "usd": 3807520716.6699934
+      },
+      {
+        "country_code": "AT",
+        "grants": 1574,
+        "usd": 4110020751.819997
+      },
+      {
+        "country_code": "CH",
+        "grants": 1533,
+        "usd": 2498445444.110017
+      },
+      {
+        "country_code": "IL",
+        "grants": 1304,
+        "usd": 1983874892.680001
+      },
+      {
+        "country_code": "IE",
+        "grants": 1303,
+        "usd": 2808667430.489999
+      },
+      {
+        "country_code": "NO",
+        "grants": 1295,
+        "usd": 4104368087.6699934
+      },
+      {
+        "country_code": "FI",
+        "grants": 1166,
+        "usd": 3540974133.530001
+      },
+      {
+        "country_code": "PT",
+        "grants": 1160,
+        "usd": 2269030821.5600033
+      },
+      {
+        "country_code": "EL",
+        "grants": 839,
+        "usd": 2944292501.7300005
+      },
+      {
+        "country_code": "ZA",
+        "grants": 538,
+        "usd": 231075635.35000002
+      }
+    ],
+    "n_countries": 105,
+    "gini_country_grants": 0.9743292603201598,
+    "gini_country_grants_ci95": [
+      0.7919791122631009,
+      0.9797225321027943
+    ],
+    "hhi_country_grants": 0.8272430551615323,
+    "us_grant_share": 0.909247875786235
+  },
+  "cofunding": {
+    "distribution": [
+      {
+        "n_funders": 1,
+        "works": 115568
+      },
+      {
+        "n_funders": 2,
+        "works": 31941
+      },
+      {
+        "n_funders": 3,
+        "works": 6992
+      },
+      {
+        "n_funders": 4,
+        "works": 1645
+      },
+      {
+        "n_funders": 5,
+        "works": 474
+      },
+      {
+        "n_funders": 6,
+        "works": 172
+      },
+      {
+        "n_funders": 7,
+        "works": 54
+      },
+      {
+        "n_funders": 8,
+        "works": 20
+      },
+      {
+        "n_funders": 9,
+        "works": 6
+      },
+      {
+        "n_funders": 10,
+        "works": 3
+      },
+      {
+        "n_funders": 11,
+        "works": 2
+      }
+    ],
+    "total_linked_works": 156877,
+    "multi_funder_works": 41309,
+    "multi_funder_share": 0.2633209457090587,
+    "top_pairs": [
+      {
+        "funder_a": "ERC",
+        "funder_b": "EC",
+        "shared_works": 17502
+      },
+      {
+        "funder_a": "EC",
+        "funder_b": "NSF",
+        "shared_works": 3430
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "NSF",
+        "shared_works": 2944
+      },
+      {
+        "funder_a": "NCI",
+        "funder_b": "NIGMS",
+        "shared_works": 1945
+      },
+      {
+        "funder_a": "ERC",
+        "funder_b": "NSF",
+        "shared_works": 1907
+      },
+      {
+        "funder_a": "NIAID",
+        "funder_b": "NIGMS",
+        "shared_works": 1299
+      },
+      {
+        "funder_a": "NIAID",
+        "funder_b": "NCI",
+        "shared_works": 1174
+      },
+      {
+        "funder_a": "NCI",
+        "funder_b": "NIDDK",
+        "shared_works": 1062
+      },
+      {
+        "funder_a": "NIDDK",
+        "funder_b": "NHLBI",
+        "shared_works": 1000
+      },
+      {
+        "funder_a": "NCI",
+        "funder_b": "NHLBI",
+        "shared_works": 987
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "NHLBI",
+        "shared_works": 919
+      },
+      {
+        "funder_a": "NIA",
+        "funder_b": "NINDS",
+        "shared_works": 903
+      },
+      {
+        "funder_a": "NCI",
+        "funder_b": "NSF",
+        "shared_works": 875
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "NIDDK",
+        "shared_works": 867
+      },
+      {
+        "funder_a": "NIAID",
+        "funder_b": "NHLBI",
+        "shared_works": 711
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "NINDS",
+        "shared_works": 692
+      },
+      {
+        "funder_a": "NIAID",
+        "funder_b": "NSF",
+        "shared_works": 678
+      },
+      {
+        "funder_a": "NIAID",
+        "funder_b": "NIDDK",
+        "shared_works": 646
+      },
+      {
+        "funder_a": "NIMH",
+        "funder_b": "NINDS",
+        "shared_works": 639
+      },
+      {
+        "funder_a": "NCI",
+        "funder_b": "NINDS",
+        "shared_works": 624
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "NIA",
+        "shared_works": 605
+      },
+      {
+        "funder_a": "NSF",
+        "funder_b": "NHLBI",
+        "shared_works": 605
+      },
+      {
+        "funder_a": "NSF",
+        "funder_b": "NINDS",
+        "shared_works": 597
+      },
+      {
+        "funder_a": "NIBIB",
+        "funder_b": "NSF",
+        "shared_works": 565
+      },
+      {
+        "funder_a": "NIGMS",
+        "funder_b": "EC",
+        "shared_works": 514
+      }
+    ]
+  },
+  "funding_output_rate": [
+    {
+      "funder": "NIBIB",
+      "country_code": "US",
+      "grants": 6777,
+      "usd": 2796463725.0,
+      "works": 2640,
+      "works_per_million_usd": 0.944
+    },
+    {
+      "funder": "NLM",
+      "country_code": "US",
+      "grants": 1471,
+      "usd": 565607771.0,
+      "works": 494,
+      "works_per_million_usd": 0.873
+    },
+    {
+      "funder": "NIGMS",
+      "country_code": "US",
+      "grants": 47464,
+      "usd": 17278016688.0,
+      "works": 14029,
+      "works_per_million_usd": 0.812
+    },
+    {
+      "funder": "NSF",
+      "country_code": "US",
+      "grants": 126254,
+      "usd": 72649763143.0,
+      "works": 52344,
+      "works_per_million_usd": 0.72
+    },
+    {
+      "funder": "ERC",
+      "country_code": null,
+      "grants": 12816,
+      "usd": 24236337779.150238,
+      "works": 16163,
+      "works_per_million_usd": 0.667
+    },
+    {
+      "funder": "NHGRI",
+      "country_code": "US",
+      "grants": 4267,
+      "usd": 3006007351.0,
+      "works": 1807,
+      "works_per_million_usd": 0.601
+    },
+    {
+      "funder": "NIAMS",
+      "country_code": "US",
+      "grants": 10300,
+      "usd": 3806806998.0,
+      "works": 2174,
+      "works_per_million_usd": 0.571
+    },
+    {
+      "funder": "FIC",
+      "country_code": "US",
+      "grants": 2706,
+      "usd": 605713271.0,
+      "works": 337,
+      "works_per_million_usd": 0.556
+    },
+    {
+      "funder": "NIDDK",
+      "country_code": "US",
+      "grants": 28318,
+      "usd": 11843938815.0,
+      "works": 6234,
+      "works_per_million_usd": 0.526
+    },
+    {
+      "funder": "NIEHS",
+      "country_code": "US",
+      "grants": 7661,
+      "usd": 3185780219.0,
+      "works": 1637,
+      "works_per_million_usd": 0.514
+    },
+    {
+      "funder": "NCI",
+      "country_code": "US",
+      "grants": 58064,
+      "usd": 28709442082.0,
+      "works": 13274,
+      "works_per_million_usd": 0.462
+    },
+    {
+      "funder": "EC",
+      "country_code": null,
+      "grants": 52933,
+      "usd": 125794291998.87001,
+      "works": 51416,
+      "works_per_million_usd": 0.409
+    },
+    {
+      "funder": "NINDS",
+      "country_code": "US",
+      "grants": 33223,
+      "usd": 15419664589.0,
+      "works": 5926,
+      "works_per_million_usd": 0.384
+    },
+    {
+      "funder": "NEI",
+      "country_code": "US",
+      "grants": 10789,
+      "usd": 3938948164.0,
+      "works": 1441,
+      "works_per_million_usd": 0.366
+    },
+    {
+      "funder": "NIDCR",
+      "country_code": "US",
+      "grants": 6876,
+      "usd": 2585403308.0,
+      "works": 862,
+      "works_per_million_usd": 0.333
+    },
+    {
+      "funder": "NCCIH",
+      "country_code": "US",
+      "grants": 2451,
+      "usd": 1164540824.0,
+      "works": 363,
+      "works_per_million_usd": 0.312
+    },
+    {
+      "funder": "NHLBI",
+      "country_code": "US",
+      "grants": 44044,
+      "usd": 24744927321.0,
+      "works": 7462,
+      "works_per_million_usd": 0.302
+    },
+    {
+      "funder": "NIMH",
+      "country_code": "US",
+      "grants": 24399,
+      "usd": 11840121443.0,
+      "works": 3519,
+      "works_per_million_usd": 0.297
+    },
+    {
+      "funder": "NIA",
+      "country_code": "US",
+      "grants": 32662,
+      "usd": 19781931298.0,
+      "works": 5729,
+      "works_per_million_usd": 0.29
+    },
+    {
+      "funder": "NIAID",
+      "country_code": "US",
+      "grants": 48040,
+      "usd": 29694892405.0,
+      "works": 8588,
+      "works_per_million_usd": 0.289
+    },
+    {
+      "funder": "NIAAA",
+      "country_code": "US",
+      "grants": 7818,
+      "usd": 2542970643.0,
+      "works": 729,
+      "works_per_million_usd": 0.287
+    },
+    {
+      "funder": "NICHD",
+      "country_code": "US",
+      "grants": 21175,
+      "usd": 8570955980.0,
+      "works": 2384,
+      "works_per_million_usd": 0.278
+    },
+    {
+      "funder": "NIDCD",
+      "country_code": "US",
+      "grants": 7636,
+      "usd": 2542744909.0,
+      "works": 666,
+      "works_per_million_usd": 0.262
+    },
+    {
+      "funder": "OD",
+      "country_code": "US",
+      "grants": 4819,
+      "usd": 7823150889.0,
+      "works": 1695,
+      "works_per_million_usd": 0.217
+    },
+    {
+      "funder": "NINR",
+      "country_code": "US",
+      "grants": 2637,
+      "usd": 1096878323.0,
+      "works": 197,
+      "works_per_million_usd": 0.18
+    },
+    {
+      "funder": "NIMHD",
+      "country_code": "US",
+      "grants": 4394,
+      "usd": 2326247502.0,
+      "works": 393,
+      "works_per_million_usd": 0.169
+    },
+    {
+      "funder": "NIDA",
+      "country_code": "US",
+      "grants": 17920,
+      "usd": 10150970357.0,
+      "works": 1539,
+      "works_per_million_usd": 0.152
+    },
+    {
+      "funder": "NCATS",
+      "country_code": "US",
+      "grants": 3212,
+      "usd": 5363065889.0,
+      "works": 244,
+      "works_per_million_usd": 0.045
+    }
+  ],
+  "domain_composition": [
+    {
+      "domain": "Physical Sciences",
+      "works": 72486
+    },
+    {
+      "domain": "Life Sciences",
+      "works": 45658
+    },
+    {
+      "domain": "Health Sciences",
+      "works": 30585
+    },
+    {
+      "domain": "Social Sciences",
+      "works": 8148
+    }
+  ],
+  "field_dynamics": {
+    "rising": [
+      {
+        "name": "COVID-19 Clinical Research Studies",
+        "early": 2,
+        "late": 183,
+        "total": 185,
+        "growth_ratio": 91.5
+      },
+      {
+        "name": "COVID-19 and Mental Health",
+        "early": 1,
+        "late": 87,
+        "total": 88,
+        "growth_ratio": 87.0
+      },
+      {
+        "name": "Explainable Artificial Intelligence (XAI)",
+        "early": 4,
+        "late": 109,
+        "total": 113,
+        "growth_ratio": 27.25
+      },
+      {
+        "name": "SARS-CoV-2 and COVID-19 Research",
+        "early": 44,
+        "late": 843,
+        "total": 887,
+        "growth_ratio": 19.16
+      },
+      {
+        "name": "Artificial Intelligence in Healthcare and Education",
+        "early": 11,
+        "late": 164,
+        "total": 175,
+        "growth_ratio": 14.91
+      },
+      {
+        "name": "Astronomy and Astrophysical Research",
+        "early": 5,
+        "late": 54,
+        "total": 59,
+        "growth_ratio": 10.8
+      },
+      {
+        "name": "Infection Control and Ventilation",
+        "early": 4,
+        "late": 43,
+        "total": 47,
+        "growth_ratio": 10.75
+      },
+      {
+        "name": "COVID-19 epidemiological studies",
+        "early": 19,
+        "late": 188,
+        "total": 207,
+        "growth_ratio": 9.89
+      },
+      {
+        "name": "Microplastics and Plastic Pollution",
+        "early": 43,
+        "late": 394,
+        "total": 437,
+        "growth_ratio": 9.16
+      },
+      {
+        "name": "COVID-19 diagnosis using AI",
+        "early": 6,
+        "late": 54,
+        "total": 60,
+        "growth_ratio": 9.0
+      },
+      {
+        "name": "Model Reduction and Neural Networks",
+        "early": 21,
+        "late": 175,
+        "total": 196,
+        "growth_ratio": 8.33
+      },
+      {
+        "name": "Autonomous Vehicle Technology and Safety",
+        "early": 6,
+        "late": 39,
+        "total": 45,
+        "growth_ratio": 6.5
+      }
+    ],
+    "falling": [
+      {
+        "name": "Hepatitis C virus research",
+        "early": 53,
+        "late": 9,
+        "total": 62,
+        "growth_ratio": 0.17
+      },
+      {
+        "name": "Caching and Content Delivery",
+        "early": 48,
+        "late": 15,
+        "total": 63,
+        "growth_ratio": 0.31
+      },
+      {
+        "name": "Sparse and Compressive Sensing Techniques",
+        "early": 66,
+        "late": 21,
+        "total": 87,
+        "growth_ratio": 0.32
+      },
+      {
+        "name": "Wnt/\u03b2-catenin signaling in development and cancer",
+        "early": 59,
+        "late": 19,
+        "total": 78,
+        "growth_ratio": 0.32
+      },
+      {
+        "name": "Mosquito-borne diseases and control",
+        "early": 380,
+        "late": 129,
+        "total": 509,
+        "growth_ratio": 0.34
+      },
+      {
+        "name": "MicroRNA in disease regulation",
+        "early": 158,
+        "late": 55,
+        "total": 213,
+        "growth_ratio": 0.35
+      },
+      {
+        "name": "Redox biology and oxidative stress",
+        "early": 31,
+        "late": 11,
+        "total": 42,
+        "growth_ratio": 0.35
+      },
+      {
+        "name": "Sirtuins and Resveratrol in Medicine",
+        "early": 74,
+        "late": 27,
+        "total": 101,
+        "growth_ratio": 0.36
+      },
+      {
+        "name": "Fatty Acid Research and Health",
+        "early": 55,
+        "late": 20,
+        "total": 75,
+        "growth_ratio": 0.36
+      },
+      {
+        "name": "Smoking Behavior and Cessation",
+        "early": 103,
+        "late": 38,
+        "total": 141,
+        "growth_ratio": 0.37
+      },
+      {
+        "name": "Viral Infections and Outbreaks Research",
+        "early": 79,
+        "late": 29,
+        "total": 108,
+        "growth_ratio": 0.37
+      },
+      {
+        "name": "Security and Verification in Computing",
+        "early": 78,
+        "late": 30,
+        "total": 108,
+        "growth_ratio": 0.38
+      }
+    ]
+  },
+  "figures": []
+}
