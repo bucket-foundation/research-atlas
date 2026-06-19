@@ -2,7 +2,7 @@
   "name": "research-atlas",
   "description": "Normalized graph of the global research economy.",
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-18T18:50:36Z",
+  "generated_at": "2026-06-19T00:58:43Z",
   "license": "MIT (code) / CC-BY-4.0 (data)",
   "publisher": "bucket-foundation",
   "datasets": [
@@ -71,7 +71,7 @@
       "kind": "entity",
       "path": "data/processed/organization.parquet",
       "schema_version": "0.1.0",
-      "row_count": 99650,
+      "row_count": 126774,
       "columns": [
         "atlas_id",
         "name",
@@ -90,18 +90,38 @@
       ],
       "sources": [
         "cordis",
+        "cordis,nih",
+        "cordis,nih,nsf",
+        "cordis,nih,nsf,openalex",
+        "cordis,nih,nsf,openalex,ukri",
+        "cordis,nih,openalex",
+        "cordis,nih,openalex,ukri",
+        "cordis,nsf",
+        "cordis,nsf,openalex",
+        "cordis,openalex",
+        "cordis,openalex,ukri",
+        "cordis,ukri",
         "nih",
+        "nih,nsf",
+        "nih,nsf,openalex",
+        "nih,nsf,openalex,ukri",
+        "nih,openalex",
+        "nih,openalex,ukri",
         "nsf",
+        "nsf,openalex",
+        "nsf,openalex,ukri",
+        "openalex",
+        "openalex,ukri",
         "ukri"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T00:57:48Z"
     },
     {
       "table": "person",
       "kind": "entity",
       "path": "data/processed/person.parquet",
       "schema_version": "0.1.0",
-      "row_count": 170408,
+      "row_count": 1193750,
       "columns": [
         "atlas_id",
         "full_name",
@@ -116,16 +136,43 @@
       ],
       "sources": [
         "nih",
-        "nsf"
+        "nsf",
+        "openalex"
       ],
-      "as_of": "2026-06-18T18:14:27Z"
+      "as_of": "2026-06-19T00:45:59Z"
+    },
+    {
+      "table": "work",
+      "kind": "entity",
+      "path": "data/processed/work.parquet",
+      "schema_version": "0.1.0",
+      "row_count": 226785,
+      "columns": [
+        "atlas_id",
+        "title",
+        "doi",
+        "openalex_id",
+        "publication_year",
+        "publication_date",
+        "type",
+        "cited_by_count",
+        "is_oa",
+        "source",
+        "source_id",
+        "source_url",
+        "as_of"
+      ],
+      "sources": [
+        "openalex"
+      ],
+      "as_of": "2026-06-19T00:45:59Z"
     },
     {
       "table": "field",
       "kind": "entity",
       "path": "data/processed/field.parquet",
       "schema_version": "0.1.0",
-      "row_count": 1756,
+      "row_count": 5308,
       "columns": [
         "atlas_id",
         "name",
@@ -141,9 +188,10 @@
         "cordis",
         "nih",
         "nsf",
+        "openalex",
         "ukri"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T00:45:59Z"
     },
     {
       "table": "funder_grant",
@@ -173,7 +221,7 @@
       "kind": "edge",
       "path": "data/processed/grant_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 1028064,
+      "row_count": 1027966,
       "columns": [
         "src_id",
         "dst_id",
@@ -213,11 +261,31 @@
       "as_of": "2026-06-18T18:14:27Z"
     },
     {
+      "table": "grant_work",
+      "kind": "edge",
+      "path": "data/processed/grant_work.parquet",
+      "schema_version": "0.1.0",
+      "row_count": 285604,
+      "columns": [
+        "src_id",
+        "dst_id",
+        "role",
+        "source",
+        "source_id",
+        "source_url",
+        "as_of"
+      ],
+      "sources": [
+        "openalex"
+      ],
+      "as_of": "2026-06-19T00:45:59Z"
+    },
+    {
       "table": "person_org",
       "kind": "edge",
       "path": "data/processed/person_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 208739,
+      "row_count": 2007793,
       "columns": [
         "src_id",
         "dst_id",
@@ -229,14 +297,35 @@
       ],
       "sources": [
         "nih",
-        "nsf"
+        "nsf",
+        "openalex"
       ],
-      "as_of": "2026-06-18T18:14:27Z"
+      "as_of": "2026-06-19T00:45:59Z"
+    },
+    {
+      "table": "work_field",
+      "kind": "edge",
+      "path": "data/processed/work_field.parquet",
+      "schema_version": "0.1.0",
+      "row_count": 226785,
+      "columns": [
+        "src_id",
+        "dst_id",
+        "score",
+        "source",
+        "source_id",
+        "source_url",
+        "as_of"
+      ],
+      "sources": [
+        "openalex"
+      ],
+      "as_of": "2026-06-19T00:45:59Z"
     }
   ],
   "totals": {
-    "tables": 9,
-    "rows": 4173070,
+    "tables": 12,
+    "rows": 7765218,
     "by_source": {
       "cordis": {
         "grants": 56585,
@@ -246,7 +335,7 @@
       "nih": {
         "grants": 529262,
         "grants_with_amount": 528207,
-        "usd_funded": 299340075590.0
+        "usd_funded": 300190762715.0
       },
       "nsf": {
         "grants": 126764,

@@ -41,16 +41,31 @@ def main() -> int:
         print("No grant.parquet -- run an ingest first.")
         return 1
 
+    # Prefer grants that actually have a linked work so the committed sample
+    # demonstrates the *connected* graph (grant -> work -> field), not just the
+    # funding side. We bias each source's slice toward grants present in
+    # grant_work, then top up with the source's first rows.
+    gw_path = DATA_PROCESSED / "grant_work.parquet"
+    linked_grant_ids: set[str] = set()
+    if gw_path.exists():
+        linked_grant_ids = set(pd.read_parquet(gw_path, columns=["src_id"])["src_id"])
+
     # Stratified slice: take an even share per source so the sample shows every
     # funder's shape (CORDIS/NSF/NIH/UKRI), not just whichever wrote first.
     all_grants = pd.read_parquet(grant_path)
     if "source" in all_grants.columns:
         sources = sorted(all_grants["source"].dropna().unique())
         per = max(1, args.max_grants // max(1, len(sources)))
-        grants = pd.concat(
-            [all_grants[all_grants["source"] == s].head(per) for s in sources],
-            ignore_index=True,
-        ).copy()
+        parts = []
+        for s in sources:
+            src_g = all_grants[all_grants["source"] == s]
+            linked = src_g[src_g["atlas_id"].isin(linked_grant_ids)].head(per)
+            if len(linked) < per:  # top up with first rows of this source
+                rest = src_g[~src_g["atlas_id"].isin(set(linked["atlas_id"]))]
+                linked = pd.concat([linked, rest.head(per - len(linked))],
+                                   ignore_index=True)
+            parts.append(linked)
+        grants = pd.concat(parts, ignore_index=True).copy()
     else:
         grants = all_grants.head(args.max_grants).copy()
     if "abstract" in grants.columns:
@@ -75,13 +90,37 @@ def main() -> int:
         if table == "grant_person":
             keep_person |= set(df["dst_id"])
 
-    # person_org edges among kept people
+    # Output side: grant_work edges on kept grants -> works -> work_field -> fields.
+    keep_work: set[str] = set()
+    gw = DATA_PROCESSED / "grant_work.parquet"
+    if gw.exists():
+        df = pd.read_parquet(gw)
+        df = df[df["src_id"].isin(keep_grant_ids)]
+        df.to_parquet(SAMPLE_DIR / "grant_work.parquet", index=False)
+        keep_work |= set(df["dst_id"])
+    keep_field_from_work: set[str] = set()
+    wf = DATA_PROCESSED / "work_field.parquet"
+    if wf.exists():
+        df = pd.read_parquet(wf)
+        df = df[df["src_id"].isin(keep_work)]
+        df.to_parquet(SAMPLE_DIR / "work_field.parquet", index=False)
+        keep_field_from_work |= set(df["dst_id"])
+
+    # person_org edges among kept people. Also pull a few work authors so the
+    # sample shows ORCID-bearing people attached to the works.
     po = DATA_PROCESSED / "person_org.parquet"
     if po.exists():
         df = pd.read_parquet(po)
         df = df[df["src_id"].isin(keep_person)]
         df.to_parquet(SAMPLE_DIR / "person_org.parquet", index=False)
         keep_org |= set(df["dst_id"])
+
+    # the kept works themselves
+    wp = DATA_PROCESSED / "work.parquet"
+    if wp.exists():
+        df = pd.read_parquet(wp)
+        df[df["atlas_id"].isin(keep_work)].to_parquet(
+            SAMPLE_DIR / "work.parquet", index=False)
 
     # Entities
     for table, keep in (("organization", keep_org), ("person", keep_person)):

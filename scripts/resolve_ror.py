@@ -100,7 +100,30 @@ def main() -> int:
     canon_lat, canon_lon, canon_home, canon_type = [], [], [], []
     cache: dict[tuple[str, str | None], object] = {}
     matched = 0
-    for name, cc in zip(orgs["name"].tolist(), orgs["country_code"].tolist()):
+    existing_ror = orgs["ror_id"].tolist() if "ror_id" in orgs.columns \
+        else [None] * len(orgs)
+    for name, cc, pre_ror in zip(orgs["name"].tolist(),
+                                 orgs["country_code"].tolist(), existing_ror):
+        # Orgs that already carry a ROR id (e.g. OpenAlex affiliations) are
+        # authoritative -- trust the id, look up canonical fields from the dump
+        # when we have the record, and skip the name matcher. This prevents a
+        # name-mismatch (soft hyphens, diacritics) from leaving such an org in the
+        # unresolved branch while a same-ROR funder org becomes the canonical node
+        # (which would collide on the canonical atlas_id).
+        if pre_ror:
+            rec = idx.records.get(pre_ror)
+            matched += 1
+            ror_ids.append(pre_ror)
+            methods.append("prematched")
+            scores.append(1.0)
+            canon_names.append(rec.name if rec else name)
+            canon_cc.append(rec.country_code if rec else cc)
+            canon_city.append(rec.city if rec else None)
+            canon_lat.append(rec.lat if rec else None)
+            canon_lon.append(rec.lon if rec else None)
+            canon_home.append(rec.homepage if rec else None)
+            canon_type.append((rec.types[0] if rec and rec.types else None))
+            continue
         ckey = (name or "", cc)
         if ckey in cache:
             m = cache[ckey]
