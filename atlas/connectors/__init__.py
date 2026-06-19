@@ -14,10 +14,13 @@ from atlas.connectors.base import Connector
 from atlas.connectors.cordis import CordisConnector
 from atlas.connectors.dfg import DfgConnector
 from atlas.connectors.erc import ErcConnector
+from atlas.connectors.gates import GatesConnector
 from atlas.connectors.nih import NihConnector
 from atlas.connectors.nsf import NsfConnector
 from atlas.connectors.nsf_bulk import NsfBulkConnector
+from atlas.connectors.sloan import SloanConnector
 from atlas.connectors.ukri import UkriConnector
+from atlas.connectors.wellcome import WellcomeConnector
 
 # registry name -> connector class
 REGISTRY: dict[str, type[Connector]] = {
@@ -28,6 +31,9 @@ REGISTRY: dict[str, type[Connector]] = {
     "ukri": UkriConnector,
     "erc": ErcConnector,
     "dfg": DfgConnector,
+    "gates": GatesConnector,
+    "wellcome": WellcomeConnector,
+    "sloan": SloanConnector,
 }
 
 __all__ = [
@@ -39,5 +45,8 @@ __all__ = [
     "UkriConnector",
     "ErcConnector",
     "DfgConnector",
+    "GatesConnector",
+    "WellcomeConnector",
+    "SloanConnector",
     "REGISTRY",
 ]

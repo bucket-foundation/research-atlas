@@ -28,6 +28,8 @@ from atlas.schema import Row, make_id, now_iso
 NSF_AWARDS_URL = "https://api.nsf.gov/services/v1/awards.json"
 NSF_AWARD_URL_TMPL = "https://www.nsf.gov/awardsearch/showAward?AWD_ID={}"
 RPP = 25  # NSF caps records-per-page at 25
+# Documented constant fx_as_of for USD-identity money rows with no start date.
+FX_AS_OF = "2026-06-01"
 
 # Fields we request from the API (keeps payloads small + stable).
 PRINT_FIELDS = ",".join([
@@ -171,7 +173,7 @@ class NsfConnector(Connector):
                     "currency": "USD" if amount is not None else None,
                     "amount_usd": amount,          # already USD; None stays None
                     "fx_rate_to_usd": 1.0 if amount is not None else None,
-                    "fx_as_of": start if amount is not None else None,
+                    "fx_as_of": (start or FX_AS_OF) if amount is not None else None,
                     "start_date": start,
                     "end_date": end,
                     "status": _status(start, end),

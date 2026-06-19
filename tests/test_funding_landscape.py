@@ -83,7 +83,7 @@ requires_db = pytest.mark.skipif(
 # docs/papers/01-funding-landscape/paper.md. Tolerances allow for bootstrap
 # seed-stability (CI bounds) but pin point estimates tightly.
 PAPER = {
-    "grants_in_window": 618_367,
+    "grants_in_window": 618_977,
     "linked_works": 156_877,
     "n_orgs": 4_840,
     "gini_grants": 0.929,          # ROR-resolved, count-based

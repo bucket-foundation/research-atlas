@@ -2,7 +2,7 @@
   "name": "research-atlas",
   "description": "Normalized graph of the global research economy.",
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-19T01:00:42Z",
+  "generated_at": "2026-06-19T04:02:07Z",
   "license": "MIT (code) / CC-BY-4.0 (data)",
   "publisher": "bucket-foundation",
   "datasets": [
@@ -11,7 +11,7 @@
       "kind": "entity",
       "path": "data/processed/sample/funder.parquet",
       "schema_version": "0.1.0",
-      "row_count": 69,
+      "row_count": 73,
       "columns": [
         "atlas_id",
         "name",
@@ -28,18 +28,22 @@
       ],
       "sources": [
         "cordis",
+        "dfg",
+        "gates",
         "nih",
         "nsf",
-        "ukri"
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "grant",
       "kind": "entity",
       "path": "data/processed/sample/grant.parquet",
       "schema_version": "0.1.0",
-      "row_count": 240,
+      "row_count": 120,
       "columns": [
         "atlas_id",
         "title",
@@ -60,18 +64,22 @@
       ],
       "sources": [
         "cordis",
+        "dfg",
+        "gates",
         "nih",
         "nsf",
-        "ukri"
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "organization",
       "kind": "entity",
       "path": "data/processed/sample/organization.parquet",
       "schema_version": "0.1.0",
-      "row_count": 681,
+      "row_count": 288,
       "columns": [
         "atlas_id",
         "name",
@@ -90,29 +98,64 @@
       ],
       "sources": [
         "cordis",
-        "cordis,nih,nsf,openalex",
-        "cordis,nih,openalex",
-        "cordis,nih,openalex,ukri",
+        "cordis,dfg,nih,openalex",
+        "cordis,dfg,nih,openalex,wellcome",
+        "cordis,dfg,openalex",
+        "cordis,dfg,openalex,wellcome",
+        "cordis,gates,nih,nsf,openalex",
+        "cordis,gates,nih,nsf,openalex,sloan",
+        "cordis,gates,nih,nsf,openalex,sloan,wellcome",
+        "cordis,gates,nih,openalex",
+        "cordis,gates,nih,openalex,sloan",
+        "cordis,gates,nih,openalex,sloan,ukri,wellcome",
+        "cordis,gates,nih,openalex,ukri,wellcome",
+        "cordis,gates,nih,openalex,wellcome",
+        "cordis,gates,openalex",
+        "cordis,gates,openalex,sloan,ukri,wellcome",
+        "cordis,gates,openalex,ukri,wellcome",
+        "cordis,gates,openalex,wellcome",
+        "cordis,nih,openalex,ukri,wellcome",
         "cordis,nsf,openalex",
         "cordis,openalex",
+        "cordis,openalex,sloan,wellcome",
         "cordis,openalex,ukri",
-        "cordis,ukri",
+        "cordis,openalex,ukri,wellcome",
+        "cordis,openalex,wellcome",
+        "cordis,ukri,wellcome",
+        "dfg",
+        "dfg,openalex",
+        "gates",
+        "gates,nih,nsf,openalex",
+        "gates,nih,nsf,openalex,sloan",
+        "gates,nih,nsf,openalex,sloan,wellcome",
+        "gates,nih,nsf,openalex,wellcome",
+        "gates,nih,nsf,sloan",
+        "gates,nih,openalex",
+        "gates,nih,openalex,ukri,wellcome",
+        "gates,nsf,openalex,sloan",
+        "gates,openalex",
+        "gates,openalex,wellcome",
+        "gates,sloan",
         "nih",
         "nih,nsf",
-        "nih,nsf,openalex",
-        "nih,openalex",
+        "nih,openalex,ukri,wellcome",
+        "nih,openalex,wellcome",
         "nsf",
-        "nsf,openalex",
-        "ukri"
+        "nsf,openalex,sloan",
+        "nsf,sloan",
+        "openalex,wellcome",
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-19T00:57:48Z"
+      "as_of": "2026-06-19T03:54:30Z"
     },
     {
       "table": "person",
       "kind": "entity",
       "path": "data/processed/sample/person.parquet",
       "schema_version": "0.1.0",
-      "row_count": 140,
+      "row_count": 252,
       "columns": [
         "atlas_id",
         "full_name",
@@ -126,17 +169,20 @@
         "as_of"
       ],
       "sources": [
+        "dfg",
         "nih",
-        "nsf"
+        "nsf",
+        "sloan",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:14:27Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "work",
       "kind": "entity",
       "path": "data/processed/sample/work.parquet",
       "schema_version": "0.1.0",
-      "row_count": 674,
+      "row_count": 207,
       "columns": [
         "atlas_id",
         "title",
@@ -162,7 +208,7 @@
       "kind": "entity",
       "path": "data/processed/sample/field.parquet",
       "schema_version": "0.1.0",
-      "row_count": 5308,
+      "row_count": 6720,
       "columns": [
         "atlas_id",
         "name",
@@ -176,19 +222,23 @@
       ],
       "sources": [
         "cordis",
+        "dfg",
+        "gates",
         "nih",
         "nsf",
         "openalex",
-        "ukri"
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-19T00:45:59Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "funder_grant",
       "kind": "edge",
       "path": "data/processed/sample/funder_grant.parquet",
       "schema_version": "0.1.0",
-      "row_count": 245,
+      "row_count": 121,
       "columns": [
         "src_id",
         "dst_id",
@@ -200,18 +250,22 @@
       ],
       "sources": [
         "cordis",
+        "dfg",
+        "gates",
         "nih",
         "nsf",
-        "ukri"
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "grant_org",
       "kind": "edge",
       "path": "data/processed/sample/grant_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 767,
+      "row_count": 286,
       "columns": [
         "src_id",
         "dst_id",
@@ -223,18 +277,22 @@
       ],
       "sources": [
         "cordis",
+        "dfg",
+        "gates",
         "nih",
         "nsf",
-        "ukri"
+        "sloan",
+        "ukri",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:15:39Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "grant_person",
       "kind": "edge",
       "path": "data/processed/sample/grant_person.parquet",
       "schema_version": "0.1.0",
-      "row_count": 141,
+      "row_count": 258,
       "columns": [
         "src_id",
         "dst_id",
@@ -245,17 +303,20 @@
         "as_of"
       ],
       "sources": [
+        "dfg",
         "nih",
-        "nsf"
+        "nsf",
+        "sloan",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:14:27Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "grant_work",
       "kind": "edge",
       "path": "data/processed/sample/grant_work.parquet",
       "schema_version": "0.1.0",
-      "row_count": 675,
+      "row_count": 207,
       "columns": [
         "src_id",
         "dst_id",
@@ -275,7 +336,7 @@
       "kind": "edge",
       "path": "data/processed/sample/person_org.parquet",
       "schema_version": "0.1.0",
-      "row_count": 219,
+      "row_count": 297,
       "columns": [
         "src_id",
         "dst_id",
@@ -286,17 +347,20 @@
         "as_of"
       ],
       "sources": [
+        "dfg",
         "nih",
-        "nsf"
+        "nsf",
+        "sloan",
+        "wellcome"
       ],
-      "as_of": "2026-06-18T18:14:27Z"
+      "as_of": "2026-06-19T03:53:18Z"
     },
     {
       "table": "work_field",
       "kind": "edge",
       "path": "data/processed/sample/work_field.parquet",
       "schema_version": "0.1.0",
-      "row_count": 674,
+      "row_count": 207,
       "columns": [
         "src_id",
         "dst_id",
@@ -314,27 +378,47 @@
   ],
   "totals": {
     "tables": 12,
-    "rows": 9833,
+    "rows": 9036,
     "by_source": {
       "cordis": {
-        "grants": 60,
-        "grants_with_amount": 60,
-        "usd_funded": 201949245.97
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 57466958.660000004
+      },
+      "dfg": {
+        "grants": 15,
+        "grants_with_amount": 0,
+        "usd_funded": 0.0
+      },
+      "gates": {
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 18059807.0
       },
       "nih": {
-        "grants": 60,
-        "grants_with_amount": 60,
-        "usd_funded": 27976133.0
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 11346509.0
       },
       "nsf": {
-        "grants": 60,
-        "grants_with_amount": 60,
-        "usd_funded": 36621116.0
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 5113092.0
+      },
+      "sloan": {
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 5225771.0
       },
       "ukri": {
-        "grants": 60,
-        "grants_with_amount": 12,
-        "usd_funded": 5182424.86
+        "grants": 15,
+        "grants_with_amount": 2,
+        "usd_funded": 636821.18
+      },
+      "wellcome": {
+        "grants": 15,
+        "grants_with_amount": 15,
+        "usd_funded": 34942824.45
       }
     }
   }

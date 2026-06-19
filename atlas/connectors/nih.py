@@ -36,6 +36,10 @@ PAGE_LIMIT = 500
 OFFSET_CAP = 14_999  # offset+? must stay <= 15000
 
 NIH_CROSSREF_ID = "100000002"  # National Institutes of Health, Crossref
+# Documented constant fx_as_of for USD-identity money rows whose grant has no
+# start date (NIH reports amounts in USD; FX is identity, but every money row
+# still records an auditable FX date).
+FX_AS_OF = "2026-06-01"
 
 INCLUDE_FIELDS = [
     "ProjectNum", "ProjectTitle", "FiscalYear", "AwardAmount",
@@ -181,7 +185,10 @@ class NihConnector(Connector):
                     "currency": "USD" if amount is not None else None,
                     "amount_usd": amount,
                     "fx_rate_to_usd": 1.0 if amount is not None else None,
-                    "fx_as_of": start if amount is not None else None,
+                    # USD identity FX: stamp the grant's start date when known,
+                    # else a documented constant (every money row must carry an
+                    # fx_as_of for auditability -- enforced by validate.py).
+                    "fx_as_of": (start or FX_AS_OF) if amount is not None else None,
                     "start_date": start,
                     "end_date": end,
                     "status": status,

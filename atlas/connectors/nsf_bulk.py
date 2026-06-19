@@ -35,6 +35,8 @@ from atlas.schema import Row, make_id, now_iso
 NSF_API = "https://www.research.gov/awardapi-service/v1/awards.json"
 RPP = 100  # research.gov caps rpp at 100
 MAX_TOTAL = 10000  # research.gov caps totalCount per query
+# Documented constant fx_as_of for USD-identity money rows with no start date.
+FX_AS_OF = "2026-06-01"
 
 PRINT_FIELDS = ",".join([
     "id", "title", "abstractText", "awardeeName", "awardeeCity",
@@ -148,7 +150,7 @@ class NsfBulkConnector(Connector):
                     "currency": "USD" if amount is not None else None,
                     "amount_usd": amount,
                     "fx_rate_to_usd": 1.0 if amount is not None else None,
-                    "fx_as_of": start if amount is not None else None,
+                    "fx_as_of": (start or FX_AS_OF) if amount is not None else None,
                     "start_date": start,
                     "end_date": end,
                     "status": _status(start, end),

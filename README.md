@@ -20,8 +20,16 @@ canonical schema, with full provenance on every row.
 | **NIH (US)** | `atlas/connectors/nih.py` | **Full** NIH RePORTER v2 feed (the largest single funder), windowed by (fiscal year, IC) under the 15k offset cap. Funder = NIH + awarding IC (NCI, NIAID, …). | USD (1.0) |
 | **UKRI / GtR** | `atlas/connectors/ukri.py` | **Full** UK Gateway to Research corpus (`fetch_all`); Funder = UKRI + lead council (EPSRC, BBSRC, …). | GBP → USD @ 1.27 (`fx_as_of` stamped) |
 | **ERC** | `atlas/connectors/erc.py` | Legacy ERC-only CORDIS slice (superseded by the full CORDIS connector; kept for back-compat). | EUR → USD @ 1.08 |
-| **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached HTML scrape; small sample). | EUR (amount not published by GEPRIS → `null`) |
+| **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached, **resumable HTML crawl** of ~172k project ids from the sitemap; `scripts/ingest_dfg_full.py` is the scale path). | EUR (amount rarely published by GEPRIS → `null`) |
+| **Gates Foundation** | `atlas/connectors/gates.py` | Bill & Melinda Gates Foundation **full Committed Grants CSV** (the bulk form of the public grants DB): grantee, purpose, division, topic, USD amount, dates. | USD (1.0, `fx_as_of` stamped) |
+| **Wellcome Trust** | `atlas/connectors/wellcome.py` | **Full 360Giving grants list** (XLSX, awarded since 2000): applicants (PI/co-PI), recipient org + 360Giving id, programme, GBP amount, dates. | GBP → USD @ 1.27 (`fx_as_of` stamped) |
+| **Sloan Foundation** | `atlas/connectors/sloan.py` | Alfred P. Sloan Foundation **full public Grants Database** (polite, cached HTML crawl): grantee, USD amount, city, year, program/sub-program, investigator. | USD (1.0, `fx_as_of` stamped) |
 | **OpenAlex (output)** | `atlas/connectors/openalex_works.py` | The research-**output** side: works that acknowledge our funders (`awards.funder_id`), polite pool + cursor paging, cached/resumable. Emits works, ORCID-keyed people, ROR-keyed institutions, the OpenAlex topic taxonomy, and `grant_work` / `person_org` / `work_field` edges. | n/a |
+
+> **Published but not yet machine-ingestible** (documented honestly in
+> `docs/LANDSCAPE.md`, not faked): **CZI**, **HHMI**, **Simons**, **Moore** —
+> all JS-rendered behind un-discoverable AJAX endpoints (or block scraping);
+> each needs a headless-browser connector (deferred).
 
 ### Connecting the piles (input ↔ output)
 
@@ -46,9 +54,12 @@ The four funder feeds are reconciled into **one** graph:
   `atlas/analysis.py` → [`docs/GRAPH.md`](GRAPH.md).
 
 **Current full-scale ingest** (see [`docs/LANDSCAPE.md`](docs/LANDSCAPE.md) for the
-full report): **~887k grants · ~99.6k organizations · ~170k people · 69 funders ·
-~$532B funded (USD-normalized) · ~4.17M total graph rows** across NIH (FY2018-25),
-NSF (FY2015-25), UKRI (full), and CORDIS (full H2020 + Horizon Europe).
+full report): **~958k grants · ~140.6k organizations · ~1.22M people · 73 funders ·
+~$658B funded (USD-normalized) · ~8.1M total graph rows** across NIH (FY2018-25),
+NSF (FY2015-25), UKRI (full), CORDIS (full H2020 + Horizon Europe), the **Gates
+Foundation** (full Committed Grants CSV), the **Wellcome Trust** (full 360Giving
+list), the **Sloan Foundation** (full grants DB), and a resumable **DFG/GEPRIS**
+corpus chunk.
 
 - **Code:** MIT · **Published datasets:** CC-BY-4.0
 - **Author:** Gianangelo Dichio · **Publisher:** bucket-foundation
@@ -110,6 +121,10 @@ python scripts/ingest_cordis.py                              # full EU (~56k)
 python scripts/ingest_nsf_bulk.py  --year-start 2015 --year-end 2025   # ~132k
 python scripts/ingest_nih.py       --year-start 2018 --year-end 2025   # ~624k
 python scripts/ingest_ukri_full.py                           # full UKRI (~174k)
+python scripts/ingest_gates.py                               # full Gates CSV (~41k)
+python scripts/ingest_wellcome.py                            # full Wellcome XLSX (~26k)
+python scripts/ingest_sloan.py                               # full Sloan DB (~3.4k)
+python scripts/ingest_dfg_full.py --limit 200000             # DFG/GEPRIS (resumable)
 
 # 2. Reconcile orgs to ROR (offline, from the bulk dump) + merge duplicates
 #    (download the dump from https://zenodo.org/communities/ror-data first)

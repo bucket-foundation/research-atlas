@@ -188,6 +188,49 @@ def run(processed: Path) -> Suite:
         s.check("ORCID ids well-formed", True, bad_orcid == 0,
                 f"{bad_orcid:,} malformed ORCIDs" if bad_orcid else "all ORCIDs well-formed")
 
+    # ----- every grant has an awarding funder (HARD) ----------------------- #
+    # A grant with no funder_grant(awarder) edge is an orphaned grant: it would
+    # never appear in any funder's portfolio. Every connector must attach one.
+    if {"grant", "funder_grant"} <= present:
+        unfunded = con.execute(f"""
+            SELECT count(*) FROM {_rp(processed, 'grant')} g
+            LEFT JOIN (
+                SELECT DISTINCT dst_id FROM {_rp(processed, 'funder_grant')}
+                WHERE role = 'awarder'
+            ) fg ON g.atlas_id = fg.dst_id
+            WHERE fg.dst_id IS NULL
+        """).fetchone()[0]
+        s.check("every grant has an awarder", True, unfunded == 0,
+                f"{unfunded:,} grants with no funder" if unfunded
+                else "all grants attributed to a funder")
+
+    # ----- FX normalization is arithmetically sound (HARD) ----------------- #
+    # Where a grant carries amount_original + currency + fx_rate, the normalized
+    # amount_usd must equal amount_original * fx_rate within rounding tolerance.
+    # This guards every money-bearing connector (Gates/Wellcome/Sloan/UKRI/CORDIS)
+    # against a stamped-but-wrong FX.
+    if "grant" in present:
+        g = _rp(processed, "grant")
+        fx_wrong = con.execute(f"""
+            SELECT count(*) FROM {g}
+            WHERE amount_original IS NOT NULL
+              AND fx_rate_to_usd IS NOT NULL
+              AND amount_usd IS NOT NULL
+              AND abs(amount_usd - (amount_original * fx_rate_to_usd)) > 1.0
+        """).fetchone()[0]
+        s.check("grant amount_usd = amount_original * fx", True, fx_wrong == 0,
+                f"{fx_wrong:,} FX arithmetic mismatches" if fx_wrong
+                else "all USD amounts reconcile with their FX rate")
+
+        # Money-bearing rows must carry a non-null fx_as_of date (auditability).
+        fx_undated = con.execute(f"""
+            SELECT count(*) FROM {g}
+            WHERE amount_usd IS NOT NULL AND fx_as_of IS NULL
+        """).fetchone()[0]
+        s.check("money rows carry an FX date", True, fx_undated == 0,
+                f"{fx_undated:,} USD amounts with no fx_as_of" if fx_undated
+                else "all money rows stamp an fx_as_of")
+
     # ----- SOFT coverage metrics ------------------------------------------- #
     if "organization" in present:
         tot, res = con.execute(
@@ -217,6 +260,20 @@ def run(processed: Path) -> Suite:
     if "grant_work" in present:
         ng = con.execute(f"SELECT count(*) FROM {_rp(processed,'grant_work')}").fetchone()[0]
         s.check("grant->work links", False, True, f"{ng:,} links")
+
+    # Per-source grant + $ breakdown (soft): one line per funder feed so a glance
+    # at the report shows every source's real contribution after a build.
+    if "grant" in present:
+        rows = con.execute(f"""
+            SELECT source, count(*) AS grants,
+                   count(amount_usd) AS with_money,
+                   coalesce(sum(amount_usd), 0) AS usd
+            FROM {_rp(processed, 'grant')}
+            GROUP BY source ORDER BY grants DESC
+        """).fetchall()
+        for src, grants, wm, usd in rows:
+            s.check(f"source[{src}] grants", False, True,
+                    f"{grants:,} grants, {wm:,} w/ amount, ${usd:,.0f} USD")
 
     con.close()
     return s

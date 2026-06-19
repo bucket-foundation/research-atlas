@@ -107,6 +107,40 @@ def test_missing_provenance_is_caught(tmp_path):
     assert any("provenance" in r.name for r in s.hard_failures)
 
 
+def test_unfunded_grant_is_caught(tmp_path):
+    _clean(tmp_path)
+    # remove the only awarder edge -> grant:1 becomes an orphan grant
+    _write(tmp_path, "funder_grant", [{"src_id": "fund:1", "dst_id": "grant:GHOST",
+                                       "role": "awarder", "source": "nsf",
+                                       "source_id": "1", "source_url": "x",
+                                       "as_of": TS}])
+    s = validate.run(tmp_path)
+    names = {r.name for r in s.hard_failures}
+    # the missing-awarder check fires (the ghost endpoint also trips orphan check)
+    assert "every grant has an awarder" in names
+
+
+def test_wrong_fx_arithmetic_is_caught(tmp_path):
+    _clean(tmp_path)
+    g = pd.read_parquet(tmp_path / "grant.parquet")
+    # amount_usd no longer equals amount_original * fx_rate_to_usd
+    g.loc[0, "amount_usd"] = 999.0  # 100 * 1.0 != 999
+    g.to_parquet(tmp_path / "grant.parquet", index=False)
+    s = validate.run(tmp_path)
+    names = {r.name for r in s.hard_failures}
+    assert "grant amount_usd = amount_original * fx" in names
+
+
+def test_money_without_fx_date_is_caught(tmp_path):
+    _clean(tmp_path)
+    g = pd.read_parquet(tmp_path / "grant.parquet")
+    g.loc[0, "fx_as_of"] = None  # has amount_usd but no fx date
+    g.to_parquet(tmp_path / "grant.parquet", index=False)
+    s = validate.run(tmp_path)
+    names = {r.name for r in s.hard_failures}
+    assert "money rows carry an FX date" in names
+
+
 def test_report_written(tmp_path):
     _clean(tmp_path)
     s = validate.run(tmp_path)

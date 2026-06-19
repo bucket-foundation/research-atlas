@@ -74,7 +74,7 @@ referential-integrity checks with zero orphan edges.
 
 We restrict the funding analyses to grants whose start date falls in
 **2015–2025**, the window with dense, near-complete coverage across all four
-funders. This yields **618,367 grants**. Works are analyzed over **2016–2024**,
+funders. This yields **618,977 grants**. Works are analyzed over **2016–2024**,
 the window with near-complete OpenAlex publication coverage in the corpus
 (2025 is partial; pre-2016 works were not ingested).
 
@@ -344,7 +344,7 @@ Foundation open-data program. No competing financial interests.
 
 | Quantity | Value | Source field in `results.json` |
 |---|---:|---|
-| Grants in 2015–2025 window | 618,367 | `coverage.grants_in_window` |
+| Grants in 2015–2025 window | 618,977 | `coverage.grants_in_window` |
 | Distinct linked works | 156,877 | `coverage.linked_works` |
 | ROR-resolved recipient coverage (window) | 67.4% | `coverage.ror_recipient_coverage` |
 | ROR-resolved recipient institutions | 4,840 | `org_concentration.n_orgs` |

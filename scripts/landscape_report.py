@@ -57,10 +57,61 @@ SOURCE_UNIVERSE = {
     },
     "dfg": {
         "label": "DFG (Germany, GEPRIS HTML)",
-        "grants_available": None,
-        "note": "Polite HTML scrape; small sample only (no bulk export exists).",
+        "grants_available": 172292,
+        "note": "Polite cached HTML crawl of English project detail pages "
+                "(no bulk export exists). ~172k project ids are published in the "
+                "GEPRIS sitemap; this is a real corpus chunk, resumable to the "
+                "full set (cache makes re-runs free). GEPRIS rarely publishes a "
+                "funding amount on the English page, so most DFG grants carry "
+                "amount=null (money invariant).",
+    },
+    "gates": {
+        "label": "Gates Foundation (Committed Grants CSV)",
+        "grants_available": None,  # the CSV is the universe; equals ingested
+        "note": "Full committed-grants CSV ingested in entirety (the bulk form "
+                "of gatesfoundation.org/about/committed-grants). Amounts are USD. "
+                "Coverage = 100% of the published CSV at download time.",
+    },
+    "wellcome": {
+        "label": "Wellcome Trust (360Giving XLSX)",
+        "grants_available": None,  # the XLSX is the universe; equals ingested
+        "note": "Full 360Giving grants list (awarded since 2000-10-01) ingested "
+                "in entirety. GBP normalized to USD via a stamped fixed FX. "
+                "Coverage = 100% of the published XLSX at download time.",
+    },
+    "sloan": {
+        "label": "Alfred P. Sloan Foundation (Grants Database HTML)",
+        "grants_available": None,  # the public DB is the universe; equals ingested
+        "note": "Full public grants database crawled (polite, cached). Sloan's "
+                "DB covers currently-operating programs back to ~2008; pre-2008 "
+                "completed programs live only in annual reports (not in the DB). "
+                "Amounts are USD; Sloan publishes only an award year.",
     },
 }
+
+# Real funders that publish grant data but are NOT machine-ingestible without a
+# headless browser (JS-rendered listings behind un-discoverable AJAX endpoints)
+# or that actively block scraping. Documented honestly rather than faked.
+NOT_INGESTIBLE = [
+    ("Chan Zuckerberg Initiative (CZI)",
+     "Publishes a searchable Grants Database (chanzuckerberg.com/grants-ventures/"
+     "grants/) of $7.2B+ since 2015, but the listing is rendered by a JS bundle "
+     "via a WordPress admin-ajax action that is not discoverable from static "
+     "HTML. Needs a headless-browser connector (deferred)."),
+    ("Howard Hughes Medical Institute (HHMI)",
+     "~300 current Investigators (~$9M / 7-yr term each) are listed at "
+     "hhmi.org/programs/investigators, but the scientist directory is JS-rendered "
+     "and the browse endpoint returns HTTP 403 to non-browser agents. No per-"
+     "investigator award amount is published. Honestly sparse; deferred."),
+    ("Simons Foundation",
+     "Funded-projects listing (simonsfoundation.org/funded-projects/) is "
+     "JS-rendered with no static data or discoverable API. Deferred to a "
+     "headless-browser connector."),
+    ("Gordon and Betty Moore Foundation",
+     "Grants are published at moore.org/grants ($401.8M / 952 grants in 2024) but "
+     "the listing is JS-rendered behind an internal API not exposed in static "
+     "HTML. Deferred to a headless-browser connector."),
+]
 
 
 def _md_table(headers, rows):
@@ -241,6 +292,16 @@ def main() -> int:
          "coverage", "notes"], rows))
     lines.append("")
 
+    lines.append("## Published funders not yet machine-ingestible (honest)\n")
+    lines.append("These funders publish real grant data, but their listings are "
+                 "JS-rendered behind un-discoverable AJAX endpoints, or block "
+                 "non-browser agents. They are documented here rather than "
+                 "faked; each needs a headless-browser connector (deferred).\n")
+    lines.append(_md_table(
+        ["funder", "why deferred"],
+        [[name, note] for name, note in NOT_INGESTIBLE]))
+    lines.append("")
+
     lines.append("## Field taxonomies\n")
     field_by_source = con.execute(f"""
         SELECT source, count(*) FROM {rp('field')}
@@ -265,8 +326,15 @@ def main() -> int:
         "(person link-following, off for the bulk run); GBP→USD already applied.\n"
         "- **CORDIS**: add FP7 and earlier framework programmes (separate zips); "
         "resolve PI names from per-project web records (not in bulk export).\n"
-        "- **DFG**: only a polite HTML sample exists (no bulk export); a larger "
-        "crawl needs more polite-rate time.\n"
+        "- **DFG**: a real GEPRIS corpus chunk is ingested; the crawl is "
+        "resumable to the full ~172k sitemap set (cache makes re-runs free) at "
+        "polite rate. Most pages omit the funding amount (money stays null).\n"
+        "- **Gates / Wellcome / Sloan**: published feeds ingested in full at "
+        "download time; re-run to refresh (Gates CSV monthly, Wellcome XLSX "
+        "monthly, Sloan DB live).\n"
+        "- **CZI / HHMI / Simons / Moore**: real funders whose listings are "
+        "JS-rendered behind un-discoverable APIs (or block scraping); need a "
+        "headless-browser connector (deferred, see table above).\n"
         "- **Cross-source**: ROR resolution as a batch backfill (bulk ROR dump) "
         "to merge duplicate orgs across funders; OpenAlex works + topic fields; "
         "ORCID person reconciliation; currency FX refresh.\n")

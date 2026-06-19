@@ -1,12 +1,12 @@
 {
-  "generated_at": "2026-06-19T01:15:31+00:00",
+  "generated_at": "2026-06-19T04:00:35+00:00",
   "coverage": {
     "year_from": 2015,
     "year_to": 2025,
-    "grants_in_window": 618367,
-    "recipient_edges_in_window": 617737,
-    "recipient_edges_ror_resolved": 416060,
-    "ror_recipient_coverage": 0.6735228746214004,
+    "grants_in_window": 618977,
+    "recipient_edges_in_window": 618347,
+    "recipient_edges_ror_resolved": 416480,
+    "ror_recipient_coverage": 0.6735376738303898,
     "grant_work_links": 285604,
     "linked_works": 156877,
     "output_funder_sources": [
@@ -19,23 +19,23 @@
   },
   "org_concentration": {
     "n_orgs": 4840,
-    "total_grants": 416060,
-    "gini_grants": 0.9288085227297557,
+    "total_grants": 416480,
+    "gini_grants": 0.9288281857710271,
     "gini_grants_ci95": [
-      0.9189825146561806,
-      0.9358860704609374
+      0.9189999566050847,
+      0.9359083425946099
     ],
-    "hhi_grants": 0.00821660931307379,
-    "top1pct_share": 0.5358818439648128,
-    "top5pct_share": 0.8513651877133106,
-    "top10pct_share": 0.9204225352112676
+    "hhi_grants": 0.008218766213948443,
+    "top1pct_share": 0.5359465040338072,
+    "top5pct_share": 0.8514142335766424,
+    "top10pct_share": 0.9204499615827891
   },
   "org_concentration_dollars_sensitivity": {
     "n_orgs": 4837,
-    "gini_dollars": 0.9061415823387687,
+    "gini_dollars": 0.9062444812818602,
     "gini_dollars_ci95": [
-      0.8947896555869758,
-      0.9147606367129857
+      0.8948695370940989,
+      0.914887937960486
     ],
     "note": "dollar column carries fuzzy-match + shared-grant double-count noise; reported only as a sensitivity comparison vs the robust count-based Gini"
   },
@@ -43,93 +43,93 @@
     "countries": [
       {
         "country_code": "US",
-        "grants": 560304,
-        "usd": 291606870185.75
+        "grants": 560915,
+        "usd": 292727417317.75
       },
       {
         "country_code": "ES",
         "grants": 6511,
-        "usd": 15520223073.93991
+        "usd": 15520223073.940002
       },
       {
         "country_code": "DE",
         "grants": 6236,
-        "usd": 17945650291.31995
+        "usd": 17945650291.319885
       },
       {
         "country_code": "FR",
-        "grants": 5189,
-        "usd": 14112174777.56997
+        "grants": 5188,
+        "usd": 14111856472.569967
       },
       {
         "country_code": "IT",
         "grants": 4924,
-        "usd": 10891445760.610027
+        "usd": 10891445760.610067
       },
       {
         "country_code": "NL",
         "grants": 3882,
-        "usd": 10619084177.369974
+        "usd": 10619084177.369987
       },
       {
         "country_code": "GB",
         "grants": 3273,
-        "usd": 4452614353.240028
+        "usd": 4452614353.239959
       },
       {
         "country_code": "UK",
         "grants": 2878,
-        "usd": 3886691056.5600166
+        "usd": 3886691056.55999
       },
       {
         "country_code": "BE",
         "grants": 2365,
-        "usd": 8085703175.27998
+        "usd": 8085703175.280033
       },
       {
         "country_code": "DK",
         "grants": 1939,
-        "usd": 3367236722.6600013
+        "usd": 3367236722.660026
       },
       {
         "country_code": "SE",
         "grants": 1737,
-        "usd": 3807520716.6699934
+        "usd": 3807520716.6700044
       },
       {
         "country_code": "AT",
         "grants": 1574,
-        "usd": 4110020751.819997
+        "usd": 4110020751.819999
       },
       {
         "country_code": "CH",
         "grants": 1533,
-        "usd": 2498445444.110017
+        "usd": 2498445444.110018
       },
       {
         "country_code": "IL",
         "grants": 1304,
-        "usd": 1983874892.680001
+        "usd": 1983874892.6800032
       },
       {
         "country_code": "IE",
         "grants": 1303,
-        "usd": 2808667430.489999
+        "usd": 2808667430.490002
       },
       {
         "country_code": "NO",
         "grants": 1295,
-        "usd": 4104368087.6699934
+        "usd": 4104368087.670002
       },
       {
         "country_code": "FI",
         "grants": 1166,
-        "usd": 3540974133.530001
+        "usd": 3540974133.5300055
       },
       {
         "country_code": "PT",
         "grants": 1160,
-        "usd": 2269030821.5600033
+        "usd": 2269030821.560001
       },
       {
         "country_code": "EL",
@@ -139,17 +139,17 @@
       {
         "country_code": "ZA",
         "grants": 538,
-        "usd": 231075635.35000002
+        "usd": 231075635.35
       }
     ],
     "n_countries": 105,
-    "gini_country_grants": 0.9743292603201598,
+    "gini_country_grants": 0.9743453208907672,
     "gini_country_grants_ci95": [
       0.7919791122631009,
-      0.9797225321027943
+      0.9797334474207353
     ],
-    "hhi_country_grants": 0.8272430551615323,
-    "us_grant_share": 0.909247875786235
+    "hhi_country_grants": 0.8274081763308471,
+    "us_grant_share": 0.9093392430427438
   },
   "cofunding": {
     "distribution": [
@@ -333,26 +333,26 @@
     {
       "funder": "NIBIB",
       "country_code": "US",
-      "grants": 6777,
-      "usd": 2796463725.0,
+      "grants": 6784,
+      "usd": 2809646946.0,
       "works": 2640,
-      "works_per_million_usd": 0.944
+      "works_per_million_usd": 0.94
     },
     {
       "funder": "NLM",
       "country_code": "US",
-      "grants": 1471,
-      "usd": 565607771.0,
+      "grants": 1460,
+      "usd": 544989851.0,
       "works": 494,
-      "works_per_million_usd": 0.873
+      "works_per_million_usd": 0.906
     },
     {
       "funder": "NIGMS",
       "country_code": "US",
-      "grants": 47464,
-      "usd": 17278016688.0,
+      "grants": 47585,
+      "usd": 17447958126.0,
       "works": 14029,
-      "works_per_million_usd": 0.812
+      "works_per_million_usd": 0.804
     },
     {
       "funder": "NSF",
@@ -373,16 +373,16 @@
     {
       "funder": "NHGRI",
       "country_code": "US",
-      "grants": 4267,
-      "usd": 3006007351.0,
+      "grants": 4268,
+      "usd": 2996172873.0,
       "works": 1807,
-      "works_per_million_usd": 0.601
+      "works_per_million_usd": 0.603
     },
     {
       "funder": "NIAMS",
       "country_code": "US",
       "grants": 10300,
-      "usd": 3806806998.0,
+      "usd": 3806712331.0,
       "works": 2174,
       "works_per_million_usd": 0.571
     },
@@ -397,26 +397,26 @@
     {
       "funder": "NIDDK",
       "country_code": "US",
-      "grants": 28318,
-      "usd": 11843938815.0,
+      "grants": 28376,
+      "usd": 11909149822.0,
       "works": 6234,
-      "works_per_million_usd": 0.526
+      "works_per_million_usd": 0.523
     },
     {
       "funder": "NIEHS",
       "country_code": "US",
-      "grants": 7661,
-      "usd": 3185780219.0,
+      "grants": 7684,
+      "usd": 3218593504.0,
       "works": 1637,
-      "works_per_million_usd": 0.514
+      "works_per_million_usd": 0.509
     },
     {
       "funder": "NCI",
       "country_code": "US",
-      "grants": 58064,
-      "usd": 28709442082.0,
+      "grants": 58164,
+      "usd": 28810215801.0,
       "works": 13274,
-      "works_per_million_usd": 0.462
+      "works_per_million_usd": 0.461
     },
     {
       "funder": "EC",
@@ -429,80 +429,80 @@
     {
       "funder": "NINDS",
       "country_code": "US",
-      "grants": 33223,
-      "usd": 15419664589.0,
+      "grants": 33251,
+      "usd": 15496376649.0,
       "works": 5926,
-      "works_per_million_usd": 0.384
+      "works_per_million_usd": 0.382
     },
     {
       "funder": "NEI",
       "country_code": "US",
       "grants": 10789,
-      "usd": 3938948164.0,
+      "usd": 3939515843.0,
       "works": 1441,
       "works_per_million_usd": 0.366
     },
     {
       "funder": "NIDCR",
       "country_code": "US",
-      "grants": 6876,
-      "usd": 2585403308.0,
+      "grants": 6877,
+      "usd": 2589630480.0,
       "works": 862,
       "works_per_million_usd": 0.333
     },
     {
       "funder": "NCCIH",
       "country_code": "US",
-      "grants": 2451,
-      "usd": 1164540824.0,
+      "grants": 2452,
+      "usd": 1165717074.0,
       "works": 363,
-      "works_per_million_usd": 0.312
+      "works_per_million_usd": 0.311
     },
     {
       "funder": "NHLBI",
       "country_code": "US",
-      "grants": 44044,
-      "usd": 24744927321.0,
+      "grants": 44092,
+      "usd": 24833658213.0,
       "works": 7462,
-      "works_per_million_usd": 0.302
+      "works_per_million_usd": 0.3
     },
     {
       "funder": "NIMH",
       "country_code": "US",
-      "grants": 24399,
-      "usd": 11840121443.0,
+      "grants": 24431,
+      "usd": 11885948436.0,
       "works": 3519,
-      "works_per_million_usd": 0.297
+      "works_per_million_usd": 0.296
     },
     {
       "funder": "NIA",
       "country_code": "US",
-      "grants": 32662,
-      "usd": 19781931298.0,
+      "grants": 32714,
+      "usd": 19981926886.0,
       "works": 5729,
-      "works_per_million_usd": 0.29
-    },
-    {
-      "funder": "NIAID",
-      "country_code": "US",
-      "grants": 48040,
-      "usd": 29694892405.0,
-      "works": 8588,
-      "works_per_million_usd": 0.289
+      "works_per_million_usd": 0.287
     },
     {
       "funder": "NIAAA",
       "country_code": "US",
       "grants": 7818,
-      "usd": 2542970643.0,
+      "usd": 2543056745.0,
       "works": 729,
       "works_per_million_usd": 0.287
     },
     {
+      "funder": "NIAID",
+      "country_code": "US",
+      "grants": 48151,
+      "usd": 29994099371.0,
+      "works": 8588,
+      "works_per_million_usd": 0.286
+    },
+    {
       "funder": "NICHD",
       "country_code": "US",
-      "grants": 21175,
-      "usd": 8570955980.0,
+      "grants": 21189,
+      "usd": 8590544426.0,
       "works": 2384,
       "works_per_million_usd": 0.278
     },
@@ -510,23 +510,23 @@
       "funder": "NIDCD",
       "country_code": "US",
       "grants": 7636,
-      "usd": 2542744909.0,
+      "usd": 2543038674.0,
       "works": 666,
       "works_per_million_usd": 0.262
     },
     {
       "funder": "OD",
       "country_code": "US",
-      "grants": 4819,
-      "usd": 7823150889.0,
+      "grants": 4825,
+      "usd": 7815665127.0,
       "works": 1695,
       "works_per_million_usd": 0.217
     },
     {
       "funder": "NINR",
       "country_code": "US",
-      "grants": 2637,
-      "usd": 1096878323.0,
+      "grants": 2636,
+      "usd": 1096389977.0,
       "works": 197,
       "works_per_million_usd": 0.18
     },
@@ -534,23 +534,23 @@
       "funder": "NIMHD",
       "country_code": "US",
       "grants": 4394,
-      "usd": 2326247502.0,
+      "usd": 2319704148.0,
       "works": 393,
       "works_per_million_usd": 0.169
     },
     {
       "funder": "NIDA",
       "country_code": "US",
-      "grants": 17920,
-      "usd": 10150970357.0,
+      "grants": 17938,
+      "usd": 10181510677.0,
       "works": 1539,
-      "works_per_million_usd": 0.152
+      "works_per_million_usd": 0.151
     },
     {
       "funder": "NCATS",
       "country_code": "US",
-      "grants": 3212,
-      "usd": 5363065889.0,
+      "grants": 3213,
+      "usd": 5379638615.0,
       "works": 244,
       "works_per_million_usd": 0.045
     }

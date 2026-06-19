@@ -38,6 +38,15 @@ DEFAULT_DB = REPO_ROOT / "research_atlas.duckdb"
 # Dense, well-covered grant window (see docs/GRAPH.md §3 and exploratory counts).
 YEAR_FROM = 2015
 YEAR_TO = 2025
+# This paper analyzes the four large *government/supranational* research funders
+# the atlas ingested first. Later-added private foundations (Gates, Wellcome,
+# Sloan) and the DFG HTML corpus are part of the broader atlas (see
+# docs/LANDSCAPE.md) but are deliberately OUT OF SCOPE for this paper so its
+# published numbers stay reproducible as the atlas grows. The filter is applied
+# uniformly to every windowed query below.
+PAPER_FUNDER_SOURCES = ("nih", "nsf", "cordis", "ukri")
+_PAPER_SRC_LIST = ", ".join(f"'{s}'" for s in PAPER_FUNDER_SOURCES)
+PAPER_SOURCE_CLAUSE = f"AND g.source IN ({_PAPER_SRC_LIST})"
 # Funders with grant_work output linkage (UKRI outputs not yet ingested).
 OUTPUT_FUNDER_SOURCES = ("nih", "nsf", "cordis")
 # Work publication window with near-complete coverage (2025 is partial, 2026 negligible).
@@ -136,6 +145,7 @@ def org_grant_counts(con, ror_only: bool = True) -> list[dict]:
         JOIN organization o ON o.atlas_id = go.dst_id
         WHERE go.role = 'recipient'
           AND substr(g.start_date, 1, 4) BETWEEN ? AND ?
+          {PAPER_SOURCE_CLAUSE}
           {ror_clause}
         GROUP BY 1, 2, 3, 4
         ORDER BY grants DESC, o.atlas_id   -- deterministic order for reproducible bootstrap
@@ -144,7 +154,7 @@ def org_grant_counts(con, ror_only: bool = True) -> list[dict]:
 
 def org_grant_dollars(con) -> list[dict]:
     """Recipient dollar sum per ROR org — the NOISY column, for sensitivity only."""
-    return _rows(con, """
+    return _rows(con, f"""
         SELECT o.atlas_id, o.name, o.country_code,
                sum(g.amount_usd) AS usd
         FROM grant_org go
@@ -153,6 +163,7 @@ def org_grant_dollars(con) -> list[dict]:
         WHERE go.role = 'recipient' AND o.ror_id IS NOT NULL
           AND g.amount_usd IS NOT NULL
           AND substr(g.start_date, 1, 4) BETWEEN ? AND ?
+          {PAPER_SOURCE_CLAUSE}
         GROUP BY 1, 2, 3
         HAVING sum(g.amount_usd) > 0
         ORDER BY usd DESC, o.atlas_id   -- deterministic order for reproducible bootstrap
@@ -161,7 +172,7 @@ def org_grant_dollars(con) -> list[dict]:
 
 def country_funding(con) -> list[dict]:
     """Recipient grant count + dollar sum by org country (robust aggregate)."""
-    return _rows(con, """
+    return _rows(con, f"""
         SELECT o.country_code,
                count(DISTINCT g.atlas_id) AS grants,
                sum(g.amount_usd) AS usd
@@ -170,6 +181,7 @@ def country_funding(con) -> list[dict]:
         JOIN organization o ON o.atlas_id = go.dst_id
         WHERE go.role = 'recipient' AND o.country_code IS NOT NULL
           AND substr(g.start_date, 1, 4) BETWEEN ? AND ?
+          {PAPER_SOURCE_CLAUSE}
         GROUP BY 1
         ORDER BY grants DESC, o.country_code
     """, [str(YEAR_FROM), str(YEAR_TO)])
@@ -322,11 +334,12 @@ def rising_falling_fields(con, min_total: int = 40, limit: int = 12) -> dict:
 
 def coverage_stats(con) -> dict:
     """The honest coverage numbers that frame every result."""
-    grants_window = _scalar(con, """
-        SELECT count(*) FROM grant
-        WHERE substr(start_date, 1, 4) BETWEEN ? AND ?
+    grants_window = _scalar(con, f"""
+        SELECT count(*) FROM grant g
+        WHERE substr(g.start_date, 1, 4) BETWEEN ? AND ?
+          {PAPER_SOURCE_CLAUSE}
     """, [str(YEAR_FROM), str(YEAR_TO)])
-    recip_total, recip_ror = con.execute("""
+    recip_total, recip_ror = con.execute(f"""
         SELECT count(*),
                count(*) FILTER (WHERE o.ror_id IS NOT NULL)
         FROM grant_org go
@@ -334,6 +347,7 @@ def coverage_stats(con) -> dict:
         JOIN organization o ON o.atlas_id = go.dst_id
         WHERE go.role = 'recipient'
           AND substr(g.start_date, 1, 4) BETWEEN ? AND ?
+          {PAPER_SOURCE_CLAUSE}
     """, [str(YEAR_FROM), str(YEAR_TO)]).fetchone()
     return {
         "year_from": YEAR_FROM,
