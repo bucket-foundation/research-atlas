@@ -21,6 +21,29 @@ canonical schema, with full provenance on every row.
 | **UKRI / GtR** | `atlas/connectors/ukri.py` | **Full** UK Gateway to Research corpus (`fetch_all`); Funder = UKRI + lead council (EPSRC, BBSRC, …). | GBP → USD @ 1.27 (`fx_as_of` stamped) |
 | **ERC** | `atlas/connectors/erc.py` | Legacy ERC-only CORDIS slice (superseded by the full CORDIS connector; kept for back-compat). | EUR → USD @ 1.08 |
 | **DFG** | `atlas/connectors/dfg.py` | Deutsche Forschungsgemeinschaft via GEPRIS (polite, cached HTML scrape; small sample). | EUR (amount not published by GEPRIS → `null`) |
+| **OpenAlex (output)** | `atlas/connectors/openalex_works.py` | The research-**output** side: works that acknowledge our funders (`awards.funder_id`), polite pool + cursor paging, cached/resumable. Emits works, ORCID-keyed people, ROR-keyed institutions, the OpenAlex topic taxonomy, and `grant_work` / `person_org` / `work_field` edges. | n/a |
+
+### Connecting the piles (input ↔ output)
+
+The four funder feeds are reconciled into **one** graph:
+
+- **Org → ROR** — `scripts/resolve_ror.py` + `atlas/ror_bulk.py` resolve every org
+  to a ROR id **offline** from the ROR bulk dump (no 99k API calls) in four tiers
+  (`exact` → abbreviation-`expanded` → `acronym` → IDF-weighted `fuzzy`), recording
+  `match_method` + `match_score` in an audit map (`org_resolution.parquet`).
+  Duplicate orgs across funders merge into **one canonical node per ROR id**.
+  Matching is conservative — ambiguous and common-token cases resolve to **null**,
+  never a wrong ROR id.
+- **Grant → work** — `atlas/award_match.py` normalizes each funder's award-id
+  conventions into shared join keys, so a work's `awards[].funder_award_id`
+  intersects with our grant ids and draws a `grant_work` edge.
+- **Person → ORCID / org** — authors carry ORCIDs and ROR-resolved affiliations
+  straight from OpenAlex; people reconcile on ORCID (then OpenAlex author id, then
+  name).
+- **Validation** — `scripts/validate.py` asserts the graph's data-quality
+  invariants after every build → [`docs/VALIDATION.md`](VALIDATION.md).
+- **Querying** — `scripts/query.py` runs the metascience queries in
+  `atlas/analysis.py` → [`docs/GRAPH.md`](GRAPH.md).
 
 **Current full-scale ingest** (see [`docs/LANDSCAPE.md`](docs/LANDSCAPE.md) for the
 full report): **~887k grants · ~99.6k organizations · ~170k people · 69 funders ·
@@ -88,12 +111,21 @@ python scripts/ingest_nsf_bulk.py  --year-start 2015 --year-end 2025   # ~132k
 python scripts/ingest_nih.py       --year-start 2018 --year-end 2025   # ~624k
 python scripts/ingest_ukri_full.py                           # full UKRI (~174k)
 
-# 2. Fold shards → flat parquet (deduped, out-of-core) + rebuild the manifest
+# 2. Reconcile orgs to ROR (offline, from the bulk dump) + merge duplicates
+#    (download the dump from https://zenodo.org/communities/ror-data first)
+python scripts/resolve_ror.py
+
+# 3. Ingest the OUTPUT side: works acknowledging our funders + grant→work links
+python scripts/ingest_openalex_works.py --from 2016-01-01
+
+# 4. Fold shards → flat parquet (deduped, out-of-core) + rebuild the manifest
 python scripts/consolidate.py --memory-limit 6GB --temp-dir /tmp/atlas_duck
 
-# 3. Build the DuckDB graph DB and the landscape report
+# 5. Build the DuckDB graph DB, validate it, write the reports
 python scripts/build_db.py
+python scripts/validate.py                                   # → docs/VALIDATION.md (gates the build)
 python scripts/landscape_report.py                           # → docs/LANDSCAPE.md
+python scripts/query.py top_funders_by_output --topic mitochondri
 ```
 
 ### Example graph query (DuckDB)

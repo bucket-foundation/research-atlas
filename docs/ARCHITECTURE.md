@@ -37,10 +37,41 @@
 - **`atlas/connectors/<source>.py`** — one module per source. `nsf.py` is the
   reference implementation.
 - **`atlas/ror.py`** — conservative, cached name→ROR resolver (only accepts the
-  ROR `chosen` flag or a high-confidence score; better `null` than wrong).
+  ROR `chosen` flag or a high-confidence score; better `null` than wrong). Used
+  for ad-hoc single lookups; the scale path is `ror_bulk.py`.
+- **`atlas/ror_bulk.py`** — the **at-scale** offline org→ROR resolver. Builds an
+  in-memory normalized name/alias/acronym index from the ROR bulk dump and matches
+  all orgs locally in four tiers (exact → abbreviation-**expanded** → acronym →
+  **IDF-weighted fuzzy**), recording `match_method` + `match_score`. Conservative:
+  records ambiguity (campus-vs-system) and common-token traps as **no match**
+  rather than guessing wrong. Inverted-index retrieval keeps it ~1s over 99k orgs.
+- **`atlas/connectors/openalex_works.py`** — the research-**output** connector.
+  Pulls works that acknowledge our funders (`awards.funder_id` filter, polite
+  pool, cursor-paged, cached), emitting works + people (ORCID) + ROR-keyed orgs +
+  the OpenAlex topic taxonomy, plus `grant_work` / `person_org` / `work_field`
+  edges.
+- **`atlas/award_match.py`** — funder-specific award-id normalization producing
+  the `grant↔work` join keys (NIH IC+serial, NSF/EC bare number, UKRI), so output
+  works link back to input grants across each funder's id conventions.
+- **`atlas/analysis.py`** — read-only metascience query affordances over the
+  DuckDB (top funders of a field, org funding-vs-output, rising-field detection,
+  cross-funder hubs, funding-by-country). Exposed via `scripts/query.py`.
 - **`atlas/manifest.py`** — (re)builds `data/MANIFEST.json` from the parquet.
-- **`scripts/`** — `ingest_<source>.py` (run a connector), `build_db.py`
-  (parquet → DuckDB), `build_sample.py` (committable slice).
+- **`scripts/`** — `ingest_<source>.py` (run a connector), `resolve_ror.py`
+  (org→ROR + dedup/merge), `ingest_openalex_works.py` (output side + grant links),
+  `consolidate.py` (shards → flat parquet), `build_db.py` (parquet → DuckDB),
+  `validate.py` (data-quality gate → `docs/VALIDATION.md`), `query.py` (run a
+  metascience query), `build_sample.py` (committable slice).
+
+## Validation gate
+
+`scripts/validate.py` runs after a build and **asserts** the invariants a
+trustworthy graph must hold — referential integrity (no orphan edge endpoints),
+the money/FX invariants, ROR/ORCID well-formedness, one canonical org per ROR id,
+unique entity keys, provenance on every row. It writes `docs/VALIDATION.md` and
+**exits non-zero on any hard failure**, so it can gate CI or a publish step. Soft
+coverage metrics (ROR %, ORCID %, works/links counts) are reported but never fail
+the run.
 
 ## Idempotency & resumability
 
