@@ -3,6 +3,7 @@
 **Author:** Bucket Foundation · research-atlas working group
 **Version:** 1.0 (preprint draft) · **Date:** 2026-06-19
 **Corpus:** research-atlas v0.1.0 — 887,016 grants / 69 funders / 226,785 linked works
+**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; v0.1.0 = 10.5281/zenodo.20774323)
 **Reproducibility:** every number in this paper is emitted by `analysis/run.py` into
 `analysis/results.json` and pinned by `tests/test_funding_landscape.py`.
 

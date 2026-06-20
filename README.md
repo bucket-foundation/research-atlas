@@ -1,5 +1,7 @@
 # research-atlas
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20774322.svg)](https://doi.org/10.5281/zenodo.20774322)
+
 **A normalized, citable graph of the global research economy.**
 
 research-atlas ingests the world's research **funding** (funders, grants/awards)
