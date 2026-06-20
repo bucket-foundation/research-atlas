@@ -1,0 +1,25 @@
+cff-version: 1.2.0
+title: "research-atlas: a reconciled graph of the global research economy"
+message: "If you use this software or data, please cite it as below."
+type: software
+authors:
+  - given-names: Gianangelo
+    family-names: Dichio
+    affiliation: Bucket Foundation
+repository-code: "https://github.com/bucket-foundation/research-atlas"
+url: "https://bucket.foundation"
+abstract: >-
+  research-atlas ingests global public research funding and output into one
+  normalized, validated graph (Funder -> Grant -> Organization[ROR] ->
+  Person[ORCID] -> Work[OpenAlex/DOI] -> Field) and publishes it as open,
+  citable datasets, with a connector framework, a validation suite, and a
+  reproducible metascience analysis pipeline.
+keywords:
+  - metascience
+  - science of science
+  - research funding
+  - knowledge graph
+  - OpenAlex
+  - ROR
+  - ORCID
+license: MIT

@@ -1,0 +1,20 @@
+{
+  "title": "research-atlas: a reconciled graph of the global research economy (funding + output)",
+  "upload_type": "software",
+  "description": "<p>research-atlas ingests the world's public research funding and output into one normalized, validated graph and publishes it as open, citable datasets. This release reconciles 958,000+ grants from NIH, NSF, the European Commission (CORDIS), UKRI, plus Gates, Wellcome, Sloan and DFG (2015-2025) into a Funder -> Grant -> Organization (ROR) -> Person (ORCID) -> Work (OpenAlex/DOI) -> Field graph: ~8.1M rows, recipient organizations merged on ROR, investigators on ORCID, and 285,604 grant-to-output acknowledgement edges. A connector framework, a 39-check validation suite, and a reproducible analysis pipeline are included, along with the first metascience study built on the graph (the structure of public research funding, 2015-2025). MIT licensed; data CC-BY-4.0.</p>",
+  "creators": [
+    { "name": "Dichio, Gianangelo", "affiliation": "Bucket Foundation" }
+  ],
+  "keywords": [
+    "metascience", "science of science", "research funding", "knowledge graph",
+    "grant data", "OpenAlex", "ROR", "ORCID", "NIH", "NSF",
+    "European Commission", "UKRI", "open data", "entity resolution"
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "communities": [
+    { "identifier": "metascience" },
+    { "identifier": "open-science" }
+  ]
+}
