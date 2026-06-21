@@ -33,11 +33,20 @@ from atlas.connectors.cordis import CordisConnector  # noqa: E402
 
 SIBLING_CORDIS = Path("/home/gian/agfarms/biophysics-phd-review/data/raw")
 CORDIS_ARCHIVES = ("cordis_horizon.zip", "cordis_h2020.zip")
+# Older framework programmes (FP7, FP6) are downloaded directly from CORDIS.
+# Map local cache filename -> canonical bulk-export URL.
+CORDIS_DOWNLOAD = {
+    "cordis_fp7.zip": "https://cordis.europa.eu/data/cordis-fp7projects-csv.zip",
+    "cordis_fp6.zip": "https://cordis.europa.eu/data/cordis-fp6projects-csv.zip",
+}
 
 
 def _ensure_cordis_cache() -> Path:
+    import urllib.request
+
     dest = DATA_RAW / "cordis"
     dest.mkdir(parents=True, exist_ok=True)
+    # 1) Horizon Europe + H2020: copied from the sibling biophysics repo cache.
     for name in CORDIS_ARCHIVES:
         dst = dest / name
         if dst.exists():
@@ -48,6 +57,16 @@ def _ensure_cordis_cache() -> Path:
             shutil.copy2(src, dst)
         else:
             print(f"  WARNING: sibling archive not found: {src}")
+    # 2) FP7 + FP6: downloaded once from CORDIS (resumable -- present file reused).
+    for name, url in CORDIS_DOWNLOAD.items():
+        dst = dest / name
+        if dst.exists():
+            continue
+        print(f"  downloading {name} from {url} ...")
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=120) as r, open(dst, "wb") as fh:
+            shutil.copyfileobj(r, fh)
+        print(f"    {name}: {dst.stat().st_size:,} B")
     return dest
 
 

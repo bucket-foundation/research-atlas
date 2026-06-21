@@ -10,25 +10,30 @@ them to reproduce.
 
 ## 1. The graph at a glance
 
+_(Numbers below are the 2026-06-21 build, after the completeness push: NIH
+extended to FY2008, NSF to 2008, CORDIS across all four open framework programmes
+FP6+FP7+H2020+Horizon, CZI added, output side widened. See
+[`COMPLETENESS.md`](COMPLETENESS.md).)_
+
 | Entity | Rows | Keyed on |
 |---|---:|---|
-| funder | 69 | Crossref Funder id |
-| grant | 887,016 | source award id |
-| **organization** | **126,774** (**39,672** ROR-resolved) | **ROR id** |
-| **person** | **1,193,750** (**728,499** with ORCID) | **ORCID** → OpenAlex id → name |
-| **work** | **226,785** | OpenAlex id / DOI |
-| field | 5,308 | OpenAlex topic/subfield/field/domain id |
+| funder | 75 | Crossref Funder id |
+| grant | 1,670,434 | source award id |
+| **organization** | **192,720** (**45,826** ROR-resolved) | **ROR id** |
+| **person** | **1,438,636** (**804,248** with ORCID) | **ORCID** → OpenAlex id → name |
+| **work** | **278,839** | OpenAlex id / DOI |
+| field | 6,782 | OpenAlex topic/subfield/field/domain id |
 
 | Edge | Rows | Meaning |
 |---|---:|---|
-| funder_grant | 900,947 | funder awarded grant |
-| grant_org | 1,027,966 | grant → recipient/host org |
-| grant_person | 876,421 | grant → PI / co-PI |
-| **grant_work** | **285,604** | **work acknowledges grant's funding** |
-| person_org | 2,007,793 | author/PI → affiliated org |
-| work_field | 226,785 | work → OpenAlex topic |
+| funder_grant | 1,688,751 | funder awarded grant |
+| grant_org | 1,989,369 | grant → recipient/host org |
+| grant_person | 1,740,326 | grant → PI / co-PI |
+| **grant_work** | **470,269** | **work acknowledges grant's funding** |
+| person_org | 2,447,774 | author/PI → affiliated org |
+| work_field | 278,839 | work → OpenAlex topic |
 
-**Total: ~7.77M rows.** Every edge endpoint resolves to a real entity (0 orphans —
+**Total: ~12.2M rows.** Every edge endpoint resolves to a real entity (0 orphans —
 see [`VALIDATION.md`](VALIDATION.md)).
 
 ### What "connected" means here
@@ -37,18 +42,18 @@ Before this work the four funders were disjoint: orgs were duplicated per funder
 (99,650 rows, 0 ROR ids), people had no identifiers, and there was **no output
 side at all**. Now:
 
-- **Orgs are merged across funders on ROR id.** 39,672 orgs carry a ROR id;
-  duplicate institutions across NIH/NSF/EC/UKRI collapse to one canonical node.
-  **65.5%** of grant-*recipient* edges land on a ROR-resolved org (the long tail
-  of unmatched orgs is overwhelmingly one-off small companies — SBIR/STTR
-  recipients and EU SMEs — that are not in ROR; the universities that receive most
-  of the money do resolve).
-- **The output side exists.** 226,785 OpenAlex works are linked to the grants
-  that funded them via **285,604 `grant_work` edges**. **77,341** distinct grants
-  now have at least one linked work, and **156,877** distinct works trace back to
-  at least one grant in the atlas.
-- **People reconcile on ORCID.** 61.0% of people carry an ORCID; authors are
-  joined to ROR-resolved institutions through `person_org`.
+- **Orgs are merged across funders on ROR id.** 45,826 orgs carry a ROR id;
+  duplicate institutions across NIH/NSF/EC/UKRI/foundations collapse to one
+  canonical node. **66.9%** of grant-*recipient* edges land on a ROR-resolved org
+  (the long tail of unmatched orgs is overwhelmingly one-off small companies —
+  SBIR/STTR recipients and EU SMEs — that are not in ROR; the universities that
+  receive most of the money do resolve).
+- **The output side exists.** 278,839 OpenAlex works are linked to the grants
+  that funded them via **470,269 `grant_work` edges** (≈235k distinct works trace
+  back to at least one grant in the atlas).
+- **People reconcile on ORCID.** 55.9% of people carry an ORCID (the denominator
+  grew with the NIH FY2008-2017 back-history, much of which predates ORCID);
+  authors are joined to ROR-resolved institutions through `person_org`.
 
 The graph now traverses end to end:
 `funder → grant → org`, `grant → work → field`, `work → person → org`.
@@ -58,6 +63,12 @@ The graph now traverses end to end:
 ## 2. Metascience queries (real results)
 
 Run any of these with `python scripts/query.py <name>` (see `atlas/analysis.py`).
+
+> The example result tables in this section were captured on an earlier (smaller)
+> build; the *shape* of the findings is stable, but exact counts grow with the
+> 2026-06-21 corpus. Re-run `scripts/query.py` for live numbers against the
+> current DuckDB. The headline aggregates at the top of this file and in
+> `docs/LANDSCAPE.md` / `analysis/results.json` are current.
 
 ### Q1 — Top funders of mitochondrial-biophysics works, 2018–2025
 `funder → grant → grant_work → work → work_field → field`

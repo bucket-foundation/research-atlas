@@ -98,10 +98,30 @@ def _status(status: str | None, end: str | None) -> str:
     return "unknown"
 
 
+def _resolve_member(zip_path: Path, member: str) -> str:
+    """Find a CSV member inside a CORDIS zip, tolerating layout differences.
+
+    The Horizon/H2020/FP7 bulk zips store ``project.csv`` at the root; the FP6
+    zip nests them under ``csv/`` (``csv/project.csv``). Match by basename so the
+    same connector reads every framework programme's export. Raises ``KeyError``
+    if no member ends with the requested basename.
+    """
+    with zipfile.ZipFile(zip_path) as zf:
+        names = zf.namelist()
+    if member in names:
+        return member
+    base = member.rsplit("/", 1)[-1]
+    for n in names:
+        if n.rsplit("/", 1)[-1] == base:
+            return n
+    raise KeyError(f"{member!r} not found in {zip_path.name}")
+
+
 def _read_csv_from_zip(zip_path: Path, member: str) -> Iterator[dict]:
     """Stream rows of a CORDIS CSV (semicolon-delimited, quoted) from a zip."""
+    resolved = _resolve_member(zip_path, member)
     with zipfile.ZipFile(zip_path) as zf:
-        with zf.open(member) as raw:
+        with zf.open(resolved) as raw:
             text = io.TextIOWrapper(raw, encoding="utf-8", errors="replace")
             # CORDIS objective/keywords can be very long; lift the field cap.
             reader = csv.DictReader(text, delimiter=";")

@@ -1,0 +1,48 @@
+{
+  "grants": [
+    [
+      {
+        "id": "rec1",
+        "createdTime": "2022-01-01T00:00:00.000Z",
+        "fields": {
+          "Commitment Year": "2022",
+          "Amount": 200000,
+          "Initiative": [
+            "Science"
+          ],
+          "Grant Purpose": "for general operating support",
+          "Account Name": "Example University",
+          "Account Website (Plaintext)": "https://example.edu"
+        }
+      },
+      {
+        "id": "rec2",
+        "createdTime": "2020-01-01T00:00:00.000Z",
+        "fields": {
+          "Commitment Year": "2019",
+          "Amount": 0,
+          "Initiative": [
+            "Education",
+            "Community"
+          ],
+          "Grant Purpose": "for a program",
+          "Account Name": "Sample Nonprofit"
+        }
+      },
+      {
+        "id": "rec3",
+        "createdTime": "2021-01-01T00:00:00.000Z",
+        "fields": {
+          "Commitment Year": "2021",
+          "Amount": 1500000,
+          "Initiative": [
+            "Science"
+          ],
+          "Grant Purpose": "for research",
+          "Account Name": "Example University",
+          "Account Website (Plaintext)": "https://example.edu"
+        }
+      }
+    ]
+  ]
+}

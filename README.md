@@ -56,12 +56,14 @@ The four funder feeds are reconciled into **one** graph:
   `atlas/analysis.py` → [`docs/GRAPH.md`](GRAPH.md).
 
 **Current full-scale ingest** (see [`docs/LANDSCAPE.md`](docs/LANDSCAPE.md) for the
-full report): **~958k grants · ~140.6k organizations · ~1.22M people · 73 funders ·
-~$658B funded (USD-normalized) · ~8.1M total graph rows** across NIH (FY2018-25),
-NSF (FY2015-25), UKRI (full), CORDIS (full H2020 + Horizon Europe), the **Gates
-Foundation** (full Committed Grants CSV), the **Wellcome Trust** (full 360Giving
-list), the **Sloan Foundation** (full grants DB), and a resumable **DFG/GEPRIS**
-corpus chunk.
+full report and [`docs/COMPLETENESS.md`](docs/COMPLETENESS.md) for the v1-bar
+scorecard): **~1.67M grants · ~192.7k organizations · ~1.44M people · 75 funders ·
+~$1.04T funded (USD-normalized) · ~12.2M total graph rows** across NIH (FY2008-25),
+NSF (2008-25), UKRI (full), CORDIS (full FP6 + FP7 + H2020 + Horizon Europe), the
+**Gates Foundation** (full Committed Grants CSV), the **Wellcome Trust** (full
+360Giving list), the **Chan Zuckerberg Initiative** (full grants REST API), the
+**Sloan Foundation** (full grants DB), and a resumable **DFG/GEPRIS** corpus
+chunk.
 
 - **Code:** MIT · **Published datasets:** CC-BY-4.0
 - **Author:** Gianangelo Dichio · **Publisher:** bucket-foundation

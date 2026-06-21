@@ -27,7 +27,10 @@ RAM.
 
 from __future__ import annotations
 
+import os
 import shutil
+import time
+import uuid
 from collections import defaultdict
 from pathlib import Path
 
@@ -72,7 +75,7 @@ class BulkWriter:
     """
 
     def __init__(self, source: str, processed_dir: Path | None = None,
-                 batch_rows: int = 200_000):
+                 batch_rows: int = 200_000, run_id: str | None = None):
         self.source = source
         self.processed_dir = processed_dir or DATA_PROCESSED
         self.batch_rows = batch_rows
@@ -80,6 +83,18 @@ class BulkWriter:
         # part index per (table, source, year) so re-flushing appends shards
         self._part_idx: dict[tuple[str, str, str], int] = {}
         self._written: dict[str, int] = defaultdict(int)
+        # A per-writer-instance run token in every part filename. Without it, two
+        # sequential runs of the SAME source (e.g. NIH FY2018-25 then FY2008-17)
+        # would both write part-00000.parquet into the year=2026 partition that
+        # holds *edges* (edges are keyed on as_of, so they all land in the current
+        # year) and the second run would OVERWRITE the first's shards -- silently
+        # dropping the earlier slice's edges. A unique token makes every run's
+        # shards distinct; the downstream consolidate() dedups (entities on
+        # atlas_id, edges on (src,dst,role|score,source)) so re-running the same
+        # slice still converges instead of duplicating.
+        self.run_id = run_id or (
+            f"{int(time.time())}-{os.getpid():06d}-{uuid.uuid4().hex[:6]}"
+        )
 
     # ----- partition pathing ---------------------------------------------- #
 
@@ -131,7 +146,7 @@ class BulkWriter:
             # build a column-major arrow table with the canonical column set
             arrays = {c: [r.get(c) for r in grp] for c in cols}
             tbl = pa.table({c: pa.array(arrays[c]) for c in cols})
-            pq.write_table(tbl, d / f"part-{idx:05d}.parquet",
+            pq.write_table(tbl, d / f"part-{self.run_id}-{idx:05d}.parquet",
                            compression="zstd")
             self._written[table] += len(grp)
 

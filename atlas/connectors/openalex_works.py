@@ -85,11 +85,17 @@ class OpenAlexWorksConnector(Connector):
 
     def fetch(self, funder_ids: list[str] | None = None,
               from_date: str = "2015-01-01",
-              max_pages_per_funder: int = 0, **kwargs) -> Iterable[dict]:
+              max_pages_per_funder: int = 0, cache_only: bool = False,
+              **kwargs) -> Iterable[dict]:
         """Yield raw OpenAlex work pages for each funder, cursor-paged.
 
         ``max_pages_per_funder`` of 0 means *all* pages (the full slice). Each
         page is cached; a re-run with the same args resumes from disk.
+
+        ``cache_only=True`` replays *only* the already-cached cursor chain and
+        stops cleanly at the first uncached page instead of going to the network.
+        This is the safe path to rebuild shards from a cache when the live API is
+        rate-limiting (HTTP 429) -- no new requests are made, so no backoff hang.
         """
         funder_ids = funder_ids or list(FUNDER_OPENALEX_TO_SOURCE)
         for fid in funder_ids:
@@ -100,6 +106,8 @@ class OpenAlexWorksConnector(Connector):
                 page_key = f"{fid}_{from_date}_{chash}"
                 page = self.load_raw(page_key)
                 if page is None:
+                    if cache_only:
+                        break  # stop at the cache boundary; no network
                     params = {
                         "filter": f"awards.funder_id:{fid},"
                                   f"from_publication_date:{from_date}",

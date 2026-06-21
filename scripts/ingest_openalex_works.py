@@ -56,11 +56,17 @@ def build_grant_key_index(processed: Path) -> dict[str, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Ingest OpenAlex works + grant links.")
-    ap.add_argument("--from", dest="from_date", default="2015-01-01")
+    ap.add_argument("--from", dest="from_dates", nargs="+", default=["2015-01-01"],
+                    help="one or more publication from-dates (cursor caches are "
+                         "keyed by from-date; pass every from-date you have "
+                         "cached to replay them all into one rebuild)")
     ap.add_argument("--funders", nargs="*", default=None,
                     help="OpenAlex funder ids (default: all known)")
     ap.add_argument("--max-pages", type=int, default=0,
                     help="max pages per funder (0 = all)")
+    ap.add_argument("--cache-only", action="store_true",
+                    help="replay only cached pages; never hit the network "
+                         "(safe rebuild when the live API is rate-limiting)")
     ap.add_argument("--batch-rows", type=int, default=200_000)
     ap.add_argument("--processed", default=str(DATA_PROCESSED))
     args = ap.parse_args()
@@ -86,18 +92,22 @@ def main() -> int:
         if src_dir.exists():
             shutil.rmtree(src_dir)
 
-    print(f"Fetching works for {len(funders)} funder(s) from {args.from_date} "
-          f"(max_pages_per_funder={args.max_pages or 'all'}) ...", flush=True)
+    print(f"Fetching works for {len(funders)} funder(s) from "
+          f"{', '.join(args.from_dates)} "
+          f"(max_pages_per_funder={args.max_pages or 'all'}, "
+          f"cache_only={args.cache_only}) ...", flush=True)
     t0 = time.time()
-    pages = conn.fetch(funder_ids=funders, from_date=args.from_date,
-                       max_pages_per_funder=args.max_pages)
     n_rows = 0
-    for row in conn.normalize(pages, grant_key_index=gindex):
-        bw.add(row)
-        n_rows += 1
-        if n_rows % 200_000 == 0:
-            print(f"  ... {n_rows:,} rows buffered "
-                  f"({time.time()-t0:.0f}s)", flush=True)
+    for from_date in args.from_dates:
+        pages = conn.fetch(funder_ids=funders, from_date=from_date,
+                           max_pages_per_funder=args.max_pages,
+                           cache_only=args.cache_only)
+        for row in conn.normalize(pages, grant_key_index=gindex):
+            bw.add(row)
+            n_rows += 1
+            if n_rows % 200_000 == 0:
+                print(f"  ... {n_rows:,} rows buffered "
+                      f"({time.time()-t0:.0f}s)", flush=True)
     bw.flush_all()
 
     counts = bw.partition_counts()

@@ -27,22 +27,25 @@ OUT = REPO_ROOT / "docs" / "LANDSCAPE.md"
 # sizes we compare our ingested counts against in the coverage table.
 SOURCE_UNIVERSE = {
     "cordis": {
-        "label": "CORDIS (EU: Horizon Europe + H2020)",
-        "grants_available": 56585,
-        "note": "Full bulk zips ingested in entirety (all funding schemes). "
-                "Older framework programmes (FP7 and earlier) not in these zips.",
+        "label": "CORDIS (EU: FP6 + FP7 + H2020 + Horizon Europe)",
+        "grants_available": 92463,
+        "note": "Full bulk zips for ALL four open framework programmes ingested "
+                "(FP6 2002 -> Horizon Europe), every funding scheme. Pre-FP6 "
+                "(FP1-FP5) is not published as bulk CSV.",
     },
     "nsf": {
         "label": "NSF (US National Science Foundation)",
         "grants_available": None,  # no single authoritative total via API
-        "note": "research.gov API, award start-date FY2015-2025, monthly windows. "
-                "Pre-2015 and post-2025 not ingested.",
+        "note": "research.gov API, award start-date 2008-2025, monthly windows. "
+                "Pre-2008 not ingested (API serves back to 1959).",
     },
     "nih": {
         "label": "NIH (US National Institutes of Health, RePORTER)",
-        "grants_available": None,
-        "note": "RePORTER v2 API, fiscal years 2018-2025, by (FY, IC). "
-                "Pre-2018 (incl. CRISP 1970-2009) not ingested.",
+        "grants_available": 2942862,  # RePORTER all-time total (FY1985->present)
+        "note": "RePORTER v2 API, fiscal years 2008-2025, by (FY, IC). "
+                "Pre-2008 not ingested; RePORTER serves the all-time universe of "
+                "2,942,862 projects back to FY1985 (the remaining FY1985-2007 is "
+                "more (FY,IC) windows, bounded by run time not capability).",
     },
     "ukri": {
         "label": "UKRI (UK Research and Innovation, Gateway to Research)",
@@ -87,30 +90,42 @@ SOURCE_UNIVERSE = {
                 "completed programs live only in annual reports (not in the DB). "
                 "Amounts are USD; Sloan publishes only an award year.",
     },
+    "czi": {
+        "label": "Chan Zuckerberg Initiative (CZI grants REST API)",
+        "grants_available": None,  # the REST document is the universe; = ingested
+        "note": "Entire grants database served by the discoverable REST route "
+                "chanzuckerberg.com/wp-json/czi/v1/grants/ in one JSON document "
+                "(2018-2024). Amounts are USD; CZI publishes only a commitment "
+                "year. Coverage = 100% of the published feed at download time. "
+                "(Previously mis-listed as deferred / un-discoverable -- false.)",
+    },
 }
 
 # Real funders that publish grant data but are NOT machine-ingestible without a
 # headless browser (JS-rendered listings behind un-discoverable AJAX endpoints)
 # or that actively block scraping. Documented honestly rather than faked.
 NOT_INGESTIBLE = [
-    ("Chan Zuckerberg Initiative (CZI)",
-     "Publishes a searchable Grants Database (chanzuckerberg.com/grants-ventures/"
-     "grants/) of $7.2B+ since 2015, but the listing is rendered by a JS bundle "
-     "via a WordPress admin-ajax action that is not discoverable from static "
-     "HTML. Needs a headless-browser connector (deferred)."),
+    # NOTE: CZI was previously listed here as "deferred / un-discoverable
+    # admin-ajax". That was WRONG and has been falsified: the page calls a plain
+    # REST route, chanzuckerberg.com/wp-json/czi/v1/grants/, that serves the
+    # entire grants database in one JSON document. CZI is now INGESTED
+    # (atlas/connectors/czi.py). See docs/COMPLETENESS.md.
     ("Howard Hughes Medical Institute (HHMI)",
-     "~300 current Investigators (~$9M / 7-yr term each) are listed at "
-     "hhmi.org/programs/investigators, but the scientist directory is JS-rendered "
-     "and the browse endpoint returns HTTP 403 to non-browser agents. No per-"
-     "investigator award amount is published. Honestly sparse; deferred."),
+     "~300 current Investigators are listed at hhmi.org, but the scientist "
+     "directory browse endpoint returns HTTP 403 to non-browser agents and "
+     "publishes no per-investigator award amount. Even rendered it is a name "
+     "list, not a grants database. Honestly sparse; deferred (verified "
+     "2026-06-21)."),
     ("Simons Foundation",
-     "Funded-projects listing (simonsfoundation.org/funded-projects/) is "
-     "JS-rendered with no static data or discoverable API. Deferred to a "
-     "headless-browser connector."),
+     "The documented URL simonsfoundation.org/funded-projects/ now returns "
+     "HTTP 404; the live funded-projects view is JS-rendered with no discoverable "
+     "JSON/REST route in its network calls. Needs deeper headless reverse-"
+     "engineering; deferred (verified 2026-06-21)."),
     ("Gordon and Betty Moore Foundation",
-     "Grants are published at moore.org/grants ($401.8M / 952 grants in 2024) but "
-     "the listing is JS-rendered behind an internal API not exposed in static "
-     "HTML. Deferred to a headless-browser connector."),
+     "moore.org/grants ($401.8M / 952 grants in 2024) fires no grants API on "
+     "load (verified by headless XHR capture) and candidate subpaths 404; the "
+     "grants data lives behind a route not exposed on the public listing. "
+     "Deferred pending the real endpoint (verified 2026-06-21)."),
 ]
 
 
@@ -317,27 +332,31 @@ def main() -> int:
 
     lines.append("## What a full-completion run still needs\n")
     lines.append(
-        "- **NSF**: extend below FY2015 (API supports it; just more monthly "
-        "windows). Resolve awardee orgs to ROR (currently name-keyed).\n"
-        "- **NIH**: extend below FY2018 (RePORTER covers to 1985; CRISP to 1970). "
-        "Pull abstracts + publication/patent link tables.\n"
+        "_(See `docs/COMPLETENESS.md` for the full v1-bar scorecard. This push "
+        "extended NIH to FY2008, NSF to 2008, CORDIS to all four open framework "
+        "programmes (FP6+FP7+H2020+Horizon), added CZI, and widened the output "
+        "side. What remains is the stretch beyond the v1 bar:)_\n\n"
+        "- **NSF / NIH stretch**: extend below 2008 to the API floors (NSF 1959, "
+        "NIH FY1985 -- RePORTER's all-time universe is 2,942,862 projects). "
+        "Bounded by run time, not capability; the connectors already accept the "
+        "wider `--year-start`.\n"
+        "- **NIH**: pull abstracts + publication/patent link tables.\n"
         "- **UKRI**: follow LEAD_ORG/PARTICIPANT_ORG links so fellowships/"
-        "studentships (no embedded participants) get org edges; resolve PIs "
-        "(person link-following, off for the bulk run); GBP→USD already applied.\n"
-        "- **CORDIS**: add FP7 and earlier framework programmes (separate zips); "
-        "resolve PI names from per-project web records (not in bulk export).\n"
+        "studentships (no embedded participants) get org edges; resolve PIs.\n"
+        "- **CORDIS**: resolve PI names from per-project web records (not in the "
+        "bulk export). Pre-FP6 (FP1-FP5) has no bulk CSV.\n"
         "- **DFG**: a real GEPRIS corpus chunk is ingested; the crawl is "
-        "resumable to the full ~172k sitemap set (cache makes re-runs free) at "
-        "polite rate. Most pages omit the funding amount (money stays null).\n"
-        "- **Gates / Wellcome / Sloan**: published feeds ingested in full at "
-        "download time; re-run to refresh (Gates CSV monthly, Wellcome XLSX "
-        "monthly, Sloan DB live).\n"
-        "- **CZI / HHMI / Simons / Moore**: real funders whose listings are "
-        "JS-rendered behind un-discoverable APIs (or block scraping); need a "
-        "headless-browser connector (deferred, see table above).\n"
-        "- **Cross-source**: ROR resolution as a batch backfill (bulk ROR dump) "
-        "to merge duplicate orgs across funders; OpenAlex works + topic fields; "
-        "ORCID person reconciliation; currency FX refresh.\n")
+        "resumable to the full ~172k sitemap set (cache makes re-runs free).\n"
+        "- **Gates / Wellcome / Sloan / CZI**: published feeds ingested in full "
+        "at download time; re-run to refresh.\n"
+        "- **HHMI / Simons / Moore**: three small foundations whose grant data is "
+        "not machine-ingestible without deeper headless reverse-engineering "
+        "(verified 2026-06-21; see table above). Documented, not faked.\n"
+        "- **Output side**: widen works back to the full grant history (2008) and "
+        "add patent/clinical-trial output tables. NOTE: live OpenAlex pulls are "
+        "rate-limited (HTTP 429) after heavy use; the cache-only replay path "
+        "(`ingest_openalex_works.py --cache-only`) rebuilds shards offline.\n"
+        "- **Access (v2)**: a hosted live-query API / public bulk download host.\n")
 
     OUT.write_text("\n".join(lines), encoding="utf-8")
     con.close()

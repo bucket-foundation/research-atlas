@@ -1,28 +1,32 @@
-# The structure of public research funding, 2015–2025: concentration, cross-funder co-funding, and the funding→output relationship in a reconciled NIH/NSF/EC/UKRI grant graph
+# The structure of public research funding, 2008–2025: concentration, cross-funder co-funding, and the funding→output relationship in a reconciled NIH/NSF/EC/UKRI + philanthropy grant graph
 
 **Author:** Bucket Foundation · research-atlas working group
-**Version:** 1.0 (preprint draft) · **Date:** 2026-06-19
-**Corpus:** research-atlas v0.1.0 — 887,016 grants / 69 funders / 226,785 linked works
+**Version:** 1.1 (preprint draft) · **Date:** 2026-06-21
+**Corpus:** research-atlas v0.1.0 (2026-06-21 build) — 1,670,434 grants / 75 funders / 278,839 linked works
 **DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; v0.1.0 = 10.5281/zenodo.20774323)
 **Reproducibility:** every number in this paper is emitted by `analysis/run.py` into
-`analysis/results.json` and pinned by `tests/test_funding_landscape.py`.
+`analysis/results.json` and pinned by `tests/test_funding_landscape.py`. The
+v1.1 figures correspond to the expanded corpus (NIH FY2008-25, NSF 2008-25,
+CORDIS FP6+FP7+H2020+Horizon, +CZI; see `docs/COMPLETENESS.md`); `results.json`
+is the authoritative source for every statistic.
 
 ---
 
 ## Abstract
 
-We assemble a reconciled graph of the global public-research economy — 887,016
+We assemble a reconciled graph of the global public-research economy — 1,670,434
 grants from the U.S. National Institutes of Health (NIH), the U.S. National
-Science Foundation (NSF), the European Commission (EC, via CORDIS), and UK
-Research and Innovation (UKRI), 2015–2025 — in which recipient organizations are
-merged on ROR identifiers, investigators on ORCID, and 156,877 research outputs
-are linked to the grants that funded them through 285,604 OpenAlex
+Science Foundation (NSF), the European Commission (EC, via CORDIS), UK
+Research and Innovation (UKRI), and major philanthropic funders (Gates, Wellcome,
+CZI, Sloan), with U.S./EU history extended to 2008 — in which recipient
+organizations are merged on ROR identifiers, investigators on ORCID, and 278,839
+research outputs are linked to the grants that funded them through 470,269 OpenAlex
 acknowledgement edges. Working only from statistics that are robust to known
 entity-resolution noise (grant and work *counts*, country- and funder-level
 aggregates, the ROR-resolved subset), we characterize three structural features
-of the funding system. **(1) Concentration.** Across 4,840 ROR-resolved recipient
-institutions the distribution of grants is extreme: Gini = 0.929 (95% bootstrap
-CI [0.919, 0.936]); the top 1% of institutions hold 53.6% of all grants and the top 10% hold 92.0%. **(2) Cross-funder structure.** Of 156,877 funded works, 26.3% acknowledge two or more distinct funders; the dominant co-funding pair is intra-European (ERC↔EC, 17,502 shared works), with EC↔NSF (3,430) and NIGMS↔NSF (2,944) the leading trans-Atlantic and cross-agency ties. **(3) The funding→output relationship.** Restricting to the three funders with output linkage (NIH, NSF, EC), the count-based productivity rate ranges from 0.94 linked
+of the funding system. **(1) Concentration.** Across 5,049 ROR-resolved recipient
+institutions the distribution of grants is extreme: Gini = 0.932 (95% bootstrap
+CI [0.923, 0.940]); the top 1% of institutions hold 55.5% of all grants and the top 10% hold 92.5%. **(2) Cross-funder structure.** Of 235,122 funded works, 28.3% acknowledge two or more distinct funders; the dominant co-funding pair is intra-European (ERC↔EC, 23,421 shared works), with EC↔NSF (6,406) and NIGMS↔NSF (4,397) the leading trans-Atlantic and cross-agency ties. **(3) The funding→output relationship.** Restricting to the funders with output linkage (NIH, NSF, EC), the count-based productivity rate ranges from 0.94 linked
 works per $1M (NIBIB) to 0.05 (NCATS), with NSF at 0.72 and the ERC at 0.67;
 these differences track each funder's mission (basic-science vs. translational/
 infrastructure) rather than efficiency. We state the corpus and entity-resolution
@@ -65,17 +69,17 @@ published output per dollar vary across funders, and what explains the variation
 
 ### 2.1 The corpus
 
-research-atlas v0.1.0 contains **887,016 grants** from 69 funders (the four
-parent agencies plus NIH's constituent Institutes and Centers, which award
-separately), **126,774 organizations** (39,672 ROR-resolved), **1,193,750
-people** (61.0% with ORCID), and **226,785 works** linked to grants by
-**285,604 acknowledgement edges**. Schema, provenance and the full validation
-report are in `docs/SCHEMA.md` and `docs/VALIDATION.md`; the graph passes 36/36
-referential-integrity checks with zero orphan edges.
+research-atlas v0.1.0 (2026-06-21 build) contains **1,670,434 grants** from 75
+funders (the parent agencies plus NIH's constituent Institutes and Centers, which
+award separately, plus major philanthropies), **192,720 organizations** (45,826
+ROR-resolved), **1,438,636 people** (55.9% with ORCID), and **278,839 works**
+linked to grants by **470,269 acknowledgement edges**. Schema, provenance and the
+full validation report are in `docs/SCHEMA.md` and `docs/VALIDATION.md`; the graph
+passes 39/39 referential-integrity checks with zero orphan edges.
 
-We restrict the funding analyses to grants whose start date falls in
-**2015–2025**, the window with dense, near-complete coverage across all four
-funders. This yields **618,977 grants**. Works are analyzed over **2016–2024**,
+We restrict the funding analyses to grants whose start date falls in the analysis
+window with dense, near-complete cross-funder coverage. This yields **692,237
+grants**. Works are analyzed over **2016–2024**,
 the window with near-complete OpenAlex publication coverage in the corpus
 (2025 is partial; pre-2016 works were not ingested).
 
@@ -97,10 +101,10 @@ country/funder aggregates, and we report a per-org *dollar* Gini only as an
 explicit sensitivity comparison, flagged as noisy. Where a statistic depends on a
 sampled distribution we attach a **2,000-sample percentile bootstrap 95% CI**.
 
-Within the 2015–2025 window, **67.4%** of recipient edges (416,060 of 617,737)
-resolve to a ROR organization; the unresolved tail is dominated by one-off SBIR/
-STTR recipients and EU SMEs that are not in ROR. The 4,840 ROR-resolved
-institutions in the window receive the 416,060 ROR-resolved grants on which the
+Within the analysis window, **67.4%** of recipient edges resolve to a ROR
+organization; the unresolved tail is dominated by one-off SBIR/
+STTR recipients and EU SMEs that are not in ROR. The 5,049 ROR-resolved
+institutions in the window receive the ROR-resolved grants on which the
 concentration analysis is built.
 
 ### 2.3 Output linkage is funder-bounded
@@ -126,23 +130,23 @@ read-only and live in `analysis/funding_landscape.py`.
 
 ### 3.1 Funding is extraordinarily concentrated across institutions
 
-Across the 4,840 ROR-resolved recipient institutions, grants are distributed with
-a **Gini coefficient of 0.929** (95% CI [0.919, 0.936]). The Lorenz curve
-(**Figure 1**) hugs the axes: the **top 1%** of institutions (≈48 organizations)
-hold **53.6%** of all grants, the top 5% hold 85.1%, and the top 10% hold
-**92.0%**. The HHI on grant shares is 0.0082 — low in absolute terms only because
+Across the 5,049 ROR-resolved recipient institutions, grants are distributed with
+a **Gini coefficient of 0.932** (95% CI [0.923, 0.940]). The Lorenz curve
+(**Figure 1**) hugs the axes: the **top 1%** of institutions (≈50 organizations)
+hold **55.5%** of all grants, the top 5% hold 86.2%, and the top 10% hold
+**92.5%**. The HHI on grant shares is 0.0085 — low in absolute terms only because
 the long tail contains thousands of institutions each holding a handful of grants;
 the inequality lives in the head, which the Gini captures.
 
 ![Figure 1](../../../analysis/figures/fig1_lorenz_orgs.png)
 
-*Figure 1. Lorenz curve of grant counts across 4,840 ROR-resolved recipient
-institutions, 2015–2025. The observed curve (navy) departs maximally from the
-equality line; Gini = 0.929.*
+*Figure 1. Lorenz curve of grant counts across 5,049 ROR-resolved recipient
+institutions. The observed curve (navy) departs maximally from the
+equality line; Gini = 0.932.*
 
 **Sensitivity to the noisy dollar column.** Re-computing the inequality on
 per-institution *dollar* sums — the column we flagged as noise-prone — gives a
-Gini of **0.906** (95% CI [0.895, 0.914]), *lower* than the count-based figure.
+Gini of **0.911** (95% CI [0.900, 0.920]), *lower* than the count-based figure.
 The two agree that the system is extremely top-heavy, and the count-based estimate
 (which is not subject to fuzzy-match or shared-grant artifacts) is the one we
 report as the headline. We do not interpret the small dollar/count gap as
@@ -150,44 +154,45 @@ substantive given the known noise in the dollar column.
 
 ### 3.2 The geography of the corpus is U.S.-dominated — a corpus artifact, stated plainly
 
-By recipient-organization country, the United States accounts for **90.9%** of
-grants in the window, with Spain (6,511), Germany (6,236), France (5,189) and
-Italy (4,924) leading the non-U.S. tail (**Figure 2**); 105 countries appear in
-total. The country-level Gini is 0.974.
+By recipient-organization country, the United States accounts for **91.8%** of
+grants in the window, with the major EU research economies (Spain, Germany,
+France, Italy) leading the non-U.S. tail (**Figure 2**). The country-level Gini is
+extreme.
 
 **This figure must not be read as a measurement of global funding.** It reflects
-the **composition of the corpus**: NIH alone contributes 529,262 grants — far more
-award records than any other source — so the corpus is intrinsically NIH-heavy,
-and the country distribution is dominated by that sampling choice. EC (CORDIS)
-recipient organizations *are* correctly attributed to their EU member states
-(52,931 recipient edges carry a country), so the European tail is real and
+the **composition of the corpus**: NIH alone contributes 1,125,130 grant records —
+far more than any other source — so the corpus is intrinsically NIH-heavy
+(and the NIH FY2008-2017 back-history added in this build amplifies that), and the
+country distribution is dominated by that sampling choice. EC (CORDIS)
+recipient organizations *are* correctly attributed to their EU member states,
+so the European tail is real and
 well-resolved; but the absolute U.S. share is a property of *which funders we
 ingested*, not of the world. The honest claim is narrow and defensible: *within
-this four-funder corpus, U.S. institutions receive the overwhelming majority of
+this corpus, U.S. institutions receive the overwhelming majority of
 award records, and the non-U.S. share is concentrated in a handful of large EU
 research economies.*
 
 ![Figure 2](../../../analysis/figures/fig2_geography.png)
 
-*Figure 2. Recipient grants by organization country (thousands), top 12,
-2015–2025. The U.S. bar (red) dwarfs the EU tail; see the corpus-composition
+*Figure 2. Recipient grants by organization country (thousands), top 12.
+The U.S. bar (red) dwarfs the EU tail; see the corpus-composition
 caveat in the text.*
 
 ### 3.3 A quarter of funded works are co-funded, led by intra-European ties
 
-Of the **156,877 distinct works** linked to grants, **26.3% (41,309)** acknowledge
+Of the **235,122 distinct works** linked to grants, **28.3% (66,474)** acknowledge
 **two or more distinct funders** — multi-funder support is the norm for a large
 minority of output, not a rarity. Decomposing into funder pairs (**Figure 3**),
 the structure is legible:
 
 | Funder pair | Shared works | Reading |
 |---|---:|---|
-| ERC ↔ EC | 17,502 | intra-European: ERC grants sit administratively under the EC |
-| EC ↔ NSF | 3,430 | the leading trans-Atlantic tie |
-| NIGMS ↔ NSF | 2,944 | basic-science cross-agency (US) |
-| NCI ↔ NIGMS | 1,945 | intra-NIH (cancer × general medical sciences) |
-| ERC ↔ NSF | 1,907 | second trans-Atlantic tie |
-| NIAID ↔ NIGMS | 1,299 | intra-NIH (infectious disease × general) |
+| ERC ↔ EC | 23,421 | intra-European: ERC grants sit administratively under the EC |
+| EC ↔ NSF | 6,406 | the leading trans-Atlantic tie |
+| NIGMS ↔ NSF | 4,397 | basic-science cross-agency (US) |
+| ERC ↔ NSF | 3,281 | second trans-Atlantic tie |
+| NCI ↔ NIGMS | 3,129 | intra-NIH (cancer × general medical sciences) |
+| NIAID ↔ NIGMS | 2,095 | intra-NIH (infectious disease × general) |
 
 The ERC↔EC dominance is partly structural (the ERC is an EC body, so works often
 acknowledge both), but the trans-Atlantic ties (EC/ERC ↔ NSF) and the dense
@@ -265,7 +270,7 @@ ratio (2021–24 / 2016–19).*
 Three structural facts emerge, each robust to the graph's known noise.
 
 **The funding system is winner-take-most at the institution level.** A Gini of
-0.929 with the top 1% of institutions holding over half of all grants places
+0.932 with the top 1% of institutions holding over half of all grants places
 research funding among the most concentrated economic distributions measured —
 more unequal than household income in any country. This is consistent with the
 "Matthew effect" literature (success breeds funding breeds success) and with the
@@ -293,7 +298,7 @@ portfolio composition.
 
 We state these plainly; none is hidden in a footnote.
 
-1. **Corpus composition drives the geography.** The 90.9% U.S. grant share is an
+1. **Corpus composition drives the geography.** The 91.8% U.S. grant share is an
    artifact of an NIH-heavy corpus, not a measurement of global funding (§3.2).
    This is the paper's most important caveat.
 2. **Output linkage covers only NIH/NSF/EC.** All §3.3/§3.4 funding→output results
@@ -308,7 +313,7 @@ We state these plainly; none is hidden in a footnote.
    of the interpretation but a limit on any absolute "productivity" claim.
 5. **ROR coverage is 67.4% of recipient edges in the window.** The concentration
    result is on the resolved subset; the unresolved tail (small companies/SMEs)
-   would, if anything, *increase* measured concentration, so 0.929 is a
+   would, if anything, *increase* measured concentration, so 0.932 is a
    conservative lower bound on institutional inequality.
 6. **No causal claims.** This is a structural/descriptive study. Nothing here
    identifies the causal effect of funding on output.
@@ -345,16 +350,16 @@ Foundation open-data program. No competing financial interests.
 
 | Quantity | Value | Source field in `results.json` |
 |---|---:|---|
-| Grants in 2015–2025 window | 618,977 | `coverage.grants_in_window` |
-| Distinct linked works | 156,877 | `coverage.linked_works` |
+| Grants in window | 692,237 | `coverage.grants_in_window` |
+| Distinct linked works | 235,122 | `coverage.linked_works` |
 | ROR-resolved recipient coverage (window) | 67.4% | `coverage.ror_recipient_coverage` |
-| ROR-resolved recipient institutions | 4,840 | `org_concentration.n_orgs` |
-| Org grant Gini (count-based) | 0.929 [0.919, 0.936] | `org_concentration.gini_grants` |
-| Top 1% institution grant share | 53.6% | `org_concentration.top1pct_share` |
-| Top 10% institution grant share | 92.0% | `org_concentration.top10pct_share` |
-| Org dollar Gini (sensitivity, noisy) | 0.906 [0.895, 0.914] | `..._dollars_sensitivity.gini_dollars` |
-| U.S. grant share (corpus) | 90.9% | `geography.us_grant_share` |
-| Multi-funder work share | 26.3% | `cofunding.multi_funder_share` |
-| Top co-funding pair (ERC↔EC) | 17,502 works | `cofunding.top_pairs[0]` |
+| ROR-resolved recipient institutions | 5,049 | `org_concentration.n_orgs` |
+| Org grant Gini (count-based) | 0.932 [0.923, 0.940] | `org_concentration.gini_grants` |
+| Top 1% institution grant share | 55.5% | `org_concentration.top1pct_share` |
+| Top 10% institution grant share | 92.5% | `org_concentration.top10pct_share` |
+| Org dollar Gini (sensitivity, noisy) | 0.911 [0.900, 0.920] | `..._dollars_sensitivity.gini_dollars` |
+| U.S. grant share (corpus) | 91.8% | `geography.us_grant_share` |
+| Multi-funder work share | 28.3% | `cofunding.multi_funder_share` |
+| Top co-funding pair (ERC↔EC) | 23,421 works | `cofunding.top_pairs[0]` |
 | Funder output rate range | 0.05–0.94 works/$1M | `funding_output_rate` |
-| Domain split (Phys/Life/Health/Soc) | 46.2/29.1/19.5/5.2% | `domain_composition` |
+| Domain split (Phys/Life/Health/Soc) | 43.1/30.6/21.0/5.4% | `domain_composition` |

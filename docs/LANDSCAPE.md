@@ -1,6 +1,6 @@
 # research-atlas — Global Research Funding Landscape
 
-*Generated 2026-06-19T04:01:58+00:00 · schema 0.1.0 · all money USD-normalized (see money invariant)*
+*Generated 2026-06-21T18:09:28+00:00 · schema 0.1.0 · all money USD-normalized (see money invariant)*
 
 > This is the **full-scale** ingest report. Money totals cover only grants whose source publishes an amount; grants with unknown money are counted but contribute `null` (never a silent 0) to `$ funded`.
 
@@ -8,26 +8,27 @@
 
 | metric | value |
 | --- | --- |
-| Funders | 73 |
-| Grants | 958,273 |
-| Organizations | 140,631 |
-| People (PIs) | 1,223,332 |
-| Fields (taxonomy nodes) | 6,720 |
-| Total $ funded (USD) | $658,166,107,208 |
-| Grants with a known amount | 819,069 / 958,273 |
-| Total rows in graph | 7,356,186 |
-| Orgs resolved to ROR | 41,517 / 140,631 |
+| Funders | 75 |
+| Grants | 1,670,434 |
+| Organizations | 192,720 |
+| People (PIs) | 1,438,636 |
+| Fields (taxonomy nodes) | 6,782 |
+| Total $ funded (USD) | $1,038,070,096,751 |
+| Grants with a known amount | 1,529,743 / 1,670,434 |
+| Total rows in graph | 11,174,867 |
+| Orgs resolved to ROR | 45,826 / 192,720 |
 
 ## By funder source
 
 | source | grants | $ funded (USD) | grants w/ amount |
 | --- | --- | --- | --- |
-| nih | 529,262 | $301,046,686,747 | 528,207 |
+| nih | 1,125,130 | $570,475,651,367 | 1,122,983 |
+| nsf | 201,676 | $107,981,151,478 | 201,670 |
 | ukri | 174,405 | $26,458,416,968 | 39,509 |
-| nsf | 126,764 | $72,887,859,132 | 126,764 |
-| cordis | 56,585 | $133,340,567,672 | 56,585 |
+| cordis | 92,463 | $202,797,986,304 | 92,075 |
 | gates | 40,814 | $98,510,355,586 | 40,813 |
 | wellcome | 26,050 | $24,698,726,693 | 23,772 |
+| czi | 5,503 | $5,924,313,945 | 5,502 |
 | sloan | 3,419 | $1,223,494,410 | 3,419 |
 | dfg | 974 | n/a | 0 |
 
@@ -35,92 +36,95 @@
 
 | funder | grants | $ awarded (USD) |
 | --- | --- | --- |
-| European Commission (EC) | 56,585 | $133,340,567,672 |
+| European Commission (EC) | 92,463 | $202,797,986,304 |
+| National Science Foundation (NSF) | 201,676 | $107,981,151,478 |
 | Bill & Melinda Gates Foundation (Gates Foundation) | 40,814 | $98,510,355,586 |
-| National Science Foundation (NSF) | 126,764 | $72,887,859,132 |
-| National Institute of Allergy and Infectious Diseases (NIAID) | 58,587 | $44,564,558,176 |
-| National Cancer Institute (NCI) | 72,932 | $44,198,219,737 |
-| National Heart Lung and Blood Institute (NHLBI) | 50,758 | $29,833,605,704 |
-| European Research Council (ERC) | 13,931 | $26,793,455,292 |
+| National Cancer Institute (NCI) | 159,104 | $87,304,525,817 |
+| National Institute of Allergy and Infectious Diseases (NIAID) | 121,456 | $82,143,478,659 |
+| National Heart Lung and Blood Institute (NHLBI) | 108,411 | $57,347,664,956 |
+| National Institute of General Medical Sciences (NIGMS) | 117,645 | $42,402,045,315 |
+| National Institute on Aging (NIA) | 63,803 | $35,555,257,400 |
+| European Research Council (ERC) | 18,309 | $35,118,094,870 |
+| National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK) | 84,707 | $34,347,111,352 |
+| National Institute of Neurological Disorders and Stroke (NINDS) | 80,510 | $34,337,705,380 |
+| National Institute of Mental Health (NIMH) | 62,220 | $28,733,535,054 |
+| Eunice Kennedy Shriver National Institute of Child Health and Human Development (NICHD) | 55,270 | $24,988,140,396 |
 | Wellcome Trust (Wellcome) | 26,050 | $24,698,726,693 |
-| National Institute on Aging (NIA) | 37,376 | $24,203,262,284 |
-| National Institute of General Medical Sciences (NIGMS) | 57,143 | $21,913,998,092 |
-| National Institute of Neurological Disorders and Stroke (NINDS) | 37,961 | $19,124,609,340 |
+| National Institute on Drug Abuse (NIDA) | 45,492 | $21,902,506,671 |
 | Innovate UK (Innovate UK) | 32,952 | $17,143,864,544 |
-| National Institute of Diabetes and Digestive and Kidney Diseases (NIDDK) | 36,383 | $16,620,169,366 |
-| National Institute of Mental Health (NIMH) | 27,848 | $15,033,216,855 |
-| National Institute on Drug Abuse (NIDA) | 20,430 | $12,214,317,519 |
-| Eunice Kennedy Shriver National Institute of Child Health and Human Development (NICHD) | 25,351 | $11,797,601,442 |
-| NIH Office of the Director (OD) | 5,775 | $8,980,775,569 |
-| National Center for Advancing Translational Sciences (NCATS) | 4,523 | $6,436,165,453 |
-| National Institute of Environmental Health Sciences (NIEHS) | 10,478 | $6,129,177,666 |
-| National Eye Institute (NEI) | 14,372 | $6,045,835,315 |
+| National Institute of Environmental Health Sciences (NIEHS) | 23,554 | $12,799,648,176 |
+| National Eye Institute (NEI) | 31,037 | $12,689,771,500 |
+| NIH Office of the Director (OD) | 9,973 | $12,415,520,692 |
+| National Human Genome Research Institute (NHGRI) | 11,255 | $10,547,559,171 |
 
 ## By year (grant start year, 2010+)
 
 | year | grants | $ funded (USD) |
 | --- | --- | --- |
+| the  | 1 | $270,114 |
+| adva | 1 | n/a |
 | 2027 | 390 | $199,753,559 |
-| 2026 | 4,192 | $7,612,719,337 |
-| 2025 | 28,418 | $30,901,092,886 |
-| 2024 | 47,022 | $42,809,824,694 |
-| 2023 | 59,523 | $53,145,037,467 |
-| 2022 | 69,390 | $49,892,739,783 |
-| 2021 | 75,538 | $53,887,353,681 |
-| 2020 | 78,169 | $56,648,774,962 |
-| 2019 | 77,244 | $49,957,461,285 |
-| 2018 | 76,471 | $47,906,288,183 |
-| 2017 | 58,938 | $40,029,559,048 |
-| 2016 | 47,713 | $38,891,976,404 |
-| 2015 | 35,337 | $29,262,744,693 |
-| 2014 | 13,450 | $14,386,242,601 |
-| 2013 | 7,568 | $7,029,114,154 |
-| 2012 | 6,901 | $5,549,434,816 |
-| 2011 | 6,458 | $7,281,917,778 |
-| 2010 | 5,635 | $4,191,287,003 |
+| 2026 | 4,188 | $7,611,905,138 |
+| 2025 | 28,422 | $30,904,414,023 |
+| 2024 | 47,742 | $42,919,129,975 |
+| 2023 | 60,068 | $54,818,739,490 |
+| 2022 | 70,440 | $50,427,479,073 |
+| 2021 | 76,564 | $55,370,216,847 |
+| 2020 | 79,287 | $57,492,366,017 |
+| 2019 | 77,595 | $49,685,899,540 |
+| 2018 | 76,667 | $47,723,597,937 |
+| 2017 | 73,447 | $46,358,909,892 |
+| 2016 | 74,722 | $49,923,846,488 |
+| 2015 | 67,572 | $41,665,855,106 |
+| 2014 | 62,165 | $38,253,884,878 |
+| 2013 | 58,129 | $34,741,686,776 |
+| 2012 | 60,206 | $32,020,186,802 |
+| 2011 | 59,146 | $33,981,248,931 |
+| 2010 | 66,239 | $34,766,421,943 |
 
 ## Top 25 recipient organizations by $ received
 
 | organization | country | grants | $ received (USD) |
 | --- | --- | --- | --- |
-| DIVISION OF BASIC SCIENCES - NCI | US | 5,630 | $7,403,466,189 |
-| Johns Hopkins University | US | 12,577 | $7,345,067,593 |
-| National Institute of Allergy and Infectious Diseases | US | 3,319 | $6,853,725,651 |
-| University of California, San Francisco | US | 11,563 | $5,959,418,532 |
-| University of Washington | US | 9,931 | $5,410,249,520 |
-| Duke University | US | 8,538 | $5,388,682,002 |
-| University of Pennsylvania | US | 10,940 | $5,299,195,804 |
-| Stanford University | US | 10,252 | $5,256,048,287 |
-| University of California San Diego | US | 9,514 | $4,960,546,205 |
-| GAVI Alliance | CH | 11 | $4,955,053,084 |
-| UNIVERSITY OF MICHIGAN AT ANN ARBOR | US | 10,536 | $4,849,905,246 |
-| Yale University | US | 9,668 | $4,802,237,181 |
-| University of California, Los Angeles | US | 8,292 | $4,721,082,872 |
-| Leidos Biomedical Research Inc. (United States) | US | 687 | $4,680,971,526 |
-| World Health Organization | CH | 636 | $4,666,255,860 |
-| UNIVERSITY OF PITTSBURGH AT PITTSBURGH | US | 9,502 | $4,515,049,984 |
-| Massachusetts General Hospital | US | 8,097 | $4,463,905,569 |
-| WASHINGTON UNIVERSITY | US | 8,763 | $4,453,542,870 |
-| COLUMBIA UNIVERSITY HEALTH SCIENCES | US | 8,077 | $4,209,245,434 |
-| Emory University | US | 7,156 | $4,009,560,084 |
-| UNIV OF NORTH CAROLINA CHAPEL HILL | US | 7,937 | $3,947,613,209 |
-| Global Fund to Fight AIDS, Tuberculosis and Malaria | CH | 46 | $3,924,940,616 |
-| Northwestern University | US | 7,533 | $3,775,539,836 |
-| University of Wisconsin–Madison | US | 6,767 | $3,695,410,864 |
-| University of Oxford | GB | 2,797 | $3,522,934,042 |
+| DIVISION OF BASIC SCIENCES - NCI | US | 12,784 | $13,803,388,487 |
+| Johns Hopkins University | US | 26,514 | $13,540,858,540 |
+| National Institute of Allergy and Infectious Diseases | US | 7,474 | $12,653,700,881 |
+| University of California, San Francisco | US | 23,614 | $11,018,236,393 |
+| University of Washington | US | 21,087 | $10,372,208,174 |
+| University of Pennsylvania | US | 23,118 | $10,017,473,455 |
+| UNIVERSITY OF MICHIGAN AT ANN ARBOR | US | 21,904 | $9,325,100,747 |
+| Stanford University | US | 19,903 | $9,189,278,638 |
+| Duke University | US | 17,211 | $9,168,408,937 |
+| University of California San Diego | US | 19,033 | $8,879,199,956 |
+| University of California, Los Angeles | US | 18,175 | $8,704,085,451 |
+| UNIVERSITY OF PITTSBURGH AT PITTSBURGH | US | 20,278 | $8,697,042,757 |
+| Yale University | US | 19,646 | $8,694,342,661 |
+| WASHINGTON UNIVERSITY | US | 17,573 | $8,126,212,508 |
+| Massachusetts General Hospital | US | 16,159 | $7,838,913,249 |
+| Leidos Biomedical Research Inc. (United States) | US | 1,227 | $7,709,817,402 |
+| UNIV OF NORTH CAROLINA CHAPEL HILL | US | 16,896 | $7,481,072,192 |
+| COLUMBIA UNIVERSITY HEALTH SCIENCES | US | 15,817 | $7,282,996,783 |
+| Emory University | US | 14,177 | $6,721,561,002 |
+| University of Wisconsin–Madison | US | 14,338 | $6,706,233,561 |
+| Northwestern University | US | 14,553 | $6,285,550,370 |
+| University of Minnesota | US | 14,284 | $6,216,134,618 |
+| NATIONAL LIBRARY OF MEDICINE | US | 617 | $5,926,092,999 |
+| Brigham and Women's Hospital | US | 11,007 | $5,880,934,743 |
+| Fred Hutch Cancer Center | US | 5,314 | $5,709,189,712 |
 
 ## Coverage (ingested vs available, honest)
 
 | source | grants ingested | grants available | coverage | notes |
 | --- | --- | --- | --- | --- |
-| CORDIS (EU: Horizon Europe + H2020) | 56,585 | 56,585 | 100.0% | Full bulk zips ingested in entirety (all funding schemes). Older framework programmes (FP7 and earlier) not in these zips. |
-| NSF (US National Science Foundation) | 126,764 | n/a | n/a | research.gov API, award start-date FY2015-2025, monthly windows. Pre-2015 and post-2025 not ingested. |
-| NIH (US National Institutes of Health, RePORTER) | 529,262 | n/a | n/a | RePORTER v2 API, fiscal years 2018-2025, by (FY, IC). Pre-2018 (incl. CRISP 1970-2009) not ingested. |
+| CORDIS (EU: FP6 + FP7 + H2020 + Horizon Europe) | 92,463 | 92,463 | 100.0% | Full bulk zips for ALL four open framework programmes ingested (FP6 2002 -> Horizon Europe), every funding scheme. Pre-FP6 (FP1-FP5) is not published as bulk CSV. |
+| NSF (US National Science Foundation) | 201,676 | n/a | n/a | research.gov API, award start-date 2008-2025, monthly windows. Pre-2008 not ingested (API serves back to 1959). |
+| NIH (US National Institutes of Health, RePORTER) | 1,125,130 | 2,942,862 | 38.2% | RePORTER v2 API, fiscal years 2008-2025, by (FY, IC). Pre-2008 not ingested; RePORTER serves the all-time universe of 2,942,862 projects back to FY1985 (the remaining FY1985-2007 is more (FY,IC) windows, bounded by run time not capability). |
 | UKRI (UK Research and Innovation, Gateway to Research) | 174,405 | 174,405 | 100.0% | Full GtR /projects corpus. Org coverage limited to embedded participantValues (no link-following); persons not resolved. |
 | DFG (Germany, GEPRIS HTML) | 974 | 172,292 | 0.6% | Polite cached HTML crawl of English project detail pages (no bulk export exists). ~172k project ids are published in the GEPRIS sitemap; this is a real corpus chunk, resumable to the full set (cache makes re-runs free). GEPRIS rarely publishes a funding amount on the English page, so most DFG grants carry amount=null (money invariant). |
 | Gates Foundation (Committed Grants CSV) | 40,814 | n/a | n/a | Full committed-grants CSV ingested in entirety (the bulk form of gatesfoundation.org/about/committed-grants). Amounts are USD. Coverage = 100% of the published CSV at download time. |
 | Wellcome Trust (360Giving XLSX) | 26,050 | n/a | n/a | Full 360Giving grants list (awarded since 2000-10-01) ingested in entirety. GBP normalized to USD via a stamped fixed FX. Coverage = 100% of the published XLSX at download time. |
 | Alfred P. Sloan Foundation (Grants Database HTML) | 3,419 | n/a | n/a | Full public grants database crawled (polite, cached). Sloan's DB covers currently-operating programs back to ~2008; pre-2008 completed programs live only in annual reports (not in the DB). Amounts are USD; Sloan publishes only an award year. |
+| Chan Zuckerberg Initiative (CZI grants REST API) | 5,503 | n/a | n/a | Entire grants database served by the discoverable REST route chanzuckerberg.com/wp-json/czi/v1/grants/ in one JSON document (2018-2024). Amounts are USD; CZI publishes only a commitment year. Coverage = 100% of the published feed at download time. (Previously mis-listed as deferred / un-discoverable -- false.) |
 
 ## Published funders not yet machine-ingestible (honest)
 
@@ -128,10 +132,9 @@ These funders publish real grant data, but their listings are JS-rendered behind
 
 | funder | why deferred |
 | --- | --- |
-| Chan Zuckerberg Initiative (CZI) | Publishes a searchable Grants Database (chanzuckerberg.com/grants-ventures/grants/) of $7.2B+ since 2015, but the listing is rendered by a JS bundle via a WordPress admin-ajax action that is not discoverable from static HTML. Needs a headless-browser connector (deferred). |
-| Howard Hughes Medical Institute (HHMI) | ~300 current Investigators (~$9M / 7-yr term each) are listed at hhmi.org/programs/investigators, but the scientist directory is JS-rendered and the browse endpoint returns HTTP 403 to non-browser agents. No per-investigator award amount is published. Honestly sparse; deferred. |
-| Simons Foundation | Funded-projects listing (simonsfoundation.org/funded-projects/) is JS-rendered with no static data or discoverable API. Deferred to a headless-browser connector. |
-| Gordon and Betty Moore Foundation | Grants are published at moore.org/grants ($401.8M / 952 grants in 2024) but the listing is JS-rendered behind an internal API not exposed in static HTML. Deferred to a headless-browser connector. |
+| Howard Hughes Medical Institute (HHMI) | ~300 current Investigators are listed at hhmi.org, but the scientist directory browse endpoint returns HTTP 403 to non-browser agents and publishes no per-investigator award amount. Even rendered it is a name list, not a grants database. Honestly sparse; deferred (verified 2026-06-21). |
+| Simons Foundation | The documented URL simonsfoundation.org/funded-projects/ now returns HTTP 404; the live funded-projects view is JS-rendered with no discoverable JSON/REST route in its network calls. Needs deeper headless reverse-engineering; deferred (verified 2026-06-21). |
+| Gordon and Betty Moore Foundation | moore.org/grants ($401.8M / 952 grants in 2024) fires no grants API on load (verified by headless XHR capture) and candidate subpaths 404; the grants data lives behind a route not exposed on the public listing. Deferred pending the real endpoint (verified 2026-06-21). |
 
 ## Field taxonomies
 
@@ -139,23 +142,27 @@ Each source contributes its own field taxonomy (euroSciVoc for CORDIS, NSF direc
 
 | source | field nodes |
 | --- | --- |
-| openalex | 3,552 |
-| cordis | 1,057 |
+| openalex | 3,594 |
+| cordis | 1,064 |
 | gates | 808 |
 | ukri | 611 |
 | wellcome | 334 |
 | dfg | 229 |
-| nsf | 61 |
+| nsf | 69 |
 | sloan | 41 |
-| nih | 27 |
+| nih | 28 |
+| czi | 4 |
 
 ## What a full-completion run still needs
 
-- **NSF**: extend below FY2015 (API supports it; just more monthly windows). Resolve awardee orgs to ROR (currently name-keyed).
-- **NIH**: extend below FY2018 (RePORTER covers to 1985; CRISP to 1970). Pull abstracts + publication/patent link tables.
-- **UKRI**: follow LEAD_ORG/PARTICIPANT_ORG links so fellowships/studentships (no embedded participants) get org edges; resolve PIs (person link-following, off for the bulk run); GBP→USD already applied.
-- **CORDIS**: add FP7 and earlier framework programmes (separate zips); resolve PI names from per-project web records (not in bulk export).
-- **DFG**: a real GEPRIS corpus chunk is ingested; the crawl is resumable to the full ~172k sitemap set (cache makes re-runs free) at polite rate. Most pages omit the funding amount (money stays null).
-- **Gates / Wellcome / Sloan**: published feeds ingested in full at download time; re-run to refresh (Gates CSV monthly, Wellcome XLSX monthly, Sloan DB live).
-- **CZI / HHMI / Simons / Moore**: real funders whose listings are JS-rendered behind un-discoverable APIs (or block scraping); need a headless-browser connector (deferred, see table above).
-- **Cross-source**: ROR resolution as a batch backfill (bulk ROR dump) to merge duplicate orgs across funders; OpenAlex works + topic fields; ORCID person reconciliation; currency FX refresh.
+_(See `docs/COMPLETENESS.md` for the full v1-bar scorecard. This push extended NIH to FY2008, NSF to 2008, CORDIS to all four open framework programmes (FP6+FP7+H2020+Horizon), added CZI, and widened the output side. What remains is the stretch beyond the v1 bar:)_
+
+- **NSF / NIH stretch**: extend below 2008 to the API floors (NSF 1959, NIH FY1985 -- RePORTER's all-time universe is 2,942,862 projects). Bounded by run time, not capability; the connectors already accept the wider `--year-start`.
+- **NIH**: pull abstracts + publication/patent link tables.
+- **UKRI**: follow LEAD_ORG/PARTICIPANT_ORG links so fellowships/studentships (no embedded participants) get org edges; resolve PIs.
+- **CORDIS**: resolve PI names from per-project web records (not in the bulk export). Pre-FP6 (FP1-FP5) has no bulk CSV.
+- **DFG**: a real GEPRIS corpus chunk is ingested; the crawl is resumable to the full ~172k sitemap set (cache makes re-runs free).
+- **Gates / Wellcome / Sloan / CZI**: published feeds ingested in full at download time; re-run to refresh.
+- **HHMI / Simons / Moore**: three small foundations whose grant data is not machine-ingestible without deeper headless reverse-engineering (verified 2026-06-21; see table above). Documented, not faked.
+- **Output side**: widen works back to the full grant history (2008) and add patent/clinical-trial output tables. NOTE: live OpenAlex pulls are rate-limited (HTTP 429) after heavy use; the cache-only replay path (`ingest_openalex_works.py --cache-only`) rebuilds shards offline.
+- **Access (v2)**: a hosted live-query API / public bulk download host.

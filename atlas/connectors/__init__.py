@@ -12,6 +12,7 @@ reference connector and ``nsf_bulk.py`` is the full-scale connector -- both emit
 
 from atlas.connectors.base import Connector
 from atlas.connectors.cordis import CordisConnector
+from atlas.connectors.czi import CziConnector
 from atlas.connectors.dfg import DfgConnector
 from atlas.connectors.erc import ErcConnector
 from atlas.connectors.gates import GatesConnector
@@ -34,6 +35,7 @@ REGISTRY: dict[str, type[Connector]] = {
     "gates": GatesConnector,
     "wellcome": WellcomeConnector,
     "sloan": SloanConnector,
+    "czi": CziConnector,
 }
 
 __all__ = [
@@ -48,5 +50,6 @@ __all__ = [
     "GatesConnector",
     "WellcomeConnector",
     "SloanConnector",
+    "CziConnector",
     "REGISTRY",
 ]
