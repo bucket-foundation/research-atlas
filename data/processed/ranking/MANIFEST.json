@@ -1,0 +1,72 @@
+{
+  "name": "research-atlas ranking corpus",
+  "generated_at": "2026-06-22T15:29:45Z",
+  "license": "MIT (code) / CC-BY-4.0 (data, via OpenAlex CC0)",
+  "source": "OpenAlex",
+  "subfield": "3106 (Nuclear & High Energy Physics)",
+  "window": "2015-01-01..2024-12-31",
+  "datasets": [
+    {
+      "name": "corpus",
+      "path": "data/processed/ranking/corpus.parquet",
+      "gitignored": true,
+      "row_count": 199400,
+      "n_with_abstract": 168677,
+      "out_references_total": 8585763,
+      "columns": [
+        "work_id",
+        "title",
+        "abstract",
+        "text",
+        "year",
+        "type",
+        "cited_by_count",
+        "topic",
+        "topic_id",
+        "refs"
+      ]
+    },
+    {
+      "name": "ranking",
+      "path": "data/processed/ranking/ranking.parquet",
+      "gitignored": true,
+      "row_count": 199400,
+      "columns": [
+        "work_id",
+        "title",
+        "year",
+        "topic",
+        "pagerank",
+        "citation_count",
+        "field_normalized_impact",
+        "in_degree_corpus",
+        "out_degree_corpus"
+      ]
+    }
+  ],
+  "embeddings": {
+    "model": "sentence-transformers/allenai-specter (SPECTER, GPU/ROCm)",
+    "dim": 768,
+    "baselines": [
+      "tfidf",
+      "tfidf+nmf",
+      "word2vec-meanpool (PPMI-SVD)"
+    ],
+    "cache": "data/raw/ranking/embed_cache/ (gitignored)",
+    "note": "legacy Ollama nomic-embed-text path retained but not default"
+  },
+  "samples": [
+    {
+      "name": "ranking_corpus_sample",
+      "path": "data/processed/sample/ranking_corpus_sample.parquet",
+      "row_count": 1000,
+      "committed": true
+    },
+    {
+      "name": "ranking_top100",
+      "path": "data/processed/sample/ranking_top100.parquet",
+      "row_count": 100,
+      "committed": true
+    }
+  ]
+}

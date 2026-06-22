@@ -74,10 +74,11 @@ def main() -> int:
             },
         ],
         "embeddings": {
-            "model": "nomic-embed-text (Ollama, local)",
+            "model": "sentence-transformers/allenai-specter (SPECTER, GPU/ROCm)",
             "dim": 768,
             "baselines": ["tfidf", "tfidf+nmf", "word2vec-meanpool (PPMI-SVD)"],
             "cache": "data/raw/ranking/embed_cache/ (gitignored)",
+            "note": "legacy Ollama nomic-embed-text path retained but not default",
         },
         "samples": [
             {"name": "ranking_corpus_sample",

@@ -154,9 +154,9 @@ def main() -> int:
         lambda q: cocitation_scores(g, q), split, g, ks=KS, n_boot=args.n_boot,
         seed=args.seed)
 
-    # (c) transformer cosine -- the neural fix
+    # (c) transformer cosine -- the neural fix (SPECTER, GPU)
     if not args.no_transformer:
-        print("Building transformer embeddings (Ollama nomic-embed-text) ...",
+        print("Building transformer embeddings (SPECTER, GPU/ROCm) ...",
               flush=True)
         t0 = time.time()
         work_ids = [r["work_id"] for r in records]
@@ -164,7 +164,7 @@ def main() -> int:
         print(f"  embedded {len(texts):,} works ({time.time()-t0:.0f}s), "
               f"dim={tfm.shape[1]}", flush=True)
         results["transformer"] = evaluate_method(
-            "transformer cosine (nomic-embed-text)",
+            "transformer cosine (SPECTER)",
             lambda q: cosine_scores(tfm, q), split, g, ks=KS,
             n_boot=args.n_boot, seed=args.seed)
 
@@ -189,6 +189,10 @@ def main() -> int:
         "min_refs": args.min_refs,
         "seed": args.seed,
         "ks": list(KS),
+        "topic": args.topic,
+        "transformer_model": (
+            "sentence-transformers/allenai-specter (SPECTER, GPU/ROCm)"
+            if not args.no_transformer else None),
         "methods": {k: pack(v) for k, v in results.items()},
     }
 

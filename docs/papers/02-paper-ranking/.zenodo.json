@@ -1,0 +1,29 @@
+{
+  "title": "Ranking and recommending scientific papers on a complete citation graph: PageRank without the uniformity artifact, and paper-trained transformer embeddings that beat TF-IDF on held-out citation prediction",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "description": "<p>We rebuild an academic paper ranking-and-recommendation system on a complete OpenAlex citation graph (subfield 3106, Nuclear &amp; High Energy Physics, 2015-2024: 199,400 works, 1,942,373 in-corpus citation edges) and add the quantitative evaluation its predecessor (a UMass MA544 course project) lacked. On the complete graph the same power-method PageRank (damping 0.85) becomes heavy-tailed (Gini 0.53, cv 4.19, top-1 work 967x the uniform mass), eliminating the uniformity artifact the predecessor reported. We add SPECTER (paper-trained transformer) sentence embeddings, run on a local AMD GPU via ROCm, and a held-out citation-prediction evaluation (mask 30% of each query's in-corpus references; Recall@k / MAP / MRR with bootstrap 95% CIs). On 2,359 queries SPECTER attains the best MAP (0.063 [0.059, 0.067]) of all five methods, beating the TF-IDF baseline by +15.4% relative MAP (paired-bootstrap p = 0.0005). Limitations (single subfield, in-corpus closed-world candidate pool, GPU-bounded neural sample) are stated plainly. MIT (code) / CC-BY-4.0 (data, via OpenAlex CC0). A DOI will be minted on the next research-atlas release.</p>",
+  "creators": [
+    { "name": "Dichio, Gianangelo", "affiliation": "Bucket Foundation" }
+  ],
+  "keywords": [
+    "paper recommendation", "citation graph", "PageRank", "SPECTER",
+    "transformer embeddings", "TF-IDF", "word2vec", "information retrieval",
+    "citation prediction", "link prediction", "OpenAlex", "bibliometrics",
+    "science of science", "open data"
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "communities": [
+    { "identifier": "metascience" },
+    { "identifier": "open-science" }
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "10.5281/zenodo.20774322",
+      "scheme": "doi"
+    }
+  ]
+}

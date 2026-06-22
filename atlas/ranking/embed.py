@@ -40,6 +40,14 @@ EMBED_MODEL = "nomic-embed-text"
 CACHE_DIR = DATA_RAW / "ranking" / "embed_cache"
 EMBED_MAX_CHARS = 4000  # nomic-embed-text context cap; truncate longer abstracts
 
+# Default transformer backend: a GPU sentence-transformers model trained on
+# scientific papers (SPECTER). Far stronger and far faster than the CPU Ollama
+# path for this task. The Ollama functions above remain available but are no
+# longer the default; ``embed_texts_by_id`` routes to the ST/GPU backend.
+ST_MODEL = "sentence-transformers/allenai-specter"   # SPECTER: trained on papers
+ST_FALLBACKS = ("nomic-ai/nomic-embed-text-v1.5",
+                "sentence-transformers/all-MiniLM-L6-v2")
+
 _TOKEN_RE = re.compile(r"[a-z][a-z0-9\-]+")
 
 
@@ -232,18 +240,102 @@ def _embed_batch(sess, inputs: list[str], model: str, url: str,
     return None
 
 
+_ST_CACHE: dict[str, object] = {}
+
+
+def _load_st_model(prefer: str = ST_MODEL):
+    """Load a SentenceTransformer on GPU (ROCm) when available, else CPU.
+
+    Sets ``HSA_OVERRIDE_GFX_VERSION`` **before** importing torch so the AMD
+    RX 7700S is recognized by ROCm. Tries SPECTER first (trained on scientific
+    papers -- the right tool for paper recommendation), then the configured
+    fallbacks if the download fails. Returns ``(model, model_name, device)``.
+    Cached per process so repeated calls don't reload weights.
+    """
+    import os
+    os.environ.setdefault("HSA_OVERRIDE_GFX_VERSION", "11.0.0")
+    import torch
+    from sentence_transformers import SentenceTransformer
+
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    candidates = [prefer, *[f for f in ST_FALLBACKS if f != prefer]]
+    last_err = None
+    for name in candidates:
+        ck = f"{name}@{device}"
+        if ck in _ST_CACHE:
+            return _ST_CACHE[ck], name, device
+        try:
+            kw = {"device": device}
+            if "nomic" in name:           # nomic ships custom code
+                kw["trust_remote_code"] = True
+            model = SentenceTransformer(name, **kw)
+            _ST_CACHE[ck] = model
+            return model, name, device
+        except Exception as exc:          # download / load failure -> next
+            last_err = exc
+            print(f"    [st] {name} unavailable ({exc}); trying fallback",
+                  flush=True)
+    raise RuntimeError(f"no sentence-transformers model could load: {last_err}")
+
+
+def embed_texts_by_id_st(work_ids: list[str], texts: list[str],
+                         model_name: str = ST_MODEL,
+                         by_id_dir: Path = BY_ID_DIR, batch_size: int = 64,
+                         log_every: int = 512) -> int:
+    """GPU sentence-transformers backend (default). Writes ``<wid>.npy`` per work.
+
+    Resumable + idempotent: skips ids already on disk, batch-encodes the rest on
+    the GPU, L2-normalizes, and writes the SAME per-id cache the eval consumes
+    (one float32 vector per work id). Returns the number newly embedded.
+    """
+    by_id_dir.mkdir(parents=True, exist_ok=True)
+    todo = [(w, t) for w, t in zip(work_ids, texts)
+            if not (by_id_dir / f"{w}.npy").exists()]
+    if not todo:
+        return 0
+
+    model, name, device = _load_st_model(model_name)
+    print(f"    [st] {name} on {device}", flush=True)
+    done = 0
+    for s in range(0, len(todo), batch_size):
+        chunk = todo[s:s + batch_size]
+        batch = [(t or " ")[:EMBED_MAX_CHARS] for _, t in chunk]
+        embs = model.encode(batch, batch_size=batch_size,
+                            convert_to_numpy=True, normalize_embeddings=True,
+                            show_progress_bar=False)
+        embs = embs.astype(np.float32)
+        for (w, _), v in zip(chunk, embs):
+            np.save(by_id_dir / f"{w}.npy", v)
+            done += 1
+        if log_every and done % log_every < batch_size:
+            print(f"    embedded {done}/{len(todo)} (gpu batch)", flush=True)
+    return done
+
+
 def embed_texts_by_id(work_ids: list[str], texts: list[str],
-                      model: str = EMBED_MODEL, url: str = OLLAMA_BATCH_URL,
+                      model: str | None = None, url: str = OLLAMA_BATCH_URL,
                       by_id_dir: Path = BY_ID_DIR, batch_size: int = 16,
-                      log_every: int = 256) -> int:
+                      log_every: int = 256, backend: str = "st") -> int:
     """Batch-embed the uncached works, writing one ``<wid>.npy`` per work.
 
     Resumable + idempotent: skips ids already on disk, batches the rest. Returns
     the number newly embedded. This is the fast path used by both the embed
     script and the eval.
+
+    ``backend="st"`` (default) uses the GPU sentence-transformers SPECTER model;
+    ``backend="ollama"`` uses the legacy CPU Ollama HTTP path (kept available but
+    no longer default -- it ran ~0.5 docs/s).
     """
+    if backend == "st":
+        return embed_texts_by_id_st(
+            work_ids, texts, model_name=model or ST_MODEL,
+            by_id_dir=by_id_dir, batch_size=max(batch_size, 64),
+            log_every=max(log_every, 512))
+
+    # ---- legacy Ollama CPU path (opt-in) --------------------------------- #
     import requests as _rq
 
+    model = model or EMBED_MODEL
     by_id_dir.mkdir(parents=True, exist_ok=True)
     sess = _rq.Session()
     todo = [(w, t) for w, t in zip(work_ids, texts)
@@ -286,18 +378,22 @@ def _embed_one_serial(sess, text, model, url: str = OLLAMA_URL, retries=5):
 
 
 def transformer_matrix_by_id(work_ids: list[str], texts: list[str],
-                             model: str = EMBED_MODEL, url: str = OLLAMA_URL,
+                             model: str | None = None, url: str = OLLAMA_URL,
                              by_id_dir: Path = BY_ID_DIR,
-                             batch_log: int = 200) -> np.ndarray:
+                             batch_log: int = 200,
+                             backend: str = "st") -> np.ndarray:
     """Transformer embeddings keyed by work id (resumable per-id cache).
 
-    Reads ``<by_id_dir>/<work_id>.npy`` when present; otherwise embeds via Ollama
-    and writes it. Returns an L2-normalized ``(n, dim)`` array aligned to
-    ``work_ids``. This is the path the eval uses so an interrupted embed resumes
-    and repeated eval runs are free. See :mod:`scripts.ranking_embed`.
+    Reads ``<by_id_dir>/<work_id>.npy`` when present; otherwise embeds and writes
+    it. Default backend is GPU sentence-transformers (SPECTER); ``backend=
+    "ollama"`` uses the legacy CPU path. Returns an L2-normalized ``(n, dim)``
+    array aligned to ``work_ids``. This is the path the eval uses so an
+    interrupted embed resumes and repeated eval runs are free.
+    See :mod:`scripts.ranking_embed`.
     """
     # 1) batch-fill the cache for any uncached work (fast path)
-    embed_texts_by_id(work_ids, texts, model=model, by_id_dir=by_id_dir)
+    embed_texts_by_id(work_ids, texts, model=model, by_id_dir=by_id_dir,
+                      backend=backend)
     # 2) load all vectors from the per-id cache in order
     vecs = [np.load(by_id_dir / f"{wid}.npy") for wid in work_ids]
     return _l2_normalize(np.array(vecs, dtype=np.float32))

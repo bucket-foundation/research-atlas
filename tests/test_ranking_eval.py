@@ -93,6 +93,33 @@ def test_transformer_beats_random_on_synthetic_text():
     assert tf.recall_at[5] > rnd.recall_at[5]
 
 
+def test_headline_eval_json_pins_transformer_win():
+    """If the eval JSON exists, the paper's headline must hold against it.
+
+    Guards against prose/data drift: the transformer (SPECTER) row must be
+    present and beat TF-IDF on MAP with a significant paired-bootstrap p-value.
+    Skipped when the JSON has not been generated (e.g. fresh checkout).
+    """
+    import json
+    from pathlib import Path
+
+    p = Path(__file__).resolve().parents[1] / "analysis" / "ranking_eval.json"
+    if not p.exists():
+        pytest.skip("analysis/ranking_eval.json not generated")
+    e = json.loads(p.read_text())
+    m = e["methods"]
+    if "transformer" not in m:
+        pytest.skip("transformer row not in eval (run with GPU embeddings)")
+    # transformer present and 768-d SPECTER per the manifest
+    assert m["transformer"]["map"] > m["tfidf"]["map"], "transformer must beat TF-IDF on MAP"
+    tv = e["transformer_vs_tfidf"]
+    assert tv["delta_map"] > 0
+    assert tv["paired_bootstrap_p"] < 0.05, "transformer-vs-TF-IDF must be significant"
+    # transformer should also lead word2vec and graph on MAP
+    assert m["transformer"]["map"] >= m["word2vec"]["map"]
+    assert m["transformer"]["map"] >= m["graph"]["map"]
+
+
 def test_paired_bootstrap_pvalue_detects_difference():
     a = np.ones(100) * 0.8
     b = np.ones(100) * 0.2

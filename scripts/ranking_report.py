@@ -45,9 +45,12 @@ def corpus_block(g) -> str:
         f"| global cited-by total | {c['global_cited_by_total']:,} |\n"
         f"| mean in-corpus in-degree | {c['mean_in_degree_corpus']:.1f} |\n"
         f"| max in-corpus in-degree | {c['max_in_degree_corpus']:,} |\n\n"
-        f"Embeddings: title+abstract via **`nomic-embed-text`** (Ollama, 768-d) "
-        f"for the transformer method; TF-IDF, TF-IDF+NMF and word2vec mean-pool "
-        f"(PPMI-SVD, in-domain) reproduce Gian's two baselines.\n\n"
+        f"Embeddings: title+abstract via **SPECTER** "
+        f"(`sentence-transformers/allenai-specter`, 768-d) — a transformer "
+        f"pre-trained on the scientific-paper citation graph, run on a local AMD "
+        f"GPU (ROCm) — for the transformer method; TF-IDF, TF-IDF+NMF and "
+        f"word2vec mean-pool (PPMI-SVD, in-domain) reproduce Gian's two "
+        f"baselines.\n\n"
         f"**Honest coverage note.** ~{100*c['in_corpus_edge_coverage']:.0f}% of "
         f"each paper's references land inside the subfield slice; the rest point "
         f"to adjacent fields (math, astrophysics, instrumentation). That is the "
@@ -94,7 +97,7 @@ def eval_block(e) -> str:
              ("tfidf_nmf", "TF-IDF+NMF cosine — *Gian baseline (exact)*"),
              ("word2vec", "word2vec mean-pool — *Gian baseline*"),
              ("graph", "graph co-citation (text-free)"),
-             ("transformer", "**transformer** (nomic-embed-text)")]
+             ("transformer", "**transformer** (SPECTER, GPU)")]
     head = ("| method | R@10 | R@20 | R@50 | MAP | MRR |\n"
             "|---|---:|---:|---:|---:|---:|")
     lines = []
@@ -185,10 +188,11 @@ def limits_block(g, e) -> str:
         f"references are in-slice; cross-field citations are counted in the "
         f"*global* `cited_by_count` (so impact isn't capped) but are not nodes in "
         f"the PageRank graph. This is an honest boundary, not a dropped edge.\n"
-        f"- **Embedding hardware.** Transformer embeddings ran on a CPU Ollama "
-        f"endpoint (~0.5 docs/s), so the neural eval is on a bounded dense subset "
-        f"({e.get('sample_works','—'):,} works); the graph/PageRank results are "
-        f"full-corpus. On a GPU the same code embeds the whole subfield.\n"
+        f"- **Embedding hardware.** Transformer (SPECTER) embeddings ran on a "
+        f"local AMD GPU (ROCm), so the neural eval is on a bounded dense subset "
+        f"({e.get('sample_works','—'):,} works) chosen to keep the citation graph "
+        f"dense; the graph/PageRank results are full-corpus. The same code scales "
+        f"to the whole subfield.\n"
         f"- **word2vec baseline** is an in-domain PPMI-SVD static embedding "
         f"(SGNS-equivalent), mean-pooled exactly as Gian pooled Google's vectors; "
         f"the representation class is identical, only the training corpus differs."

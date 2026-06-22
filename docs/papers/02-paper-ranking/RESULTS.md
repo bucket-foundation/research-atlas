@@ -1,5 +1,6 @@
 <!-- AUTO-FILLED from analysis/ranking_graph.json + analysis/ranking_eval.json by
-     scripts/ranking_report.py. Do not hand-edit the numbers; re-run the report. -->
+     scripts/ranking_report.py. Do not hand-edit the numbers; re-run the report.
+     This file is regenerable: the {{..._BLOCK}} tokens are replaced on each run. -->
 # A complete-citation-graph paper ranking & recommendation system — results
 
 **Successor to:** Gian Dichio, *Academic Paper Ranking and Recommendation System*
@@ -7,9 +8,10 @@
 similarity, PageRank via the power method on a CSR adjacency).
 
 **This work** rebuilds that system on a **complete** citation graph from OpenAlex,
-adds **transformer** (neural) embeddings, and — the headline — adds a **real
-quantitative evaluation** (held-out citation prediction with bootstrap CIs) that
-his original lacked. Each change maps to a weakness he stated himself.
+adds **SPECTER transformer** (neural, paper-trained) embeddings, and — the
+headline — adds a **real quantitative evaluation** (held-out citation prediction
+with bootstrap CIs) that his original lacked. Each change maps to a weakness he
+stated himself.
 
 _Numbers below are emitted by `scripts/ranking_build.py` →
 `analysis/ranking_graph.json` and `scripts/ranking_evaluate.py` →
@@ -23,7 +25,7 @@ _Numbers below are emitted by `scripts/ranking_build.py` →
 |---|---------------------|---------|-------|
 | 1 | Incomplete citation graph — references to papers outside the arXiv slice were **dropped** | Pull a coherent OpenAlex subfield with **global, resolvable** out-references (`referenced_works`); keep the complete **in-corpus** edge set | `atlas/ranking/corpus.py`, `graph.py` |
 | 2 | In-citations **undercounted** → PageRank came out **~uniform** (an artifact) | Keep OpenAlex **global `cited_by_count`** (counts citations from outside the slice) and build the complete in-corpus graph; PageRank is now heavy-tailed | `atlas/ranking/rank.py` |
-| 3 | TF-IDF / word2vec **lose phrase meaning**; **no quantitative evaluation** | Add **transformer** sentence embeddings (`nomic-embed-text`, 768-d) **and** a held-out **citation-prediction** eval (Recall@k / MAP / MRR, bootstrap CIs) scoring all methods | `atlas/ranking/embed.py`, `evaluate.py` |
+| 3 | TF-IDF / word2vec **lose phrase meaning**; **no quantitative evaluation** | Add **SPECTER** sentence embeddings (paper-trained transformer, 768-d, GPU) **and** a held-out **citation-prediction** eval (Recall@k / MAP / MRR, bootstrap CIs) scoring all methods | `atlas/ranking/embed.py`, `evaluate.py` |
 
 ---
 
@@ -42,7 +44,7 @@ Corpus: **OpenAlex subfield 3106 (Nuclear & High Energy Physics)**, articles 201
 | mean in-corpus in-degree | 9.7 |
 | max in-corpus in-degree | 5,067 |
 
-Embeddings: title+abstract via **`nomic-embed-text`** (Ollama, 768-d) for the transformer method; TF-IDF, TF-IDF+NMF and word2vec mean-pool (PPMI-SVD, in-domain) reproduce Gian's two baselines.
+Embeddings: title+abstract via **SPECTER** (`sentence-transformers/allenai-specter`, 768-d) — a transformer pre-trained on the scientific-paper citation graph, run on a local AMD GPU (ROCm) — for the transformer method; TF-IDF, TF-IDF+NMF and word2vec mean-pool (PPMI-SVD, in-domain) reproduce Gian's two baselines.
 
 **Honest coverage note.** ~23% of each paper's references land inside the subfield slice; the rest point to adjacent fields (math, astrophysics, instrumentation). That is the *real* citation behaviour Gian's arXiv-only graph silently dropped — here those out-of-slice targets are simply not in-corpus nodes, but the global `cited_by_count` still counts them, so impact is not capped at the slice boundary.
 
@@ -90,8 +92,11 @@ We also compute raw **citation count** (global, uncapped) and **field-normalized
 | TF-IDF+NMF cosine — *Gian baseline (exact)* | 0.046 | 0.070 | 0.125 | 0.029 | 0.077 |
 | word2vec mean-pool — *Gian baseline* | 0.092 | 0.136 | 0.222 | 0.055 | 0.137 |
 | graph co-citation (text-free) | 0.078 | 0.146 | 0.284 | 0.051 | 0.112 |
+| **transformer** (SPECTER, GPU) | 0.104 | 0.156 | 0.247 | 0.063 | 0.157 |
 
-MAP with 95% CI — TF-IDF: 0.054 [0.050, 0.059]; transformer: .
+**Transformer vs TF-IDF (Gian's primary method), paired on the same 2,359 queries:** ΔMAP = +0.008 (+15.4% relative), paired-bootstrap p = 0.0005 (significant).
+
+MAP with 95% CI — TF-IDF: 0.054 [0.050, 0.059]; transformer: 0.063 [0.059, 0.067].
 
 This is the evaluation Gian's report did not have at all (he showed a few cherry-picked similar abstracts and word clouds, with no metric).
 
@@ -100,7 +105,7 @@ This is the evaluation Gian's report did not have at all (he showed a few cherry
 ## 4. What the stronger paper claims
 
 1. **A complete citation graph beats an arXiv-only slice.** On 199,400 works with 1,942,373 in-corpus citation edges, PageRank is heavy-tailed (Gini 0.53, cv 4.19), not the uniform artifact Gian reported — the in-citation undercount and dropped-edge problems are fixed.
-2. **A real evaluation exists.** Held-out citation prediction with Recall@k / MAP / MRR and bootstrap CIs scores every recommender on the same footing (the transformer row is filled once embeddings complete).
+2. **Transformer embeddings beat his TF-IDF/word2vec baselines on a real task.** On held-out citation prediction, the transformer recommender improves MAP by +15% over TF-IDF (paired-bootstrap p = 0.001) — quantifying the phrase-meaning loss he could only describe qualitatively.
 3. **Evaluation, not anecdote.** The system is judged by a standard IR protocol with confidence intervals and a significance test, replacing the original's hand-picked examples.
 
 ---
@@ -109,7 +114,7 @@ This is the evaluation Gian's report did not have at all (he showed a few cherry
 
 - **Single subfield.** The corpus is one OpenAlex subfield (3106 (Nuclear & High Energy Physics)); the method generalizes but the numbers are for HEP, as Gian's were for hep-ph.
 - **In-corpus vs. global.** ~23% of references are in-slice; cross-field citations are counted in the *global* `cited_by_count` (so impact isn't capped) but are not nodes in the PageRank graph. This is an honest boundary, not a dropped edge.
-- **Embedding hardware.** Transformer embeddings ran on a CPU Ollama endpoint (~0.5 docs/s), so the neural eval is on a bounded dense subset (3,000 works); the graph/PageRank results are full-corpus. On a GPU the same code embeds the whole subfield.
+- **Embedding hardware.** Transformer (SPECTER) embeddings ran on a local AMD GPU (ROCm), so the neural eval is on a bounded dense subset (3,000 works) chosen to keep the citation graph dense; the graph/PageRank results are full-corpus. The same code scales to the whole subfield.
 - **word2vec baseline** is an in-domain PPMI-SVD static embedding (SGNS-equivalent), mean-pooled exactly as Gian pooled Google's vectors; the representation class is identical, only the training corpus differs.
 
 ---
@@ -119,8 +124,8 @@ This is the evaluation Gian's report did not have at all (he showed a few cherry
 ```bash
 python scripts/ranking_ingest_corpus.py          # pull the OpenAlex subfield (cached/idempotent)
 python scripts/ranking_build.py                  # complete graph + PageRank + impact -> analysis/ranking_graph.json
-python scripts/ranking_embed.py --topic T10048 --sample 3000   # transformer embeddings (per-id cache, resumable)
-python scripts/ranking_evaluate.py --topic T10048 --sample 3000  # held-out citation prediction -> analysis/ranking_eval.json
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/ranking_embed.py --topic T10048 --sample 3000   # SPECTER embeddings on GPU (per-id cache, resumable)
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/ranking_evaluate.py --topic T10048 --sample 3000  # held-out citation prediction -> analysis/ranking_eval.json
 python scripts/ranking_report.py                 # fill this RESULTS.md from the two JSONs
 python scripts/ranking_build_sample.py           # committable sample + manifest
 pytest tests/test_ranking_graph_rank.py tests/test_ranking_eval.py
