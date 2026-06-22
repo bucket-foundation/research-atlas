@@ -3,8 +3,8 @@
   "total_researchers": 1165557,
   "with_orcid": 805931,
   "corresponding_authors": 169268,
-  "contactable_total": 44,
-  "with_public_email_total": 44,
+  "contactable_total": 184,
+  "with_public_email_total": 184,
   "by_field": {
     "biomed-bio": 689684,
     "earth-climate": 116840,
@@ -30,48 +30,48 @@
   "contact_coverage_by_field": {
     "biomed-bio": {
       "profiles": 689684,
-      "with_public_email": 6,
-      "contact_coverage_pct": 0.001
+      "with_public_email": 27,
+      "contact_coverage_pct": 0.004
     },
     "earth-climate": {
       "profiles": 116840,
-      "with_public_email": 7,
-      "contact_coverage_pct": 0.006
+      "with_public_email": 23,
+      "contact_coverage_pct": 0.02
     },
     "physics-astro": {
       "profiles": 108466,
-      "with_public_email": 8,
-      "contact_coverage_pct": 0.007
+      "with_public_email": 27,
+      "contact_coverage_pct": 0.025
     },
     "engineering": {
       "profiles": 93027,
-      "with_public_email": 1,
-      "contact_coverage_pct": 0.001
+      "with_public_email": 15,
+      "contact_coverage_pct": 0.016
     },
     "cs-ml": {
       "profiles": 44999,
-      "with_public_email": 5,
-      "contact_coverage_pct": 0.011
+      "with_public_email": 20,
+      "contact_coverage_pct": 0.044
     },
     "materials": {
       "profiles": 44536,
-      "with_public_email": 3,
-      "contact_coverage_pct": 0.007
+      "with_public_email": 15,
+      "contact_coverage_pct": 0.034
     },
     "econ-social": {
       "profiles": 42276,
-      "with_public_email": 6,
-      "contact_coverage_pct": 0.014
+      "with_public_email": 24,
+      "contact_coverage_pct": 0.057
     },
     "chemistry": {
       "profiles": 20531,
-      "with_public_email": 2,
-      "contact_coverage_pct": 0.01
+      "with_public_email": 13,
+      "contact_coverage_pct": 0.063
     },
     "math": {
       "profiles": 5198,
-      "with_public_email": 6,
-      "contact_coverage_pct": 0.115
+      "with_public_email": 20,
+      "contact_coverage_pct": 0.385
     }
   },
   "contact_coverage_note": "contact_coverage_pct is computed over profiles that carry a public email / total profiles in the field -- it is an HONEST sample rate, bounded by the high-value enrichment cap, NOT a claim that the rest have no public email (they were simply not yet looked up).",
