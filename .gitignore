@@ -10,6 +10,15 @@ data/raw/
 data/processed/*.parquet
 !data/processed/sample/*.parquet
 
+# PII-BEARING researcher/users CRM table -- carries harvested PUBLIC emails.
+# NEVER commit. Only the email-free sample + aggregates ship (see
+# scripts/build_users_sample.py and docs/USERS_POLICY.md). Listed explicitly
+# (belt-and-suspenders on top of the data/processed/*.parquet rule above).
+data/processed/researchers.parquet
+data/processed/users.parquet
+# Raw contact-lookup cache (ORCID / EuropePMC responses) may contain emails.
+data/raw/contacts/
+
 # Partitioned shard directories written by the bulk scale path
 # (data/processed/<table>/source=.../year=.../part-*.parquet). Rebuilt from raw
 # via scripts/ingest_*.py + scripts/consolidate.py; never committed.

@@ -31,6 +31,8 @@ def main() -> int:
     ap.add_argument("--topic", default="mitochondri")
     ap.add_argument("--limit", type=int, default=15)
     ap.add_argument("--min-grants", type=int, default=50)
+    ap.add_argument("--tool", default="fair-data-mgmt",
+                    help="roadmap tool slug for the tool_targets query")
     ap.add_argument("--json", action="store_true")
     args = ap.parse_args()
 
@@ -51,6 +53,8 @@ def main() -> int:
         kwargs = {"topic_like": args.topic, "limit": args.limit}
     elif args.query == "org_funding_vs_output":
         kwargs = {"min_grants": args.min_grants, "limit": args.limit}
+    elif args.query == "tool_targets":
+        kwargs = {"tool_slug": args.tool, "limit": args.limit}
     else:
         kwargs = {"limit": args.limit}
     rows = fn(con, **kwargs)

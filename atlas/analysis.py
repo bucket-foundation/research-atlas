@@ -159,10 +159,49 @@ def funding_by_country(con, limit: int = 20) -> list[dict]:
     """, [limit]))
 
 
+def researchers_by_segment(con, limit: int = 30) -> list[dict]:
+    """Researcher/user counts by field x seniority x activity tier.
+
+    Reads the PII-free ``researchers_public`` view so this query can never
+    surface contact data. The basis for tool-targeting: who, in which field, at
+    which career stage, is active.
+    """
+    return _rows(con.execute("""
+        SELECT field_slug, seniority, activity_tier,
+               count(*) AS researchers,
+               sum(CASE WHEN is_corresponding_author THEN 1 ELSE 0 END) AS corresponding
+        FROM researchers_public
+        GROUP BY 1, 2, 3
+        ORDER BY researchers DESC
+        LIMIT ?
+    """, [limit]))
+
+
+def tool_targets(con, tool_slug: str, limit: int = 25) -> list[dict]:
+    """Active-PI researchers whose ``tool_fit`` includes a given roadmap tool.
+
+    Joins a cross-field software need (from ``docs/USERS_NEEDS.md``) to the exact
+    active researchers who need it -- the discovery layer of the tool roadmap.
+    PII-free (``researchers_public``); pair with the contactable view for the
+    public-contact subset (governed by ``docs/USERS_POLICY.md``).
+    """
+    return _rows(con.execute("""
+        SELECT field_slug, full_name, primary_org_name, country_code,
+               works_count, h_index_proxy, seniority, segment
+        FROM researchers_public
+        WHERE tool_fit LIKE ?
+          AND activity_tier = 'active-pi'
+        ORDER BY h_index_proxy DESC, works_count DESC
+        LIMIT ?
+    """, [f"%{tool_slug}%", limit]))
+
+
 QUERIES = {
     "top_funders_by_output": top_funders_by_output,
     "org_funding_vs_output": org_funding_vs_output,
     "rising_fields": rising_fields,
     "cross_funder_orgs": cross_funder_orgs,
     "funding_by_country": funding_by_country,
+    "researchers_by_segment": researchers_by_segment,
+    "tool_targets": tool_targets,
 }

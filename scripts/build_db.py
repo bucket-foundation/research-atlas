@@ -56,6 +56,43 @@ def main() -> int:
             con.execute(f"CREATE INDEX idx_{table}_src ON {table}(src_id)")
             con.execute(f"CREATE INDEX idx_{table}_dst ON {table}(dst_id)")
 
+    # ---- researcher/users (CRM) layer ------------------------------------- #
+    # The enriched, segmented, contactable researcher profiles built on top of
+    # the Person nodes (scripts/build_users.py). The full table carries public
+    # contacts and is local/gitignored; a PII-stripped view is exposed for any
+    # query that should never touch contact data.
+    from atlas.users.schema import PII_COLUMNS, USER_COLUMNS  # noqa: E402
+
+    researchers_pq = processed / "researchers.parquet"
+    if researchers_pq.exists():
+        con.execute(
+            "CREATE TABLE researchers AS "
+            f"SELECT * FROM read_parquet('{researchers_pq}')")
+        con.execute("CREATE UNIQUE INDEX idx_researchers_pk ON researchers(atlas_id)")
+        con.execute("CREATE INDEX idx_researchers_field ON researchers(field_slug)")
+        con.execute("CREATE INDEX idx_researchers_seg ON researchers(segment)")
+        n = con.execute("SELECT count(*) FROM researchers").fetchone()[0]
+        loaded.append(("researchers", n))
+        # PII-free view: every non-PII column, contacts excluded by construction.
+        safe_cols = ", ".join(c for c in USER_COLUMNS if c not in PII_COLUMNS)
+        con.execute(
+            f"CREATE VIEW researchers_public AS SELECT {safe_cols} FROM researchers")
+        # convenience view: the contactable, not-opted-out outreach segment
+        con.execute(
+            "CREATE VIEW researchers_contactable AS "
+            "SELECT * FROM researchers "
+            "WHERE contactable = TRUE AND opt_out = FALSE")
+    else:
+        # Build from the committed email-free sample if the full table is absent,
+        # so a fresh clone still has a researchers_public view to query.
+        sample_pq = processed / "sample" / "researchers_sample.parquet"
+        if sample_pq.exists():
+            con.execute(
+                "CREATE VIEW researchers_public AS "
+                f"SELECT * FROM read_parquet('{sample_pq}')")
+            n = con.execute("SELECT count(*) FROM researchers_public").fetchone()[0]
+            loaded.append(("researchers_public (sample)", n))
+
     con.close()
     print(f"Built {db_path}")
     for table, n in loaded:

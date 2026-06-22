@@ -199,10 +199,21 @@ analysis/
   run.py               recompute results.json + figures (idempotent)
   results.json         machine-readable results (paper + tests read this)
   figures/             the 5 paper figures (PNG)
+atlas/users/           researcher/users (CRM) layer on top of Person nodes
+  schema.py            enriched user schema + compliance coerce (no fabricated emails)
+  profiles.py          build profiles from raw works (field/activity/impact/seniority)
+  contacts.py          harvest PUBLIC contacts (ORCID public + EuropePMC corresp-author)
+  segment.py           seniority / activity / tool-fit segmentation
+scripts/
+  build_users.py       full enrichment → data/processed/researchers.parquet (gitignored, PII)
+  enrich_contacts.py   public-contact enrichment for the high-value segment (network)
+  build_users_sample.py  email-free sample + counts-only aggregates (committable)
 docs/
   SCHEMA.md            the canonical schema, in prose
   ARCHITECTURE.md      data flow, idempotency, money, Publish-to-Bucket seam
   LANDSCAPE.md         the full funding-landscape report (real numbers)
+  USERS_POLICY.md      researcher contact data policy (GDPR/CAN-SPAM, public-only, opt-out)
+  USERS_NEEDS.md       per-field software-needs analysis + cross-field tool roadmap
   papers/01-funding-landscape/   first preprint: paper.md + paper.pdf + .zenodo.json
 tests/                 schema invariants + per-connector normalizers + scale path + paper-vs-data (no network)
 data/
