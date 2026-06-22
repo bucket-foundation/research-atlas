@@ -27,6 +27,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import requests
 from pathlib import Path
 
 import numpy as np
@@ -233,7 +234,7 @@ def _embed_batch(sess, inputs: list[str], model: str, url: str,
 
 def embed_texts_by_id(work_ids: list[str], texts: list[str],
                       model: str = EMBED_MODEL, url: str = OLLAMA_BATCH_URL,
-                      by_id_dir: Path = BY_ID_DIR, batch_size: int = 64,
+                      by_id_dir: Path = BY_ID_DIR, batch_size: int = 16,
                       log_every: int = 256) -> int:
     """Batch-embed the uncached works, writing one ``<wid>.npy`` per work.
 
