@@ -10,6 +10,18 @@ data/raw/
 data/processed/*.parquet
 !data/processed/sample/*.parquet
 
+# Ranking system: heavy corpus + per-work ranking parquet (rebuilt from the
+# OpenAlex cache). The small committed slice lives under data/processed/sample/.
+data/processed/ranking/*.parquet
+
+# Cross-field orchestrator: commit the checkpoint JSONs + manifest + convergence
+# log (small, durable results), but NOT the run lock, transient partials, or
+# the run log (all rebuilt by re-running scripts/crossfield_run.py).
+analysis/crossfield/run.lock
+analysis/crossfield/*.partial.json
+analysis/crossfield/*.tmp
+analysis_ckpt*.log
+
 # PII-BEARING researcher/users CRM table -- carries harvested PUBLIC emails.
 # NEVER commit. Only the email-free sample + aggregates ship (see
 # scripts/build_users_sample.py and docs/USERS_POLICY.md). Listed explicitly

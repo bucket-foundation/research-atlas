@@ -14,6 +14,27 @@ write-up and adds the quantitative evaluation he never had.
 | embed | `embed.py` | **transformer** embeddings (Ollama `nomic-embed-text`, 768-d) + his **TF-IDF**, **TF-IDF+NMF**, and **word2vec mean-pool** baselines |
 | recommend | `recommend.py` | cosine-kNN over each representation + a text-free graph co-citation recommender |
 | evaluate | `evaluate.py` | **held-out citation prediction**: mask refs, rank candidates, score Recall@k / MAP / MRR with bootstrap 95% CIs + a paired significance test |
+| **crossfield** | `crossfield.py` | scale the whole pipeline to **all 26 OpenAlex top-level fields**, impact-ranked, **checkpointed + resumable**, with ingestion (network) running **concurrent** with analysis (GPU). Per-checkpoint per-field PageRank/Gini + the eval, plus cross-field generalization (does SPECTER beat TF-IDF in *every* field?), Gini-by-field, and interdisciplinarity |
+
+## Cross-field generalization study (`crossfield.py` + `scripts/crossfield_run.py`)
+
+The single-subfield study proves the pattern on HEP; the cross-field orchestrator
+asks whether it **generalizes**. It is checkpointed, resumable, and grows the
+corpus by tranches (e.g. 3k → 5k → 20k → 50k works/field). Ingestion is concurrent
+with analysis (a producer thread downloads the next field while the GPU embeds the
+ready one), every checkpoint writes a durable
+`analysis/crossfield/checkpoint_<N>.json` + updates `manifest.json` +
+`convergence.jsonl`, and a SIGINT/crash mid-run resumes cleanly from the per-field
+partial + the raw-page / per-id embedding caches.
+
+```bash
+# run the NEXT checkpoint (first run = checkpoint 1, top ~3k works/field)
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py
+# advance the loop: re-run grows the corpus to the next tranche
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py
+# measure GPU embed throughput on the current cache
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py --measure-throughput
+```
 
 ## The three fixes (each maps to a weakness he listed)
 

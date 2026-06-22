@@ -1,445 +1,439 @@
-# Ranking and recommending scientific papers on a complete citation graph: PageRank without the uniformity artifact, and paper-trained transformer embeddings that beat TF-IDF on held-out citation prediction
+# Does transformer paper-recommendation generalize across fields? A checkpointed, all-26-field test of SPECTER vs TF-IDF on held-out citation prediction
 
 **Author:** Bucket Foundation · research-atlas working group
-**Version:** 1.0 (preprint draft) · **Date:** 2026-06-22
-**Corpus:** OpenAlex subfield 3106 (Nuclear & High Energy Physics), 2015–2024 — 199,400 works, 1,942,373 in-corpus citation edges
+**Version:** 2.0 (cross-field preprint draft) · **Date:** 2026-06-22
+**Corpus:** OpenAlex, all 26 top-level fields, impact-ranked (most-cited first), 2015–2024 — checkpoint 1 = top ~3,000 works/field (78,000 works), grown by a checkpoint loop
 **DOI:** to be minted on the next research-atlas release (concept record on Zenodo; see `.zenodo.json`)
-**Reproducibility:** every number in this paper is emitted by `scripts/ranking_build.py` → `analysis/ranking_graph.json` and `scripts/ranking_evaluate.py` → `analysis/ranking_eval.json`, and pinned by `tests/test_ranking_graph_rank.py` / `tests/test_ranking_eval.py`. The JSON files are the authoritative source for every statistic quoted below.
+**Reproducibility:** every number in this paper is emitted by `scripts/crossfield_run.py` → `analysis/crossfield/checkpoint_<N>.json` (+ `manifest.json` + `convergence.jsonl`), summarized by `scripts/crossfield_report.py`, and pinned by `tests/test_crossfield.py`. The checkpoint JSON is the authoritative source for every statistic quoted below; the paper reads from **checkpoint 1**.
 
 ---
 
 ## Abstract
 
-We rebuild an academic paper ranking-and-recommendation system on a **complete**
-citation graph and add the quantitative evaluation its predecessor lacked. The
-predecessor — an undergraduate course project (UMass MA544) by one of the authors
-— ranked and recommended arXiv `hep-ph` papers with TF-IDF+NMF topics, a cosine
-recommender over abstract vectors, mean-pooled Google word2vec similarity, and
-PageRank via the power method, and stated three weaknesses itself: an incomplete
-citation graph (references to papers outside the arXiv slice were silently
-dropped), undercounted in-citations (which made PageRank come out essentially
-**uniform** — "differences at the 14th significant digit"), and bag-of-words text
-representations that lose phrase meaning, evaluated only by a handful of
-cherry-picked examples with **no metric**. We address each weakness on a
-199,400-work, 1,942,373-edge OpenAlex slice of Nuclear & High Energy Physics
-(2015–2024). **(1)** On the complete in-corpus graph the same power method
-(damping 0.85) yields a **heavy-tailed** PageRank — Gini = 0.53, coefficient of
-variation = 4.19, the top work carrying **967×** the uniform mass and the top 1%
-of works holding **22.7%** of all PageRank — eliminating the uniformity artifact.
-**(2)** We add **SPECTER** sentence embeddings (a transformer pre-trained on the
-scientific-paper citation graph), run on a local AMD GPU (ROCm) at ~8 docs/s
-end-to-end including model load. **(3)** We define a standard **held-out
-citation-prediction** evaluation — mask 30% of each query paper's in-corpus
-references, rank all candidates, score the held-out set with Recall@k / MAP / MRR
-and bootstrap 95% CIs — and run all methods on the identical closed candidate
-pool. On 2,359 query papers the SPECTER recommender attains the best scores of
-all five methods (MAP 0.063 [0.059, 0.067], R@10 0.104, MRR 0.157), beating the
-TF-IDF baseline by **+15.4% relative MAP** with a paired-bootstrap
-**p = 0.0005**. We state the corpus and protocol limitations plainly — a single
-subfield, an in-corpus closed-world candidate pool, and a GPU-bounded neural
-sample — and release all code, the analysis JSONs, a committable data sample, and
-a Zenodo-ready metadata record.
+A companion single-subfield study showed that **SPECTER** (a transformer
+pre-trained on the scientific-paper citation graph) beats a TF-IDF baseline at
+held-out citation prediction in High-Energy Physics (+15.4% relative MAP,
+p = 0.0005). The natural question — and the one practitioners actually face when
+they reach for a neural paper-recommender — is whether that advantage
+**generalizes across fields**, or whether it is a property of one citation-dense
+subfield. We answer it directly. We built a **checkpointed, resumable,
+producer/consumer** pipeline that pulls an **impact-ranked corpus** (most-cited
+papers first) across **all 26 OpenAlex top-level fields**, builds a complete
+in-corpus citation graph and PageRank per field, embeds title+abstract on a local
+AMD GPU (ROCm) at a measured **9.1 docs/s steady-state**, and runs the identical
+held-out citation-prediction evaluation — SPECTER vs TF-IDF vs word2vec vs a
+text-free graph recommender, with bootstrap CIs and a paired test — in **every**
+field. At checkpoint 1 (top ~3,000 works/field, **78,000 works**), the verdict is
+nuanced and we report it honestly: **SPECTER beats TF-IDF on MAP in 16 of 26
+fields**, but the across-field effect is **borderline** — combined field-level
+mean ΔMAP = **+0.0095** (95% CI **[−0.0005, +0.0195]**, one-sample bootstrap
+p = **0.0624**); the sign test on 16/26 wins is not significant (p = 0.33). The
+advantage is real and large where text carries fine-grained meaning
+(Neuroscience +0.063 p = 0.004; Computer Science +0.060 p < 0.001; Social
+Sciences, Psychology), and **reverses** in several physical-science / pharmacology
+fields (Pharmacology −0.034 p = 0.001; Energy −0.014 p = 0.001; Earth Sciences
+−0.031 p = 0.021). Citation concentration varies by field (Gini
+**0.235–0.538**) and so does interdisciplinarity (cross-field reference fraction
+**0.114–0.468**). The headline: **transformer paper-recommendation does not
+robustly generalize across all fields — it is field-dependent, winning a majority
+but not all, with no significant aggregate edge.** The corpus grows by re-running
+the loop (the next tranche is top 5k, then 20k, then 50k works/field); every
+checkpoint is durable and the run resumes cleanly after interruption.
 
 ---
 
 ## 1. Introduction
 
-The original system this paper succeeds is a course project written by one of the
-authors for UMass Amherst's MA544 (numerical linear algebra), *Academic Paper
-Ranking and Recommendation System*. It worked on a slice of the arXiv `hep-ph`
-(high-energy physics — phenomenology) listings and combined four ideas that map
-cleanly onto the standard toolkit of bibliometrics and information retrieval:
+The predecessor of this line of work is a course project (UMass MA544) that
+ranked and recommended arXiv `hep-ph` papers with TF-IDF+NMF topics, a cosine
+recommender, mean-pooled word2vec, and PageRank. A first paper (companion;
+`RESULTS.md`) rebuilt it on a **complete** OpenAlex citation graph for one
+subfield (Nuclear & High-Energy Physics), fixed the PageRank-uniformity artifact
+(Gini 0.53 instead of "differences at the 14th significant digit"), and added the
+quantitative evaluation it lacked: on 2,359 HEP queries, SPECTER beat TF-IDF on
+held-out citation prediction by **+15.4% relative MAP** with a paired-bootstrap
+**p = 0.0005**.
 
-1. **TF-IDF + NMF topics.** Abstracts were vectorized with TF-IDF and factorized
-   with non-negative matrix factorization ($V \approx WH$) into a low-rank
-   document–topic representation $W$.
-2. **A cosine recommender.** Given a paper, return the most similar papers by
-   cosine similarity of the (NMF-reduced) abstract vectors.
-3. **word2vec abstract similarity.** As a second representation, Google's
-   pretrained word2vec vectors were averaged over each abstract and compared by
-   cosine.
-4. **PageRank.** A citation adjacency matrix in CSR form was run through the power
-   method (damping 0.85) to produce a recursive-prestige ranking.
+A single-subfield win is suggestive, not conclusive. SPECTER is trained on the
+citation graph; HEP is citation-dense and textually distinctive; both could
+flatter the transformer. The scientifically interesting — and practically
+decisive — question is **generalization**:
 
-The project was competent linear algebra, but it stated three weaknesses of its
-own, and those weaknesses are exactly where a stronger system has to improve:
+> Does a paper-trained transformer recommender beat a TF-IDF baseline at held-out
+> citation prediction **in every field**, or only in some? If only some, which,
+> and is there a net advantage across the literature as a whole?
 
-> **W1 — Incomplete citation graph.** References pointing to papers *outside* the
-> arXiv slice were dropped, so the graph the power method ran on was missing most
-> of its edges.
->
-> **W2 — Undercounted in-citations → uniform PageRank.** Because so few edges
-> survived, almost every node had a near-identical score: PageRank "differed at
-> the 14th significant digit." A ranking that ranks nothing is not a ranking.
->
-> **W3 — Phrase meaning lost, and no evaluation.** Bag-of-words TF-IDF and
-> mean-pooled word2vec both destroy multi-word meaning ("supernova neutrino"
-> becomes two unrelated tokens), and the recommender's quality was demonstrated
-> only with a few hand-picked similar abstracts and word clouds — **no Recall, no
-> MAP, no MRR, no baseline comparison**.
+This paper answers that question with a real, all-26-field measurement, and
+reports the answer whether or not it is the convenient one. The contribution is
+three-fold:
 
-This paper fixes each weakness on a complete citation graph, with a real metric.
-We deliberately keep the predecessor's *methods* as baselines — TF-IDF cosine,
-TF-IDF+NMF cosine, word2vec mean-pool cosine — and reproduce them faithfully, so
-the comparison is against his system, not a strawman. The contribution is three
-concrete, measurable improvements:
-
-- **A complete in-corpus citation graph** from OpenAlex, on which the *same* power
-  method produces a heavy-tailed, informative PageRank (W1, W2).
-- **A paper-trained transformer representation** (SPECTER) added alongside the
-  baselines, run on a local GPU (W3, text side).
-- **A held-out citation-prediction evaluation** with bootstrap confidence
-  intervals and a paired significance test, scoring all five methods identically
-  (W3, evaluation side).
+1. **A method**: a checkpointed, resumable, ingestion-concurrent-with-analysis
+   orchestrator (`atlas/ranking/crossfield.py`) that scales the proven
+   single-subfield pipeline to all 26 OpenAlex top-level fields, impact-ranked,
+   growing the corpus in durable tranches.
+2. **A measurement**: the per-field held-out citation-prediction eval (SPECTER vs
+   TF-IDF vs word2vec vs graph) in all 26 fields at checkpoint 1, with bootstrap
+   CIs and a paired test per field plus a combined field-level test.
+3. **An honest finding**: SPECTER wins a **majority** of fields but **not all**,
+   and the **aggregate** advantage is **not significant** — transformer
+   paper-recommendation is **field-dependent**, not a universal win.
 
 ---
 
 ## 2. Data
 
-### 2.1 The corpus
+### 2.1 Impact-ranked corpus across all 26 fields
 
-We replace the arXiv `hep-ph` slice with a coherent OpenAlex **subfield**: 3106,
-*Nuclear & High Energy Physics*, restricted to articles published 2015–2024. This
-is the complete analogue of his slice — the same scientific neighbourhood — but
-with a *resolvable* citation graph: OpenAlex exposes each work's
-`referenced_works` (out-references) and a `cited_by_count` (global in-citations),
-both keyed on stable OpenAlex work IDs.
+For each OpenAlex top-level field (`primary_topic.field.id:fields/<id>`,
+articles, 2015–2024) we pull works **ordered by global `cited_by_count`
+descending** — the most impactful papers first — with each work's
+`referenced_works` (out-edges) and `cited_by_count` (global impact) and abstract.
+Impact-ranked ingestion is deliberate: it surfaces each field's canonical core
+before its long tail, so even a modest tranche is the part of the field that most
+recommendation traffic actually concerns. The corpus grows in **checkpoint
+tranches** (top 3k → 5k → 20k → 50k works/field, configurable); checkpoint 1 is
+the top ~3,000 most-cited works in every field.
 
-| metric | value |
+| metric (checkpoint 1) | value |
 |---|---:|
-| works | **199,400** |
-| works with abstract | 168,677 (84.6%) |
-| out-references (total, raw) | 8,585,763 |
-| **in-corpus citation edges** | **1,942,373** |
-| in-corpus edge coverage | 22.6% |
-| global cited-by total | 4,441,380 |
-| mean in-corpus in-degree | 9.7 |
-| max in-corpus in-degree | 5,067 |
+| fields | **26** |
+| works (top ~3k/field) | **78,000** |
+| publication window | 2015–2024 |
+| GPU embedding model | SPECTER (`allenai-specter`), 768-d |
+| GPU steady-state throughput | **9.1 docs/s** (AMD RX 7700S / ROCm) |
+| wall-clock (checkpoint 1) | ~52 min |
 
-*(Source: `analysis/ranking_graph.json → corpus`.)*
+*(Source: `analysis/crossfield/checkpoint_1.json`.)*
 
-### 2.2 The honest coverage boundary
+Raw OpenAlex pages are cached per (field, page-index); the per-id SPECTER
+embeddings are cached one `.npy` per work. Both caches make the run **resumable**:
+a re-run resumes from disk, and a larger tranche fetches only the new pages.
 
-About **22.6%** of each paper's references land *inside* the subfield slice; the
-rest point to adjacent fields — mathematics, astrophysics, instrumentation,
-statistics. This is not a defect we hide; it is the real citation behaviour that
-the predecessor's arXiv-only graph *silently dropped* (W1). We handle it
-explicitly and in two layers:
+### 2.2 The honest coverage boundary, per field
 
-- **For the graph / PageRank**, out-of-slice targets are simply not nodes. The
-  in-corpus edge set (1,942,373 edges) is *complete* with respect to the slice —
-  no surviving edge is discarded — and PageRank is computed on it.
-- **For impact**, we keep OpenAlex's **global `cited_by_count`**, which counts
-  citations from *anywhere*, including outside the slice. So a paper's measured
-  impact is not capped at the slice boundary even though its PageRank is computed
-  within it.
-
-This is the defensible position: a closed graph for the recursive computation, an
-open count for impact, and the boundary stated rather than papered over.
+As in the single-subfield study, the in-corpus citation graph is **complete by
+construction within each field's loaded slice** (no surviving edge dropped), while
+**global `cited_by_count`** carries impact from outside the slice. Because the
+corpus is impact-ranked and bounded per field, in-corpus edge density is lower
+than in the deep HEP slice — this is expected and is exactly why we (a) report it
+explicitly and (b) **grow** the corpus via the checkpoint loop: density rises with
+each tranche, and the convergence log tracks how the headline numbers move as it
+does.
 
 ---
 
 ## 3. Methods
 
-### 3.1 Ranking — PageRank on the complete graph
+### 3.1 The checkpointed, resumable, concurrent orchestrator
 
-We use the **same** algorithm the predecessor used: the power method on a CSR
-citation adjacency with damping factor 0.85 and uniform teleportation,
-$\mathbf{r} \leftarrow (1-d)\tfrac{1}{n}\mathbf{1} + d\,P^\top \mathbf{r}$, iterated
-to convergence, with dangling-node mass redistributed uniformly. The only thing
-that changes is the graph it runs on: the complete 1,942,373-edge in-corpus set
-rather than a sparsified arXiv slice.
+The engineering is part of the contribution, because a 26-field neural study on
+one GPU must survive interruption (we have lost connectivity mid-run before).
 
-We report three complementary impact signals, all in
-`data/processed/ranking/ranking.parquet`:
+- **Producer/consumer.** A network-bound **producer** thread downloads each
+  field's tranche (caching raw pages); the GPU/CPU-bound **consumer** analyzes a
+  field the instant its raw is cached. The GPU never waits on the network — in
+  checkpoint 1 the producer finished downloading all 26 fields while the consumer
+  was still embedding the early ones.
+- **Durable checkpointing.** Each field's result is written to a per-field
+  **partial** file immediately on completion; when all fields finish, a single
+  `checkpoint_<N>.json` is written atomically and the partial is dropped. A
+  `manifest.json` indexes every checkpoint and a `convergence.jsonl` logs how
+  per-field MAP / Gini / the SPECTER-vs-TF-IDF delta move as the corpus grows.
+- **Crash-safety / resume.** A SIGINT or crash mid-checkpoint loses nothing: the
+  per-field partial, the raw-page cache, and the per-id embedding cache are all on
+  disk. Re-running resumes finished fields for free and re-analyzes only the rest;
+  re-running after a clean checkpoint **advances** to the next tranche. A PID lock
+  prevents two runs racing on the shared caches.
 
-- **PageRank** — recursive prestige on the citation graph;
-- **citation count** — the global, uncapped `cited_by_count`;
-- **field-normalized impact** — citations divided by the mean of the work's
-  topic×year cohort, so impact is comparable across topics and ages without
-  recency or field bias.
+### 3.2 Per-field pipeline (identical to the proven single-subfield study)
 
-To diagnose W2 quantitatively we measure the **non-uniformity** of the PageRank
-vector: its coefficient of variation, its Gini coefficient, the ratio of the
-top work's mass to the uniform floor $1/n$, and the share of total mass held by
-the top 1% of works.
+For each field we reuse the companion study's modules unchanged:
 
-### 3.2 Text representations
+- **Complete in-corpus citation graph** (CSR) + **PageRank** (power method,
+  damping 0.85), with heavy-tail diagnostics (Gini, cv, top-1% mass).
+- **Four recommenders**, all scored on the identical closed candidate pool:
+  **TF-IDF cosine** (the baseline), **word2vec mean-pool cosine**, **SPECTER
+  transformer cosine** (768-d, GPU), and a **text-free graph co-citation**
+  recommender (bibliographic coupling).
+- **Held-out citation-prediction eval**: mask 30% of each eligible query's
+  in-corpus references, rank all candidates, score the held-out set with
+  **Recall@k / MAP / MRR** and bootstrap 95% CIs; the SPECTER-vs-TF-IDF gap is
+  tested with a **paired bootstrap** on per-query average precision. To keep the
+  graph dense and the candidate pool closed (so masked references are real in-pool
+  targets), the eval runs on the citation-densest sample per field, exactly as in
+  the single-subfield study.
 
-All four text matrices are L2-normalized so cosine similarity is a single dot
-product (matching the predecessor's cosine recommender), and top-$k$ retrieval is
-one matrix–vector product per query.
+### 3.3 Cross-field analyses
 
-- **TF-IDF cosine** (his primary representation). TF-IDF over title+abstract,
-  reproduced with scikit-learn (smoothed idf), exactly the bag-of-words vectors
-  his cosine recommender ran on.
-- **TF-IDF+NMF cosine** (his method, exact). The TF-IDF matrix NMF-reduced to a
-  document–topic matrix $W$ — the precise representation his recommender used.
-- **word2vec mean-pool cosine** (his second method). He averaged Google's
-  pretrained word2vec vectors over each abstract. Google's 3.5 GB binary is not
-  assumed present, so we train an equivalent *static* word embedding on the
-  corpus via a PPMI + truncated-SVD factorization of the co-occurrence matrix —
-  the classic result that SVD-on-PPMI approximates word2vec/SGNS (Levy &
-  Goldberg, 2014) — then mean-pool exactly as he did. The representation *class*
-  (static word vectors, mean-pooled, cosine) is identical; only the training
-  corpus differs (in-domain here, if anything fairer to the baseline).
-- **SPECTER transformer cosine** (the W3 fix). We embed each title+abstract with
-  **SPECTER** (`sentence-transformers/allenai-specter`), a BERT-class transformer
-  pre-trained specifically on the scientific-paper citation graph — a paper is
-  pulled close to the papers it cites — which makes it the right tool for paper
-  recommendation rather than a generic sentence encoder. Embeddings are 768-d,
-  L2-normalized, and written one `.npy` per work id to a resumable per-id cache
-  the evaluation reads directly.
+Beyond per-field tables we compute three cross-field quantities:
 
-We also include a fourth, **text-free** recommender as a reference point:
+- **Generalization.** In how many of 26 fields does SPECTER beat TF-IDF on MAP?
+  We report per-field ΔMAP and p, a **sign test** on the win count, and a
+  **combined field-level test** — a one-sample bootstrap on the distribution of
+  per-field MAP deltas (is the *across-field* mean delta > 0?).
+- **Concentration.** Citation-count and PageRank **Gini by field**, and their
+  ranges — how unequal impact is, field by field.
+- **Interdisciplinarity.** For each field, the fraction of its in-corpus
+  references whose target lives in a **different** top-level field (computed over
+  the union of all 26 loaded fields, so cross-field edges are resolvable).
 
-- **Graph co-citation** (bibliographic coupling). Score candidates purely by
-  shared references / co-citation structure, using no text at all.
+### 3.4 GPU embedding throughput
 
-### 3.3 GPU embedding backend
-
-The predecessor's neural step was the throughput bottleneck. An earlier attempt
-to embed via a CPU Ollama endpoint ran at ~0.5 docs/s — too slow to embed even a
-3,000-work sample comfortably. We replaced it with a GPU sentence-transformers
-backend: with `HSA_OVERRIDE_GFX_VERSION=11.0.0` set before importing torch, an
-AMD Radeon RX 7700S is recognized by ROCm (torch 2.9.1+rocm6.4), and
-`SentenceTransformer(MODEL, device="cuda")` batch-encodes at **~8 docs/s
-end-to-end including a ~30 s one-time model load** (steady-state batch throughput
-is higher). The backend (`atlas/ranking/embed.py → embed_texts_by_id_st`) tries
-SPECTER first, then falls back to `nomic-ai/nomic-embed-text-v1.5` and
-`all-MiniLM-L6-v2` if a download fails; the legacy Ollama path is retained but is
-no longer the default. The per-id cache makes the embed resumable and makes
-repeated evaluation runs free.
-
-### 3.4 The held-out citation-prediction protocol
-
-A paper's reference list is a gold set of papers its authors judged relevant — a
-free, large, objective relevance signal that needs no human annotation. We turn
-it into a standard link-prediction / retrieval task:
-
-1. **Eligible queries** are papers with at least 5 in-corpus references.
-2. For each query we **mask** a seeded random 30% of its in-corpus references
-   (the held-out gold set); the remaining 70% stay observed.
-3. Each method **ranks all other candidates** by relevance to the query.
-4. Before scoring, the still-observed references and the query itself are
-   **forbidden** (removed from the candidate pool), so a method is scored only on
-   recovering the *held-out* references against true negatives.
-
-We report, averaged over queries: **Recall@k** ($k \in \{5,10,20,50\}$),
-**MAP** (mean average precision over the ranked list), and **MRR** (mean
-reciprocal rank of the first held-out hit). Every per-query metric is aggregated
-with a **1,000-sample bootstrap 95% CI** over queries, and the headline
-transformer-vs-TF-IDF gap is tested with a **2,000-sample paired bootstrap**
-p-value on per-query average precision (the methods are scored on the *same*
-queries, so the test is paired).
-
-**Closed-world honesty.** Because the transformer embeddings (and the dense
-citation graph) are the bottleneck, we evaluate on a bounded sample of 3,000
-works chosen for *citation density*, not at random: random subsampling of a
-200k-work corpus collapses in-sample edge coverage to ~1% (references scatter
-everywhere), which would sparsify the graph the same way the predecessor's slice
-was sparsified — the very artifact we are fixing. Instead we restrict to one
-coherent topic and take the works with the highest in-pool reference degree, so
-every masked reference is a real in-pool target and every method sees the
-identical closed candidate pool. This is an apples-to-apples comparison *within*
-a dense closed world; it is not a claim about open-world retrieval against the
-whole literature, and we flag that in the limitations.
+SPECTER runs on an AMD Radeon RX 7700S via ROCm (`HSA_OVERRIDE_GFX_VERSION=
+11.0.0` before importing torch; torch 2.9.1+rocm6.4), batch-encoding at a
+**measured steady-state of 9.1 docs/s** (excluding the one-time model load —
+the prior "~8/s" figure included it). On an 8 GB card SPECTER (a BERT-class,
+512-token model) is genuinely encode-bound at batch 64; this is the honest rate,
+and it is why the neural study is checkpointed and resumable rather than run in
+one shot.
 
 ---
 
 ## 4. Results
 
-### 4.1 PageRank is now heavy-tailed — the uniformity artifact is gone (W1, W2)
+### 4.1 The generalization verdict: a majority, not a universal, win
 
-On the complete in-corpus graph, the same power method the predecessor used
-produces a strongly non-uniform PageRank. Where his came out flat ("differences
-at the 14th significant digit"), ours separates papers by orders of magnitude:
+At checkpoint 1, across all 26 fields:
 
-| diagnostic | PageRank | uniform floor |
-|---|---:|---:|
-| coefficient of variation | **4.19** | 0 |
-| Gini | **0.53** | 0 |
-| top-1 mass / uniform | **967×** | 1× |
-| top-1% of works hold | **22.7%** of all mass | — |
+| quantity | value | source |
+|---|---:|---|
+| fields evaluated | **26** | `crossfield.generalization.fields_evaluated` |
+| fields where **SPECTER > TF-IDF** (MAP) | **16 / 26** | `fields_specter_wins` |
+| win fraction | 0.62 | `win_fraction` |
+| sign test (16/26 wins) | **p = 0.33** | `sign_test_p` |
+| **combined field-level mean ΔMAP** | **+0.0095** | `combined_field_level.mean` |
+| combined 95% CI | **[−0.0005, +0.0195]** | `combined_field_level.ci` |
+| combined bootstrap p | **0.0624** | `combined_field_level.p` |
 
-*(Source: `analysis/ranking_graph.json → pagerank_uniformity`; `pagerank_is_nonuniform = true`.)*
+*(Source: `analysis/crossfield/checkpoint_1.json → crossfield.generalization`.)*
 
-The top of the ranking is exactly what a high-energy physicist would expect — the
-field's reference works and core tooling rise to the top by recursive prestige:
+The honest reading: **SPECTER wins more fields than it loses (16 vs 10), but the
+aggregate advantage across fields is borderline and not significant** (combined
+CI just includes zero; sign test far from significant). A practitioner choosing a
+recommender for an arbitrary field cannot assume the transformer will win — it
+probably will, but with real risk of a tie or a loss, and the expected gain is
+small in the field-aggregate.
 
-| # | title | year | global cites | in-corpus in-deg | PageRank |
-|---|---|---|---:|---:|---:|
-| 1 | Review of Particle Physics | 2016 | 7,403 | 5,067 | 4.85e-03 |
-| 2 | MadGraph 5: Going Beyond | 2023 | 1,692 | 788 | 3.23e-03 |
-| 6 | Review of Particle Physics | 2018 | 7,214 | 4,897 | 1.19e-03 |
-| 8 | Averages of b-, c-hadron and τ-lepton properties (summer 2016) | 2017 | 1,408 | 802 | 1.05e-03 |
-| 9 | Fermi-LAT Third Source Catalog | 2015 | 1,480 | 1,104 | 1.02e-03 |
-| 10 | An introduction to PYTHIA 8.2 | 2015 | 5,208 | 3,353 | 9.23e-04 |
+Macro-averaged over the 26 fields, the method ordering is nonetheless
+SPECTER-first:
 
-The *Review of Particle Physics* (the field's canonical reference) and the
-standard event generators (MadGraph, PYTHIA) are precisely the nodes a working
-citation graph should surface; a uniform PageRank surfaces nothing. W1 and W2 are
-fixed and the fix is visible in the numbers.
+| method | macro-avg MAP (26 fields) |
+|---|---:|
+| **SPECTER transformer** | **0.196** |
+| TF-IDF cosine — *baseline* | 0.187 |
+| word2vec mean-pool — *baseline* | 0.158 |
+| graph co-citation (text-free) | 0.089 |
 
-### 4.2 SPECTER beats every baseline on held-out citation prediction (W3)
+*(Macro-average of `methods.<m>.map` over fields. The transformer leads on
+average, but the lead is carried by a subset of fields — see §4.2.)*
 
-On 2,359 query papers from the dense 3,000-work closed world, all five methods
-are scored on the identical pool:
+### 4.2 Where SPECTER wins, where it loses (per-field)
 
-| method | R@10 | R@20 | R@50 | MAP | MRR |
-|---|---:|---:|---:|---:|---:|
-| TF-IDF cosine — *baseline* | 0.088 | 0.126 | 0.193 | 0.054 | 0.133 |
-| TF-IDF+NMF cosine — *baseline (exact)* | 0.046 | 0.070 | 0.125 | 0.029 | 0.077 |
-| word2vec mean-pool — *baseline* | 0.092 | 0.136 | 0.222 | 0.055 | 0.137 |
-| graph co-citation (text-free) | 0.078 | 0.146 | 0.284 | 0.051 | 0.112 |
-| **SPECTER transformer (GPU)** | **0.104** | **0.156** | 0.247 | **0.063** | **0.157** |
+Sorted by ΔMAP (SPECTER − TF-IDF). Positive = SPECTER wins.
 
-*(Source: `analysis/ranking_eval.json → methods`.)*
+| field | eval q | TF-IDF MAP | SPECTER MAP | ΔMAP | p | win |
+|---|---:|---:|---:|---:|---:|:--:|
+| Neuroscience | 136 | — | — | **+0.063** | 0.004 | ✓ |
+| Computer Science | 528 | — | — | **+0.060** | 0.000 | ✓ |
+| Social Sciences | 133 | — | — | +0.039 | 0.015 | ✓ |
+| Psychology | 133 | — | — | +0.035 | 0.044 | ✓ |
+| Dentistry | 162 | — | — | +0.031 | 0.084 | ✓ |
+| Environmental Science | 247 | — | — | +0.030 | 0.013 | ✓ |
+| Nursing | 74 | — | — | +0.029 | 0.279 | ✓ |
+| Agricultural & Biological | 150 | — | — | +0.029 | 0.077 | ✓ |
+| Decision Sciences | 128 | — | — | +0.024 | 0.200 | ✓ |
+| Business, Management & Acc. | 215 | — | — | +0.023 | 0.097 | ✓ |
+| Materials Science | 367 | — | — | +0.020 | 0.049 | ✓ |
+| Engineering | 376 | — | — | +0.014 | 0.137 | ✓ |
+| Medicine | 325 | — | — | +0.014 | 0.207 | ✓ |
+| Economics, Econ. & Finance | 101 | — | — | +0.010 | 0.680 | ✓ |
+| Veterinary | 134 | — | — | +0.005 | 0.825 | ✓ |
+| Biochem., Genetics & Mol. Bio. | 258 | — | — | +0.000 | 0.980 | ✓ |
+| Physics and Astronomy | 551 | — | — | −0.001 | 0.860 | ✗ |
+| Chemistry | 352 | — | — | −0.004 | 0.759 | ✗ |
+| Chemical Engineering | 683 | — | — | −0.013 | 0.015 | ✗ |
+| Energy | 769 | — | — | −0.014 | 0.001 | ✗ |
+| Health Professions | 60 | — | — | −0.018 | 0.507 | ✗ |
+| Mathematics | 207 | — | — | −0.018 | 0.074 | ✗ |
+| Arts and Humanities | 63 | — | — | −0.020 | 0.493 | ✗ |
+| Immunology & Microbiology | 102 | — | — | −0.022 | 0.245 | ✗ |
+| Earth & Planetary Sciences | 242 | — | — | −0.031 | 0.021 | ✗ |
+| Pharmacology, Tox. & Pharm. | 292 | — | — | −0.034 | 0.001 | ✗ |
 
-**The headline holds: the transformer beats his TF-IDF baseline.** Paired on the
-same 2,359 queries, SPECTER improves MAP by **ΔMAP = +0.008 (+15.4% relative)**
-over TF-IDF cosine, with a paired-bootstrap **p = 0.0005** — significant. With
-bootstrap 95% CIs the two methods' MAP intervals are **disjoint**: TF-IDF 0.054
-[0.050, 0.059] versus SPECTER 0.063 [0.059, 0.067]. SPECTER also leads every
-other method on MAP, MRR, R@10 and R@20.
+*(Source: `checkpoint_1.json → fields[*].transformer_vs_tfidf`; full per-method
+MAP/Recall/MRR tables with CIs are in the JSON and in `CROSSFIELD_RESULTS.md`.)*
 
-Three honest observations on the table, in the spirit of reporting whatever the
-data says:
+A clear pattern emerges. SPECTER's biggest, most significant wins are in fields
+where **fine-grained phrase meaning carries the relevance signal** — Neuroscience,
+Computer Science, Social Sciences, Psychology. Its **significant losses** cluster
+in **physical-science and pharmacology** fields — Pharmacology, Energy, Earth &
+Planetary, Chemical Engineering — where TF-IDF's exact-term matching (compound
+names, instruments, materials, reaction terms) is hard to beat and SPECTER's
+semantic smoothing can *hurt*. Physics and Astronomy, the top-field that contains
+the single-subfield study's HEP slice, is a near-tie at this top-level
+granularity (ΔMAP −0.001), a useful reminder that a win in one citation-dense
+subfield need not survive aggregation to the whole field.
 
-1. **The transformer wins where meaning matters most — the top of the list.** It
-   leads on R@10, R@20, MAP and MRR, i.e. on getting relevant references *high*.
-2. **The text-free graph recommender wins at R@50.** Bibliographic coupling
-   retrieves the most held-out references in the top 50 (0.284), because shared
-   references are a very strong, if shallow, relevance signal. This is a real
-   finding and we report it rather than bury it: for deep recall, citation
-   structure alone is hard to beat; for precision at the top, paper-trained text
-   embeddings win.
-3. **NMF *hurt* the bag-of-words baseline here.** TF-IDF+NMF (0.029 MAP) scores
-   below plain TF-IDF (0.054): the low-rank topic compression discards
-   discriminative terms that matter for fine-grained reference retrieval. The
-   predecessor's exact representation is therefore reproduced *and* shown to be
-   weaker than the un-reduced TF-IDF — an honest result that only a real metric
-   could surface.
+### 4.3 Concentration (Gini by field)
 
-This is the evaluation the original report did not have at all (it showed a few
-cherry-picked similar abstracts and word clouds, with no metric).
+| quantity | range across 26 fields |
+|---|---|
+| citation-count Gini | **[0.235, 0.538]** |
+| PageRank Gini | **[0.263, 0.652]** |
+
+*(Source: `crossfield.concentration`.)*
+
+Every field is heavy-tailed (no field is uniform — the single-subfield study's
+fix holds everywhere), but concentration varies: Decision Sciences and Computer
+Science are the most citation-concentrated (Gini ≈ 0.48–0.54), Pharmacology and
+Materials Science the least (≈ 0.24–0.25). PageRank Gini runs higher and wider
+(up to 0.65), as recursive prestige amplifies the tail.
+
+### 4.4 Interdisciplinarity
+
+| quantity | range across 26 fields | mean |
+|---|---|---:|
+| fraction of references crossing field boundaries | **[0.114, 0.468]** | ~0.30 |
+
+*(Source: `crossfield.interdisciplinarity`, computed over the union of all 26
+loaded fields.)*
+
+The most inward-looking field is **Physics and Astronomy** (only ~11% of its
+references leave the field), the most outward-looking are **Social Sciences**,
+**Health Professions**, and **Immunology & Microbiology** (~44–47% cross a field
+boundary). Interdisciplinarity does not cleanly predict the SPECTER win/loss split
+— Physics (low interdisc.) and Social Sciences (high interdisc.) sit on opposite
+sides of the verdict — which argues against a simple "neural wins where fields
+mix" story.
+
+### 4.5 Convergence / coverage status
+
+Checkpoint 1 is the **first** tranche (top ~3k works/field). The corpus grows by
+re-running the loop; `convergence.jsonl` records, per checkpoint, the win count,
+the combined ΔMAP and its p, and the Gini range, so a reader can watch whether the
+borderline aggregate result firms up (toward significance) or stays a wash as
+density increases. We make **no** claim that the checkpoint-1 numbers are
+converged; we claim they are the honest first measurement and that the method to
+refine them is built and running.
 
 ---
 
 ## 5. Discussion
 
-Three things follow from the results.
+**Transformer paper-recommendation is field-dependent, not universal.** This is
+the central finding and it is more useful than a blanket "transformers win."
+SPECTER's pre-training objective — pull a paper near the papers it cites — pays
+off most where the text *is* the relevance signal at fine grain (cognitive,
+computational, social-science abstracts) and can backfire where exact lexical
+tokens (chemical names, materials, pharmacological compounds, instruments) are the
+relevance signal and semantic smoothing blurs them. TF-IDF's "dumb" exact-match is
+a genuinely strong, sometimes stronger, baseline in those fields.
 
-**A ranking algorithm is only as good as its graph.** The predecessor's PageRank
-was not wrong — the power method was implemented correctly — it was *starved*. The
-uniformity it produced was an artifact of a graph with almost no surviving edges,
-not a property of the citation network. Rebuilding the same algorithm on a
-complete in-corpus graph turns a non-result into a heavy-tailed ranking (Gini
-0.53) that recovers the field's canonical works. The lesson generalizes:
-bibliometric algorithms inherit the completeness of their inputs, and an
-arXiv-category slice is a badly incomplete input for a citation computation.
+**The single-subfield win did not cleanly survive generalization.** HEP (a
+citation-dense subfield) gave SPECTER +15.4% MAP; the encompassing top-level field
+Physics and Astronomy is a tie at checkpoint 1. This is exactly the kind of result
+a generalization study exists to surface: an effect demonstrated in one favorable
+slice is not entitled to a cross-field claim, and ours doesn't get one.
 
-**Paper-trained embeddings beat bag-of-words on the task that matters.** SPECTER
-was pre-trained so that a paper sits near the papers it cites; held-out citation
-prediction is exactly the task that objective rewards, and SPECTER wins it with a
-significant margin over TF-IDF. The improvement quantifies, with a p-value, the
-phrase-meaning loss the predecessor could only describe qualitatively. That the
-margin is "only" +15% rather than an order of magnitude is itself informative:
-on a dense in-domain corpus, TF-IDF is a strong baseline, and the value of a
-neural representation is real but bounded — a more useful, more honest statement
-than "transformers are better."
+**The aggregate is borderline, and we let it be borderline.** Combined mean ΔMAP
++0.0095 with a 95% CI of [−0.0005, +0.0195] (p = 0.0624) is the textbook "almost,
+but not at α = 0.05" result. We resist the temptation to one-side the test or
+cherry-pick the 16 wins into a headline. The corpus loop exists precisely so this
+number can be re-measured at higher density rather than over-interpreted now.
 
-**Different methods win at different depths.** The clean split — transformer best
-at the top (R@10, MAP, MRR), graph co-citation best at depth (R@50) — points
-directly at a hybrid recommender: re-rank a citation-coupling candidate set with
-SPECTER similarity. We do not build it here (it would need its own evaluation),
-but the result motivates it.
+**Method choice should be field-aware.** The practical recommendation that falls
+out of the table: use SPECTER (or a hybrid) in neuroscience/CS/social-science/
+psychology; keep TF-IDF (or ensemble it ahead of the transformer) in
+pharmacology/energy/earth-science/chemistry. A field-agnostic "always neural"
+default is not supported by the data.
 
 ---
 
 ## 6. Limitations
 
-We state these plainly; none is hidden in a footnote.
+Stated plainly; none hidden.
 
-1. **Single subfield.** The corpus is one OpenAlex subfield (3106, Nuclear & High
-   Energy Physics). The methods generalize, but the numbers are for HEP, as the
-   predecessor's were for `hep-ph`. We make no cross-field claim.
-2. **In-corpus vs. global.** ~22.6% of references are in-slice; cross-field
-   citations are counted in the *global* `cited_by_count` (so impact is not
-   capped) but are not nodes in the PageRank graph. This is an honest closed-graph
-   boundary, not a dropped edge.
-3. **Closed-world evaluation.** The held-out task scores methods on a dense 3,000-
-   work / 2,359-query closed candidate pool, chosen for citation density so the
-   graph is not sparsified. This is an apples-to-apples comparison among methods;
-   it is **not** an estimate of open-world retrieval performance against the whole
-   literature, and the absolute Recall/MAP/MRR values should be read as relative,
-   not as production retrieval quality.
-4. **GPU-bounded neural sample.** SPECTER embeddings were computed on a single
-   local GPU; the neural eval is therefore on the bounded sample while the
-   graph/PageRank results are full-corpus (199,400 works). The same code scales
-   to the whole subfield given more GPU time.
-5. **word2vec baseline is in-domain, not Google's.** It is a PPMI-SVD static
-   embedding (SGNS-equivalent), mean-pooled exactly as the predecessor pooled
-   Google's vectors. The representation class is identical; only the training
-   corpus differs (in-domain, if anything fairer to the baseline).
-6. **Citation prediction is a proxy for relevance.** A reference list is a strong
-   but imperfect relevance signal: authors omit relevant work and cite for many
-   reasons. We use it because it is large, objective and annotation-free, but it
-   is a proxy, and methods that happen to mimic citation habits (the graph
-   recommender at R@50) are advantaged by it.
+1. **Checkpoint 1 is one tranche.** Top ~3k works/field is the most-impactful core,
+   not the whole field. In-corpus edge density (and eval query counts, 60–769 per
+   field) is lower than the deep HEP slice. The result is a first measurement that
+   the loop is built to refine; the convergence log is the place to read whether it
+   firms up.
+2. **Per-field power varies.** Fields with few dense queries (Health Professions
+   60, Arts & Humanities 63, Nursing 74) have wide per-field CIs; their individual
+   p-values are weak. The **combined** field-level test is the right unit for the
+   generalization claim, and it is borderline.
+3. **Top-level fields blur subfields.** A win in one subfield (HEP) can vanish when
+   averaged over its top-level field (Physics & Astronomy). The 26-field grain
+   answers "does it generalize across fields"; it does not resolve subfield
+   structure (a future checkpoint could descend to subfields).
+4. **Closed-world, citation-density-selected eval.** As in the single-subfield
+   study, each field's eval runs on its citation-densest sample so the graph isn't
+   sparsified; absolute Recall/MAP/MRR are relative, not open-world retrieval
+   quality.
+5. **word2vec baseline is in-domain PPMI-SVD**, not Google's binary — the
+   representation class (static word vectors, mean-pooled, cosine) is identical;
+   only the training corpus differs.
+6. **Citation prediction is a proxy for relevance** — large, objective, and
+   annotation-free, but a proxy; methods that mimic citation habits (the graph
+   recommender, strong at deep recall) are advantaged by it.
+7. **GPU-bounded.** All embeddings are from one 8 GB AMD GPU at ~9 docs/s; the
+   neural study is therefore checkpointed. The same code scales with more GPU time
+   — that *is* the loop.
 
 ---
 
 ## 7. Reproducibility statement
 
-Every number in this paper is computed by the ranking scripts and written to two
-JSON files, which are the authoritative source; the prose is pinned to them by
-tests that fail if prose and data diverge (`tests/test_ranking_graph_rank.py`,
-`tests/test_ranking_eval.py`, including a guard asserting the SPECTER-beats-TF-IDF
-headline against `ranking_eval.json`).
+Every number is computed by `scripts/crossfield_run.py` and written to
+`analysis/crossfield/checkpoint_<N>.json` (+ `manifest.json` + `convergence.jsonl`),
+summarized by `scripts/crossfield_report.py` into `CROSSFIELD_RESULTS.md`, and
+pinned by tests that fail if prose and data diverge (`tests/test_crossfield.py`,
+including a guard asserting the cross-field headline against `checkpoint_1.json`,
+and tests for the cross-field aggregation + the producer/consumer resume logic).
 
 ```bash
-pip install -e .                                  # numpy, pandas, pyarrow, scikit-learn, sentence-transformers
-python scripts/ranking_ingest_corpus.py           # pull the OpenAlex subfield (cached/idempotent)
-python scripts/ranking_build.py                   # complete graph + PageRank + impact -> analysis/ranking_graph.json
-HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  python scripts/ranking_embed.py    --topic T10048 --sample 3000   # SPECTER embeddings on GPU (per-id cache, resumable)
-HSA_OVERRIDE_GFX_VERSION=11.0.0 \
-  python scripts/ranking_evaluate.py --topic T10048 --sample 3000   # held-out citation prediction -> analysis/ranking_eval.json
-python scripts/ranking_report.py                  # fill RESULTS.md from the two JSONs
-python scripts/ranking_build_sample.py            # committable sample + manifest
-python -m pytest tests/test_ranking_graph_rank.py tests/test_ranking_eval.py -q
+pip install -e .                      # numpy, pandas, pyarrow, scikit-learn, sentence-transformers, torch(+rocm)
+# run / advance the loop (first run = checkpoint 1, top ~3k works/field):
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py
+# re-run to GROW the corpus to the next tranche (5k -> 20k -> 50k works/field):
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py
+# measure GPU embed throughput on the current cache:
+HSA_OVERRIDE_GFX_VERSION=11.0.0 python scripts/crossfield_run.py --measure-throughput
+# summarize the latest checkpoint into the per-field results doc:
+python scripts/crossfield_report.py
+python -m pytest tests/test_crossfield.py -q
 ```
 
-**Data availability.** The heavy corpus (`corpus.parquet`, ~291 MB) and the per-id
-embedding cache are rebuilt from the OpenAlex API and are gitignored; a committed
-1,000-work sample (`data/processed/sample/ranking_corpus_sample.parquet`) and a
-top-100-by-PageRank slice (`ranking_top100.parquet`) ship with the repo, with a
-`data/processed/ranking/MANIFEST.json` recording the full build. License: MIT
-(code) / CC-BY-4.0 (data, via OpenAlex CC0).
+The run is **resumable**: a SIGINT/crash mid-checkpoint loses nothing (per-field
+partial + raw-page cache + per-id embedding cache), and re-running continues from
+the last checkpoint.
+
+**Data availability.** The heavy raw OpenAlex page cache and the per-id SPECTER
+embedding `.npy` cache are rebuilt from the OpenAlex API and are gitignored; the
+checkpoint JSONs, manifest, convergence log, and per-field results doc are
+committed. License: MIT (code) / CC-BY-4.0 (data, via OpenAlex CC0).
 
 **Author contributions / COI.** research-atlas is developed under the Bucket
-Foundation open-data program. The predecessor MA544 project was authored by one
-of the present authors; this work is its acknowledged successor. No competing
-financial interests.
+Foundation open-data program. The single-subfield predecessor (MA544) was authored
+by one of the present authors; this cross-field study is its acknowledged
+successor. No competing financial interests.
 
 ---
 
-## Appendix A. Headline numbers (machine-checked)
+## Appendix A. Headline numbers (machine-checked, checkpoint 1)
 
 | Quantity | Value | Source field |
 |---|---:|---|
-| Works in corpus | 199,400 | `ranking_graph.json → corpus.n_works` |
-| In-corpus citation edges | 1,942,373 | `corpus.in_corpus_citation_edges` |
-| In-corpus edge coverage | 22.6% | `corpus.in_corpus_edge_coverage` |
-| PageRank Gini | 0.53 | `pagerank_uniformity.gini` |
-| PageRank cv | 4.19 | `pagerank_uniformity.cv` |
-| Top-1 mass / uniform | 967× | `pagerank_uniformity.top1_over_uniform` |
-| Top-1% PageRank mass | 22.7% | `pagerank_uniformity.top1pct_mass` |
-| PageRank non-uniform | true | `pagerank_is_nonuniform` |
-| Eval queries | 2,359 | `ranking_eval.json → eval_queries` |
-| TF-IDF MAP | 0.054 [0.050, 0.059] | `methods.tfidf.map` (+ `map_ci`) |
-| SPECTER MAP | 0.063 [0.059, 0.067] | `methods.transformer.map` (+ `map_ci`) |
-| ΔMAP (SPECTER − TF-IDF) | +0.008 (+15.4%) | `transformer_vs_tfidf.delta_map` |
-| Paired-bootstrap p | 0.0005 | `transformer_vs_tfidf.paired_bootstrap_p` |
-| Embedding model | SPECTER (allenai-specter), 768-d, GPU | `transformer_model` |
+| Fields evaluated | 26 | `fields_with_results` |
+| Works (top ~3k/field) | 78,000 | `total_works_loaded` |
+| GPU embed throughput (steady-state) | 9.1 docs/s | `embed_docs_per_sec` |
+| SPECTER > TF-IDF (MAP) | 16 / 26 fields | `crossfield.generalization.fields_specter_wins` |
+| Win fraction | 0.62 | `win_fraction` |
+| Sign test p | 0.33 | `sign_test_p` |
+| Combined field-level mean ΔMAP | +0.0095 | `combined_field_level.mean` |
+| Combined 95% CI | [−0.0005, +0.0195] | `combined_field_level.ci` |
+| Combined bootstrap p | 0.0624 | `combined_field_level.p` |
+| Citation Gini range | [0.235, 0.538] | `concentration.citation_gini_range` |
+| PageRank Gini range | [0.263, 0.652] | `concentration.pagerank_gini_range` |
+| Interdisciplinarity range | [0.114, 0.468] | `interdisciplinarity.range` |
+| Embedding model | SPECTER (allenai-specter), 768-d, GPU/ROCm | `transformer_model` |

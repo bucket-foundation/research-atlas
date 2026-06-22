@@ -161,6 +161,67 @@ class CorpusConnector:
         for p in sorted(self.raw_dir.glob("*.json")):
             yield json.loads(p.read_text(encoding="utf-8"))
 
+    # ----- impact-ranked field fetch (cross-field path) -------------------- #
+
+    def fetch_field(self, field_id: str, target: int,
+                    from_date: str = "2015-01-01", to_date: str = "2024-12-31",
+                    work_type: str = "article", cache_only: bool = False
+                    ) -> Iterable[dict]:
+        """Yield raw pages for ONE top-level field, ordered by global impact.
+
+        Pulls ``primary_topic.field.id:fields/<field_id>`` sorted by
+        ``cited_by_count:desc`` (most-cited / most-impactful first) until at least
+        ``target`` works have been seen, cursor-paged. Each page is cached under a
+        deterministic key (field + window + page-index), so a re-run resumes from
+        disk and a larger ``target`` only fetches the *new* pages past the last
+        cached one (the checkpoint-tranche growth path).
+
+        ``cache_only`` replays only cached pages (no network) -- used by the
+        analyzer/consumer to read what the producer has already downloaded.
+        """
+        flt = (f"primary_topic.field.id:fields/{field_id},"
+               f"from_publication_date:{from_date},"
+               f"to_publication_date:{to_date}")
+        if work_type:
+            flt += f",type:{work_type}"
+        cursor = "*"
+        page_no = 0
+        seen = 0
+        while cursor and seen < target:
+            # key is page-INDEX based (not cursor-hash) so the same page index
+            # always maps to the same file across runs -> deterministic resume.
+            key = f"fld{field_id}_{from_date}_{to_date}_imp_p{page_no:05d}"
+            page = self._load(key)
+            if page is None:
+                if cache_only:
+                    break
+                params = {
+                    "filter": flt, "per-page": PER_PAGE, "cursor": cursor,
+                    "sort": "cited_by_count:desc",
+                    "select": SELECT, "mailto": MAILTO,
+                }
+                resp = self.http.get(OPENALEX_WORKS, params=params)
+                if resp is None:
+                    break
+                try:
+                    page = resp.json()
+                except ValueError:
+                    break
+                self._cache(key, page)
+            results = page.get("results") or []
+            if not results:
+                break
+            yield page
+            seen += len(results)
+            page_no += 1
+            cursor = (page.get("meta") or {}).get("next_cursor")
+
+    def cached_field_pages(self, field_id: str, from_date: str = "2015-01-01",
+                           to_date: str = "2024-12-31") -> int:
+        """How many impact-ranked pages are already cached for a field (resume)."""
+        prefix = f"fld{field_id}_{from_date}_{to_date}_imp_p"
+        return sum(1 for p in self.raw_dir.glob(f"{prefix}*.json"))
+
     # ----- normalize ------------------------------------------------------- #
 
     def normalize(self, raw_pages: Iterable[dict]) -> Iterator[dict]:
