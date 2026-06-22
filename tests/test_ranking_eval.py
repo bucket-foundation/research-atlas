@@ -8,7 +8,30 @@ from atlas.ranking.evaluate import (average_precision, make_split,
                                      evaluate_method, recall_at_k,
                                      reciprocal_rank, paired_bootstrap_pvalue)
 from atlas.ranking.graph import build_graph
-from atlas.ranking.recommend import cosine_scores
+from atlas.ranking.recommend import cosine_scores, cocitation_scores
+
+
+def _cocitation_reference(graph, query_idx):
+    """Reference (pure-Python, pre-vectorization) bibliographic-coupling scorer.
+
+    Mirrors the original nested-loop implementation exactly: Score(i, j) =
+    |refs(i) ∩ refs(j)| via a reverse (cited -> citing) map, self set to -inf.
+    The vectorized scipy.sparse ``cocitation_scores`` must equal this byte-for-byte
+    so the held-out citation-prediction metrics (Recall@k / MAP / MRR) cannot drift.
+    """
+    n = graph.n
+    indptr, indices = graph.indptr, graph.indices
+    out = np.full((len(query_idx), n), 0.0, dtype=np.float32)
+    citing_of = [[] for _ in range(n)]
+    for i in range(n):
+        for t in indices[indptr[i]:indptr[i + 1]]:
+            citing_of[t].append(i)
+    for qi, i in enumerate(query_idx):
+        for t in indices[indptr[i]:indptr[i + 1]]:
+            for j in citing_of[t]:
+                out[qi, j] += 1.0
+        out[qi, i] = -np.inf
+    return out
 
 
 def test_recall_map_mrr_known_values():
@@ -118,6 +141,97 @@ def test_headline_eval_json_pins_transformer_win():
     # transformer should also lead word2vec and graph on MAP
     assert m["transformer"]["map"] >= m["word2vec"]["map"]
     assert m["transformer"]["map"] >= m["graph"]["map"]
+
+
+def test_cocitation_vectorized_equals_reference_small():
+    """Vectorized (scipy.sparse A A^T) co-citation == the pure-Python reference.
+
+    Small hand-checkable fixture: works share out-references in a known pattern,
+    so |refs(i) ∩ refs(j)| is computable by hand and both implementations must
+    agree exactly, including the -inf self mask. This pins ranking equivalence so
+    future changes to the recommender can't silently shift the graph metrics.
+    """
+    # W0 cites W4,W5 ; W1 cites W4,W5,W6 ; W2 cites W5,W6 ; W3 cites W6
+    recs = [
+        {"work_id": "W0", "refs": ["W4", "W5"], "cited_by_count": 0,
+         "topic_id": "T", "year": 2020},
+        {"work_id": "W1", "refs": ["W4", "W5", "W6"], "cited_by_count": 0,
+         "topic_id": "T", "year": 2020},
+        {"work_id": "W2", "refs": ["W5", "W6"], "cited_by_count": 0,
+         "topic_id": "T", "year": 2020},
+        {"work_id": "W3", "refs": ["W6"], "cited_by_count": 0,
+         "topic_id": "T", "year": 2020},
+        {"work_id": "W4", "refs": [], "cited_by_count": 0, "topic_id": "T",
+         "year": 2020},
+        {"work_id": "W5", "refs": [], "cited_by_count": 0, "topic_id": "T",
+         "year": 2020},
+        {"work_id": "W6", "refs": [], "cited_by_count": 0, "topic_id": "T",
+         "year": 2020},
+    ]
+    g = build_graph(recs)
+    q = np.array([0, 1, 2, 3])
+    new = cocitation_scores(g, q)
+    ref = _cocitation_reference(g, q)
+
+    # exact equality including -inf self positions
+    assert np.array_equal(~np.isfinite(new), ~np.isfinite(ref))
+    fin = np.isfinite(ref)
+    assert np.array_equal(new[fin], ref[fin])
+
+    # spot-check known intersections: refs(W0)={W4,W5}, refs(W1)={W4,W5,W6} -> 2
+    assert new[0, 1] == pytest.approx(2.0)   # share W4, W5
+    assert new[0, 2] == pytest.approx(1.0)   # share W5
+    assert new[0, 3] == pytest.approx(0.0)   # share nothing
+    assert new[1, 2] == pytest.approx(2.0)   # share W5, W6
+    assert new[0, 0] == -np.inf              # self masked
+
+
+def test_cocitation_vectorized_equals_reference_dense_random():
+    """Equivalence on a larger random dense graph (the regime that motivated the
+    vectorization). Whatever the topology, A A^T must match the reverse-map loop.
+    """
+    rng = np.random.default_rng(7)
+    n = 120
+    ids = [f"W{i}" for i in range(n)]
+    recs = []
+    for i in range(n):
+        k = int(rng.integers(5, 15))
+        tgt = rng.choice(n, size=k, replace=False)
+        refs = [ids[t] for t in tgt if t != i]
+        recs.append({"work_id": ids[i], "refs": refs, "cited_by_count": 0,
+                     "topic_id": "T", "year": 2020})
+    g = build_graph(recs)
+    q = np.arange(n)
+    new = cocitation_scores(g, q)
+    ref = _cocitation_reference(g, q)
+    assert np.array_equal(~np.isfinite(new), ~np.isfinite(ref))
+    fin = np.isfinite(ref)
+    assert np.array_equal(new[fin], ref[fin])
+
+
+def test_cocitation_metrics_unchanged_through_evaluator():
+    """End-to-end: the eval metrics computed from the vectorized scorer equal
+    those from the reference scorer on the same split (Recall@k / MAP / MRR)."""
+    rng = np.random.default_rng(3)
+    n = 80
+    ids = [f"W{i}" for i in range(n)]
+    recs = []
+    for i in range(n):
+        tgt = rng.choice(n, size=8, replace=False)
+        recs.append({"work_id": ids[i],
+                     "refs": [ids[t] for t in tgt if t != i],
+                     "cited_by_count": 0, "topic_id": "T", "year": 2020})
+    g = build_graph(recs)
+    split = make_split(g, mask_frac=0.3, min_refs=5, seed=0)
+    ks = (5, 10, 20)
+    fast = evaluate_method("vec", lambda qq: cocitation_scores(g, qq), split, g,
+                           ks=ks, n_boot=50, seed=0)
+    slow = evaluate_method("ref", lambda qq: _cocitation_reference(g, qq), split,
+                           g, ks=ks, n_boot=50, seed=0)
+    assert fast.map == pytest.approx(slow.map)
+    assert fast.mrr == pytest.approx(slow.mrr)
+    for k in ks:
+        assert fast.recall_at[k] == pytest.approx(slow.recall_at[k])
 
 
 def test_paired_bootstrap_pvalue_detects_difference():

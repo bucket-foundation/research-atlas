@@ -46,6 +46,25 @@ def cosine_scores(matrix: np.ndarray, query_idx: np.ndarray) -> np.ndarray:
     return sims
 
 
+def _adjacency_csr(graph: CitationGraph):
+    """The citation adjacency ``A`` (``A[i, j] = 1`` iff i cites j) as a CSR.
+
+    Built directly from the graph's CSR arrays -- ``data`` is all-ones, so
+    ``A @ A.T`` counts shared out-references (bibliographic coupling) exactly.
+    Falls back to ``None`` if scipy is unavailable so callers can use the
+    dense numpy path (mirrors :mod:`atlas.ranking.embed`'s optional-dep style).
+    """
+    try:
+        from scipy.sparse import csr_matrix
+    except Exception:  # pragma: no cover - scipy is a declared analysis dep
+        return None
+    n = graph.n
+    indptr = np.ascontiguousarray(graph.indptr, dtype=np.int64)
+    indices = np.ascontiguousarray(graph.indices, dtype=np.int64)
+    data = np.ones(indices.shape[0], dtype=np.float32)
+    return csr_matrix((data, indices, indptr), shape=(n, n))
+
+
 def cocitation_scores(graph: CitationGraph,
                       query_idx: np.ndarray) -> np.ndarray:
     """Graph recommender score matrix ``(Q, n)`` from bibliographic coupling.
@@ -53,14 +72,32 @@ def cocitation_scores(graph: CitationGraph,
     Two papers are related if they cite the same papers (bibliographic coupling)
     -- a text-free signal. Score(i, j) = | refs(i) ∩ refs(j) |. This is the
     "graph/co-citation" method in the evaluation. Self is set to -inf.
+
+    Vectorized form: with the citation adjacency ``A`` (``A[i, j] = 1`` iff i
+    cites j), the bibliographic-coupling score is exactly ``A A^T`` -- entry
+    ``(i, j)`` is the size of the intersection of i's and j's out-reference sets.
+    We compute ``A[query] @ A^T`` as a single sparse matmul (CSR), which is the
+    same arithmetic as the previous nested-Python triple loop but runs in
+    optimized C and scales to 20k-50k works/field. The dense ``(Q, n)`` result
+    and the ``-inf`` self mask are byte-for-byte the prior semantics, so
+    downstream ranking (Recall@k / MAP / MRR) is numerically unchanged.
+
+    Falls back to an explicit reverse-map loop if scipy is unavailable.
     """
     n = graph.n
+    query_idx = np.asarray(query_idx)
+    A = _adjacency_csr(graph)
+    if A is not None:
+        # A[query] @ A^T : (Q, n) shared-reference counts. Densify to match the
+        # historical dense-array contract the evaluator's argsort consumes.
+        scores = (A[query_idx] @ A.T).toarray().astype(np.float32, copy=False)
+        # mask self (each query's own row index) with -inf, exactly as before.
+        scores[np.arange(len(query_idx)), query_idx] = -np.inf
+        return scores
+
+    # ---- pure-numpy fallback (no scipy): same result, reverse-map loop ----- #
     indptr, indices = graph.indptr, graph.indices
-    # build the set of out-targets per query once
     out = np.full((len(query_idx), n), 0.0, dtype=np.float32)
-    # represent each node's out-set as a boolean row lazily via the CSR
-    # (corpus is bounded; this is O(Q * avg_refs * avg_co) which is fine)
-    # Precompute, for each target work t, the list of works citing t (reverse map)
     citing_of: list[list[int]] = [[] for _ in range(n)]
     for i in range(n):
         for t in indices[indptr[i]:indptr[i + 1]]:
