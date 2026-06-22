@@ -1,0 +1,174 @@
+{
+  "corpus": {
+    "subfield": "3106 (Nuclear & High Energy Physics)",
+    "n_works": 199400,
+    "n_with_abstract": 168677,
+    "out_references_total": 8585763,
+    "in_corpus_citation_edges": 1942373,
+    "in_corpus_edge_coverage": 0.2262318445081701,
+    "global_cited_by_total": 4441380,
+    "mean_in_degree_corpus": 9.741088264794383,
+    "max_in_degree_corpus": 5067
+  },
+  "pagerank_uniformity": {
+    "n": 199400,
+    "min": 1.8604596559828486e-06,
+    "max": 0.0048502110257131826,
+    "mean": 5.0150451354062186e-06,
+    "std": 2.1026099728679747e-05,
+    "cv": 4.192604285898741,
+    "gini": 0.533004751401441,
+    "top1_over_uniform": 967.1320785272086,
+    "top1pct_mass": 0.22699391571107702
+  },
+  "citation_count_uniformity": {
+    "n": 199400,
+    "min": 0.0,
+    "max": 801217.0,
+    "mean": 22.27372116349047,
+    "std": 1795.0347616098293,
+    "cv": 80.5898012475852,
+    "gini": 0.7560657048870202,
+    "top1_over_uniform": 159762669800.0,
+    "top1pct_mass": 1449205.0
+  },
+  "pagerank_is_nonuniform": true,
+  "top15_by_pagerank": [
+    {
+      "rank": 1,
+      "work_id": "W3084106382",
+      "title": "Review of Particle Physics",
+      "year": 2016,
+      "pagerank": 0.0048502110257131826,
+      "citation_count": 7403,
+      "in_degree_corpus": 5067
+    },
+    {
+      "rank": 2,
+      "work_id": "W3102863431",
+      "title": "MadGraph 5 : Going Beyond",
+      "year": 2023,
+      "pagerank": 0.0032276453616125614,
+      "citation_count": 1692,
+      "in_degree_corpus": 788
+    },
+    {
+      "rank": 3,
+      "work_id": "W3098230356",
+      "title": "Effective Holographic Theories for low-temperature condensed matter systems",
+      "year": 2016,
+      "pagerank": 0.0018167729689143365,
+      "citation_count": 373,
+      "in_degree_corpus": 137
+    },
+    {
+      "rank": 4,
+      "work_id": "W3103709197",
+      "title": "Domain Wall Holography for Finite Temperature Scaling Solutions",
+      "year": 2016,
+      "pagerank": 0.0015984156238479691,
+      "citation_count": 56,
+      "in_degree_corpus": 19
+    },
+    {
+      "rank": 5,
+      "work_id": "W3100351450",
+      "title": "Results from 730 kg days of the CRESST-II Dark Matter Search",
+      "year": 2016,
+      "pagerank": 0.0012503193858716128,
+      "citation_count": 527,
+      "in_degree_corpus": 190
+    },
+    {
+      "rank": 6,
+      "work_id": "W2899140785",
+      "title": "Review of Particle Physics",
+      "year": 2018,
+      "pagerank": 0.0011911425492194066,
+      "citation_count": 7214,
+      "in_degree_corpus": 4897
+    },
+    {
+      "rank": 7,
+      "work_id": "W2132343497",
+      "title": "Jet energy measurement and its systematic uncertainty in proton\u2013proton collisions at $$\\sq",
+      "year": 2015,
+      "pagerank": 0.0011000639809948904,
+      "citation_count": 326,
+      "in_degree_corpus": 236
+    },
+    {
+      "rank": 8,
+      "work_id": "W2163389141",
+      "title": "Averages of b-hadron, c-hadron, and $$\\tau $$ \u03c4 -lepton properties as of summer 2016",
+      "year": 2017,
+      "pagerank": 0.001047413532558453,
+      "citation_count": 1408,
+      "in_degree_corpus": 802
+    },
+    {
+      "rank": 9,
+      "work_id": "W4211080138",
+      "title": "<i>FERMI</i> LARGE AREA TELESCOPE THIRD SOURCE CATALOG",
+      "year": 2015,
+      "pagerank": 0.00102420261846694,
+      "citation_count": 1480,
+      "in_degree_corpus": 1104
+    },
+    {
+      "rank": 10,
+      "work_id": "W2125102738",
+      "title": "An introduction to PYTHIA 8.2",
+      "year": 2015,
+      "pagerank": 0.0009229121593011558,
+      "citation_count": 5208,
+      "in_degree_corpus": 3353
+    },
+    {
+      "rank": 11,
+      "work_id": "W3104585359",
+      "title": "Vector boson pair production at the LHC",
+      "year": 2016,
+      "pagerank": 0.0009094814282988212,
+      "citation_count": 593,
+      "in_degree_corpus": 313
+    },
+    {
+      "rank": 12,
+      "work_id": "W2146942363",
+      "title": "LHCb detector performance",
+      "year": 2015,
+      "pagerank": 0.0008801125917446906,
+      "citation_count": 1045,
+      "in_degree_corpus": 719
+    },
+    {
+      "rank": 13,
+      "work_id": "W2558185986",
+      "title": "Performance of the ATLAS trigger system in 2015",
+      "year": 2017,
+      "pagerank": 0.0007867999874503264,
+      "citation_count": 737,
+      "in_degree_corpus": 520
+    },
+    {
+      "rank": 14,
+      "work_id": "W2148539882",
+      "title": "Parton distributions for the LHC run II",
+      "year": 2015,
+      "pagerank": 0.0007639841976216265,
+      "citation_count": 2383,
+      "in_degree_corpus": 1768
+    },
+    {
+      "rank": 15,
+      "work_id": "W3103034020",
+      "title": "0 More Holography from Conformal Field Theory",
+      "year": 2016,
+      "pagerank": 0.0007369789152783165,
+      "citation_count": 63,
+      "in_degree_corpus": 30
+    }
+  ],
+  "note": "Gian's arXiv-only graph dropped out-of-slice references, leaving an almost-edgeless graph whose PageRank was ~uniform (his words: 'differences at the 14th significant digit'). On the complete in-corpus graph here, PageRank is heavy-tailed: cv and gini well above the uniform floor (cv->0, gini->0)."
+}
