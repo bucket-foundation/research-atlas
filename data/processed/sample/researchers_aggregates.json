@@ -3,8 +3,19 @@
   "total_researchers": 1165557,
   "with_orcid": 805931,
   "corresponding_authors": 169268,
-  "contactable_total": 184,
-  "with_public_email_total": 184,
+  "high_value_segment_total": 83996,
+  "high_value_with_email": 328,
+  "high_value_coverage_pct": 0.39,
+  "contactable_total": 328,
+  "with_public_email_total": 328,
+  "by_email_source": {
+    "orcid": 184,
+    "europepmc": 144
+  },
+  "by_email_method": {
+    "orcid-public": 184,
+    "corresponding-author-metadata": 144
+  },
   "by_field": {
     "biomed-bio": 689684,
     "earth-climate": 116840,
@@ -30,48 +41,75 @@
   "contact_coverage_by_field": {
     "biomed-bio": {
       "profiles": 689684,
-      "with_public_email": 27,
-      "contact_coverage_pct": 0.004
+      "with_public_email": 80,
+      "contact_coverage_pct": 0.012,
+      "high_value_profiles": 46868,
+      "high_value_with_email": 80,
+      "high_value_coverage_pct": 0.17
     },
     "earth-climate": {
       "profiles": 116840,
-      "with_public_email": 23,
-      "contact_coverage_pct": 0.02
+      "with_public_email": 30,
+      "contact_coverage_pct": 0.026,
+      "high_value_profiles": 12488,
+      "high_value_with_email": 30,
+      "high_value_coverage_pct": 0.24
     },
     "physics-astro": {
       "profiles": 108466,
       "with_public_email": 27,
-      "contact_coverage_pct": 0.025
+      "contact_coverage_pct": 0.025,
+      "high_value_profiles": 5852,
+      "high_value_with_email": 27,
+      "high_value_coverage_pct": 0.46
     },
     "engineering": {
       "profiles": 93027,
       "with_public_email": 15,
-      "contact_coverage_pct": 0.016
+      "contact_coverage_pct": 0.016,
+      "high_value_profiles": 7836,
+      "high_value_with_email": 15,
+      "high_value_coverage_pct": 0.19
     },
     "cs-ml": {
       "profiles": 44999,
-      "with_public_email": 20,
-      "contact_coverage_pct": 0.044
+      "with_public_email": 57,
+      "contact_coverage_pct": 0.127,
+      "high_value_profiles": 2237,
+      "high_value_with_email": 57,
+      "high_value_coverage_pct": 2.55
     },
     "materials": {
       "profiles": 44536,
       "with_public_email": 15,
-      "contact_coverage_pct": 0.034
+      "contact_coverage_pct": 0.034,
+      "high_value_profiles": 3850,
+      "high_value_with_email": 15,
+      "high_value_coverage_pct": 0.39
     },
     "econ-social": {
       "profiles": 42276,
       "with_public_email": 24,
-      "contact_coverage_pct": 0.057
+      "contact_coverage_pct": 0.057,
+      "high_value_profiles": 2794,
+      "high_value_with_email": 24,
+      "high_value_coverage_pct": 0.86
     },
     "chemistry": {
       "profiles": 20531,
-      "with_public_email": 13,
-      "contact_coverage_pct": 0.063
+      "with_public_email": 60,
+      "contact_coverage_pct": 0.292,
+      "high_value_profiles": 1830,
+      "high_value_with_email": 60,
+      "high_value_coverage_pct": 3.28
     },
     "math": {
       "profiles": 5198,
       "with_public_email": 20,
-      "contact_coverage_pct": 0.385
+      "contact_coverage_pct": 0.385,
+      "high_value_profiles": 241,
+      "high_value_with_email": 20,
+      "high_value_coverage_pct": 8.3
     }
   },
   "contact_coverage_note": "contact_coverage_pct is computed over profiles that carry a public email / total profiles in the field -- it is an HONEST sample rate, bounded by the high-value enrichment cap, NOT a claim that the rest have no public email (they were simply not yet looked up).",

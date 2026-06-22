@@ -37,8 +37,17 @@ nothing else:
 |---|---|---|
 | `europepmc` / `pubmed` | Corresponding-author email embedded in the PubMed/EuropePMC record's affiliation string (`"Electronic address: …"`) | The author published it as their point of contact on a public paper |
 | `orcid` | Email on the researcher's ORCID profile | Returned by the ORCID **public** API only when the researcher set it public — explicit opt-in |
-| `labpage` | Email on a public faculty/lab page | Public web page the researcher/institution publishes (reserved; not yet implemented) |
-| `crossref` | Author email in public Crossref metadata, when present | Public scholarly metadata |
+| `crossref` | Author email in public Crossref metadata (author object or `affiliation[].name`), when literally present | Public scholarly metadata deposited by the publisher; citeable to the DOI |
+| `labpage` | Email literally present on the researcher's **own** public homepage / lab page (a `mailto:` link or visible address), read from a URL the researcher listed on their public ORCID `researcher-urls` | Public web page the researcher/institution publishes; citeable to the exact URL. **Conservative**: public pages only, capped count + size, boilerplate (`info@`, `no-reply@`, …) filtered, never guessed |
+
+**Source priority is per-field.** Biomed/chemistry authors are tried against
+**EuropePMC corresponding-author metadata first** (their highest-yield public
+source); other fields lead with the ORCID public email (explicit opt-in, highest
+trust). In all cases the first source that yields a literal, public, provenanced
+email wins; `labpage` is the conservative last resort. An anti-noise filter
+removes obvious institutional/automated mailboxes (`info@`, `no-reply@`,
+`webmaster@`, placeholder/example domains) — it only ever *removes* candidates,
+it never invents one.
 
 **Hard prohibitions, enforced in code (`atlas/users/schema.py::coerce_user`):**
 

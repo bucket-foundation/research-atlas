@@ -64,22 +64,56 @@ def main() -> int:
         "bounded by the high-value enrichment cap, NOT a claim that the rest "
         "have no public email (they were simply not yet looked up)."
     )
+    # The high-value segment is the only segment we deep-enrich contacts for, so
+    # the honest coverage denominator is THAT pool, not the whole corpus.
+    if {"is_corresponding_author", "activity_tier", "seniority"} <= set(df.columns):
+        corr = df["is_corresponding_author"].fillna(False).astype(bool)
+        act = df["activity_tier"]
+        sen = df["seniority"]
+        hv = (act == "active-pi") | (
+            corr & act.isin(["active-pi", "active"]) &
+            sen.isin(["rising-star", "established", "eminent"]))
+    else:
+        hv = pd.Series(False, index=df.index)
+
     contact_by_field = {}
     for slug, total in by_field.items():
-        n_email = int(has_email[df["field_slug"] == slug].sum())
+        in_field = df["field_slug"] == slug
+        n_email = int(has_email[in_field].sum())
+        hv_field = int((hv & in_field).sum())
+        hv_email = int((hv & in_field & has_email).sum())
         contact_by_field[slug] = {
             "profiles": int(total),
             "with_public_email": n_email,
             "contact_coverage_pct": round(100 * n_email / total, 3) if total else 0.0,
+            "high_value_profiles": hv_field,
+            "high_value_with_email": hv_email,
+            "high_value_coverage_pct": round(100 * hv_email / hv_field, 2) if hv_field else 0.0,
         }
+
+    # per-source breakdown (counts only, EMAIL-FREE -- never the addresses)
+    by_source = {}
+    if "email_source" in df.columns:
+        vc = df.loc[has_email, "email_source"].value_counts()
+        by_source = {str(k): int(v) for k, v in vc.items()}
+    by_method = {}
+    if "email_method" in df.columns:
+        vc = df.loc[has_email, "email_method"].value_counts()
+        by_method = {str(k): int(v) for k, v in vc.items()}
 
     aggregates = {
         "users_schema_version": USERS_SCHEMA_VERSION,
         "total_researchers": int(len(df)),
         "with_orcid": int(df["orcid"].notna().sum()),
         "corresponding_authors": int(df["is_corresponding_author"].fillna(False).astype(bool).sum()),
+        "high_value_segment_total": int(hv.sum()),
+        "high_value_with_email": int((hv & has_email).sum()),
+        "high_value_coverage_pct": (round(100 * int((hv & has_email).sum()) / int(hv.sum()), 2)
+                                    if int(hv.sum()) else 0.0),
         "contactable_total": int(contactable.sum()),
         "with_public_email_total": int(has_email.sum()),
+        "by_email_source": by_source,
+        "by_email_method": by_method,
         "by_field": {k: int(v) for k, v in by_field.items()},
         "by_seniority": {k: int(v) for k, v in df.groupby("seniority").size().items()},
         "by_activity_tier": {k: int(v) for k, v in df.groupby("activity_tier").size().items()},
