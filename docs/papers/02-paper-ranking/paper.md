@@ -3,7 +3,7 @@
 **Author:** Bucket Foundation · research-atlas working group
 **Version:** 2.1 (final cross-field preprint) · **Date:** 2026-06-23
 **Corpus:** OpenAlex, all 26 top-level fields, impact-ranked (most-cited first), 2015–2024, grown by a checkpoint loop across 4 corpus scales (78,000 → 361,800 works)
-**DOI:** to be minted on the next research-atlas release (concept record on Zenodo; see `.zenodo.json`)
+**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; this study = research-atlas v0.3.0 = 10.5281/zenodo.20808201)
 **Reproducibility:** every number in this paper is emitted by `scripts/crossfield_run.py` → `analysis/crossfield/checkpoint_<N>.json` (+ `manifest.json` + `convergence.jsonl`), summarized by `scripts/crossfield_report.py`, figured by `scripts/crossfield_figure.py`, and pinned by `tests/test_crossfield.py`. The checkpoint JSONs are the authoritative source for every statistic quoted below; this paper reads from **checkpoints 1–4 + `convergence.jsonl`** (the convergence finding is the headline).
 
 ---
