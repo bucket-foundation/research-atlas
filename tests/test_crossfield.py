@@ -257,3 +257,51 @@ def test_run_checkpoint_producer_consumer_and_resume(tmp_path):
         max_queries=40, do_transformer=False, n_boot=100, conn=conn,
         analysis_dir=adir, log=lambda *a: None)
     assert report2["fields_with_results"] == 2
+
+
+def test_convergence_decay_pins_paper_thesis():
+    """If the 4 checkpoints exist, the paper's convergence thesis must hold.
+
+    Guards prose/data drift for the headline finding: the SPECTER-vs-TF-IDF
+    across-field edge starts positive at the head of the impact distribution
+    (ckpt 1) and decays monotonically toward null as the corpus broadens, and
+    the corpus plateaus at ckpt 4 (ckpt3 == ckpt4 -> converged). Skipped on a
+    fresh checkout where the loop hasn't run all 4 checkpoints.
+    """
+    import json
+    from pathlib import Path
+
+    cdir = Path(__file__).resolve().parents[1] / "analysis" / "crossfield"
+    conv_path = cdir / "convergence.jsonl"
+    if not conv_path.exists():
+        pytest.skip("analysis/crossfield/convergence.jsonl not generated")
+    rows = [json.loads(ln) for ln in conv_path.read_text().splitlines() if ln.strip()]
+    by_ck = {r["checkpoint"]: r for r in rows}
+    if not {1, 2, 3, 4}.issubset(by_ck):
+        pytest.skip("all 4 checkpoints not present in convergence.jsonl")
+
+    c1, c2, c3, c4 = by_ck[1], by_ck[2], by_ck[3], by_ck[4]
+
+    # head of the distribution: SPECTER wins a majority, positive combined edge
+    assert c1["fields_specter_wins"] >= 15
+    assert c1["mean_delta_map"] > 0
+
+    # monotonic decay of the across-field edge toward null as corpus broadens
+    assert c1["mean_delta_map"] > c2["mean_delta_map"] > c3["mean_delta_map"]
+    assert c1["win_fraction"] > c2["win_fraction"] >= c3["win_fraction"]
+
+    # broad-literature edge is gone (non-significant, sign flipped) by ckpt 3
+    assert c3["mean_delta_map"] < 0
+    assert c3["combined_p"] > 0.05
+    assert c3["fields_specter_wins"] < 13  # below the 13/26 coin-flip majority
+
+    # CONVERGED: ckpt 4 hit the corpus plateau and reproduced ckpt 3 exactly
+    assert c4["total_works"] == c3["total_works"]
+    assert c4["fields_specter_wins"] == c3["fields_specter_wins"]
+    assert c4["mean_delta_map"] == c3["mean_delta_map"]
+    assert c4["combined_p"] == c3["combined_p"]
+
+    # the converged combined test is present in the checkpoint JSON
+    cj4 = json.loads((cdir / "checkpoint_4.json").read_text())
+    comb = cj4["crossfield"]["generalization"]["combined_field_level"]
+    assert comb["n"] == 26 and comb["mean"] < 0 and comb["ci"][0] < 0 < comb["ci"][1]
