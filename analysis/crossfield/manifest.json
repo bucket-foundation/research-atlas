@@ -29,9 +29,19 @@
       "win_fraction": 0.4230769230769231,
       "embed_docs_per_sec": 9.143604031934144,
       "file": "checkpoint_3.json"
+    },
+    "4": {
+      "tranche_target_per_field": 50000,
+      "fields_with_results": 26,
+      "total_works_loaded": 361800,
+      "fields_specter_wins": 11,
+      "fields_evaluated": 26,
+      "win_fraction": 0.4230769230769231,
+      "embed_docs_per_sec": 0.0,
+      "file": "checkpoint_4.json"
     }
   },
-  "latest_checkpoint": 3,
+  "latest_checkpoint": 4,
   "fields": {
     "11": "Agricultural and Biological Sciences",
     "12": "Arts and Humanities",

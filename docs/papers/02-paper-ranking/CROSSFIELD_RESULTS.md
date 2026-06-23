@@ -1,11 +1,10 @@
-# Cross-field results — checkpoint 3
+# Cross-field results — checkpoint 4
 
-*Generated from `analysis/crossfield/checkpoint_3.json`. Every number below is read from that file.*
+*Generated from `analysis/crossfield/checkpoint_4.json`. Every number below is read from that file.*
 
-- Tranche: top **20,000** most-cited works / field
+- Tranche: top **50,000** most-cited works / field
 - Fields with results: **26** / 26
 - Total works loaded: **361,800**
-- GPU embed throughput (steady-state): **9.1 docs/s** (SPECTER, AMD RX 7700S / ROCm)
 - Window: 2015-01-01 .. 2024-12-31
 
 ## Generalization: does SPECTER beat TF-IDF in every field?
