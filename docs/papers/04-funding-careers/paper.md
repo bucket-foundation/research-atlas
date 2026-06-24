@@ -3,7 +3,7 @@
 **Author:** Bucket Foundation · research-atlas working group
 **Version:** 1.0 (preprint draft) · **Date:** 2026-06-24
 **Corpus:** research-atlas v0.1.0 (2026-06-24 build) — 1,740,326 grant-PI edges; a new `grant_pi_person` bridge resolving 528,570 of them (30.4%) to 59,180 canonical OpenAlex-author researchers
-**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; this study = research-atlas v0.5.0, DOI minted on next release)
+**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; this study = research-atlas v0.5.0 = 10.5281/zenodo.20836727)
 **Reproducibility:** every number in this paper is emitted by `analysis/careers/run.py` into `analysis/careers/results.json` and pinned by `tests/test_funding_careers.py`, which re-derives each constant from the live DuckDB (and from a seeded bootstrap) and fails if the prose and the data diverge. `results.json` is the authoritative source for every statistic quoted below.
 
 ---
