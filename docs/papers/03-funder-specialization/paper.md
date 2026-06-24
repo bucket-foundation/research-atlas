@@ -3,7 +3,7 @@
 **Author:** Bucket Foundation · research-atlas working group
 **Version:** 1.0 (preprint draft) · **Date:** 2026-06-24
 **Corpus:** research-atlas v0.1.0 (2026-06-22 build) — 1,670,434 grants / 75 funders / 470,269 grant→work edges
-**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; this study = research-atlas v0.4.0, DOI minted on next release)
+**DOI:** [10.5281/zenodo.20774322](https://doi.org/10.5281/zenodo.20774322) (concept; this study = research-atlas v0.4.0 = 10.5281/zenodo.20836205)
 **Reproducibility:** every number in this paper is emitted by `analysis/specialization/run.py` into `analysis/specialization/results.json` and pinned by `tests/test_funder_specialization.py`, which re-derives each constant from the live DuckDB and fails if the prose and the data diverge. `results.json` is the authoritative source for every statistic quoted below.
 
 ---
