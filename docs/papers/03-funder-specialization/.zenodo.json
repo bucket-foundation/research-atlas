@@ -1,0 +1,29 @@
+{
+  "title": "What each funder funds: specialization, complementarity, and the surprising temporal stability of funder field-portfolios in a reconciled NIH/NSF/EC grant-to-output graph",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "description": "<p>Where the first paper on the research-atlas graph measured who gets grants (institutional concentration), who shares the resulting works (co-funding), and how much output accompanies a dollar (the funding-to-output rate), this study asks the prior structural question: what does each funder actually fund, and how distinctively? On the same reconciled NIH/NSF/EC grant-to-output graph we map every funder's linked output to the 26 OpenAlex top-level fields using only distinct-work counts (no dollar column anywhere, so none of the documented dollar-attribution noise can reach any result) and measure three things. (1) A specialization gradient: across the 23 funders with enough linked output to estimate a portfolio, the field-concentration of that portfolio (an HHI over the 26 fields) spans a clean 5x range, from the pure generalists EC (HHI 0.092) and NSF (0.095), each with no single field above 16%, to the hyper-specialist NHGRI (HHI 0.466, 66% of its output in Biochemistry/Genetics/Molecular Biology). (2) Complementarity, recovered with no labels: cosine similarity of funder field-share vectors rebuilds the agency map - the NIH Institutes form a tight cluster (internal mean cosine 0.819), NSF is the maximal outlier (mean cosine 0.385 to the NIH cluster; most distinct single pair NIDCD-NSF at 0.217), and the EC is a partial bridge (0.621). (3) Specialization is a stable fingerprint: comparing each funder's portfolio HHI in 2016-2019 vs 2021-2024, the rank order is almost perfectly preserved (Spearman rho = 0.973) and the mean absolute HHI change is only 0.011. The one aggregate compositional move detected - Physical Sciences' share of funded output rising +3.83pp (95% CI [+2.87, +4.85]) over 2016-2024 - vanishes under mix control: within NSF alone the Physical-Sciences share fell 0.88pp, so the aggregate wobble is a composition/coverage-endpoint artifact, not a secular shift. Scope limit stated throughout: field assignment requires output edges, which exist for NIH/NSF/EC only, so every funder analyzed is an NIH Institute/Center, NSF, or an EC body. MIT (code) / CC-BY-4.0 (data, via OpenAlex CC0). A DOI will be minted on the next research-atlas release.</p>",
+  "creators": [
+    { "name": "Dichio, Gianangelo", "affiliation": "Bucket Foundation" }
+  ],
+  "keywords": [
+    "research funding", "funder specialization", "portfolio analysis",
+    "Herfindahl-Hirschman Index", "science of science", "metascience",
+    "bibliometrics", "NIH", "NSF", "European Commission", "OpenAlex",
+    "grant-to-output linkage", "open data", "funder complementarity"
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "communities": [
+    { "identifier": "metascience" },
+    { "identifier": "open-science" }
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "10.5281/zenodo.20774322",
+      "scheme": "doi"
+    }
+  ]
+}
