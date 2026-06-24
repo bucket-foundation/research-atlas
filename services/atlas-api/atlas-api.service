@@ -1,0 +1,28 @@
+[Unit]
+Description=research-atlas read-only query API (FastAPI over DuckDB, read_only)
+After=network.target
+
+[Service]
+Type=simple
+# %h = the running user's home. DB + venv live under ~/research-atlas-api.
+Environment=ATLAS_DB=%h/research-atlas-api/research_atlas.duckdb
+Environment=PORT=8092
+Environment=ATLAS_RATE=120
+Environment=ATLAS_CACHE_TTL=300
+Environment=ATLAS_CORS=https://bucket.foundation,https://www.bucket.foundation,https://bucket-foundation.vercel.app
+WorkingDirectory=%h/research-atlas-api
+ExecStart=%h/research-atlas-api/venv/bin/uvicorn server:app --host 127.0.0.1 --port 8092
+Restart=on-failure
+RestartSec=3
+# The DuckDB connection memmaps the file; queries are bounded + cached. Cap
+# resident memory so a pathological query can never starve other tenants on the
+# box. The graph file is ~3.2GB on disk but DuckDB memmaps it (pages, not a full
+# copy) and we LIMIT every result; ~3GB headroom is generous.
+MemoryMax=3500M
+MemoryHigh=3000M
+# Light hardening (user service; no root).
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target

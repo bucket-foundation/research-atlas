@@ -1,0 +1,36 @@
+# atlas-api.agfarms.dev — research-atlas read-only query API
+# Terminates TLS on host nginx, proxies to the systemd --user uvicorn service
+# bound to 127.0.0.1:8092. Public read-only JSON API (CORS handled by the app).
+# Stands alongside the other *.agfarms.dev service vhosts; touches no tenant.
+
+server {
+    listen 80;
+    server_name atlas-api.agfarms.dev;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name atlas-api.agfarms.dev;
+
+    ssl_certificate /etc/letsencrypt/live/atlas-api.agfarms.dev/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/atlas-api.agfarms.dev/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 1m;
+
+    # Defense-in-depth rate limit at the edge (the app also rate-limits per IP).
+    limit_req zone=atlasapi burst=40 nodelay;
+
+    location / {
+        proxy_pass http://127.0.0.1:8092;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 30s;
+        proxy_send_timeout 30s;
+    }
+}
