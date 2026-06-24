@@ -1,0 +1,30 @@
+{
+  "title": "Public funding and researcher careers: funder portfolios, career-stage composition, and why the funded-vs-unfunded productivity gap is mostly selection, not effect",
+  "upload_type": "publication",
+  "publication_type": "preprint",
+  "description": "<p>The first three papers on the research-atlas graph never touched the people side: a grant's principal investigator was a name-only node with no ORCID, a different node set from the canonical OpenAlex-author researcher layer, so funding could not be joined to careers. A new conservative resolver (atlas/users/pi_resolve.py) closes that gap, producing a grant_pi_person bridge linking 528,570 of 1,740,326 PI edges (30.4%) to 59,180 distinct canonical researchers (490,839 with ORCID). This study asks how public funding maps onto researcher careers, and its central methodological move is to refuse a tempting false claim. The resolver succeeds precisely on ORCID-era, OpenAlex-indexed, more-productive researchers: the resolved 'funded' population is 89.9% ORCID'd vs 69.1% for the pool it is drawn from (a +20.8pp gap) with 2.12x the mean publications, so a naive 'funded researchers publish 2x more' is confounded by resolution/selection bias, not a funding effect; we state and quantify that up front. Three descriptive findings survive the bias. (1) Who each funder funds: funder researcher-portfolios differ in shape - Sloan funds the most eminence-skewed, highest-impact portfolio (9.5% eminent, median 451.5 citations) while DFG and Wellcome are the most early-career-skewed (DFG 69.0% rising-stars); NIH's grant-holders are 88.0% biomedical, NSF's span the disciplines with no field above 28%. These are within-funder structures that need no unfunded baseline. (2) Career-stage composition of grant-holders: 58.8% rising-stars, 19.2% established, 4.6% eminent; grant-holding is concentrated (median 4 grants/researcher, max 394; 6.55% multi-funder). (3) Funded vs comparison done honestly: restricting to the resolvable population (researchers at the same 1,574 grant-receiving ROR-resolved orgs who could have been matched) and matching on field x career-stage x entry-era, the naive 2.11x ratio collapses to a matched residual of 1.23x works (95% CI [1.18, 1.28]), 1.23x h-index, and only 1.06x citations - roughly 80% of the apparent gap is selection. No causal claim is made: the matched residual is descriptive structure of the funded population, not a return to funding. Counts and per-researcher proxies only, no dollar column, so the graph's documented dollar-attribution noise cannot reach any result. MIT (code) / CC-BY-4.0 (data, via OpenAlex CC0). A DOI will be minted on the next research-atlas release.</p>",
+  "creators": [
+    { "name": "Dichio, Gianangelo", "affiliation": "Bucket Foundation" }
+  ],
+  "keywords": [
+    "research funding", "researcher careers", "selection bias",
+    "entity resolution", "matched comparison", "career stage",
+    "science of science", "metascience", "bibliometrics",
+    "NIH", "NSF", "Wellcome", "Sloan", "DFG", "OpenAlex", "ORCID",
+    "grant-to-PI linkage", "open data", "funder portfolios"
+  ],
+  "license": "mit",
+  "access_right": "open",
+  "language": "eng",
+  "communities": [
+    { "identifier": "metascience" },
+    { "identifier": "open-science" }
+  ],
+  "related_identifiers": [
+    {
+      "relation": "isPartOf",
+      "identifier": "10.5281/zenodo.20774322",
+      "scheme": "doi"
+    }
+  ]
+}

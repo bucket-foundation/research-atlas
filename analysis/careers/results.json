@@ -1,0 +1,279 @@
+{
+  "generated_at": "2026-06-24T21:14:37+00:00",
+  "coverage": {
+    "pi_edges": 1740326,
+    "resolved_edges": 528570,
+    "resolved_pct": 30.37,
+    "resolved_with_orcid": 490839,
+    "resolved_with_orcid_pct": 28.2,
+    "distinct_resolved_researchers": 59180,
+    "distinct_recipient_orgs": 1574,
+    "by_method": {
+      "name+org": 478612,
+      "name+org+field": 49958
+    }
+  },
+  "resolution_bias": {
+    "all_researchers": {
+      "n": 1165557,
+      "pct_orcid": 69.1,
+      "mean_works": 2.41,
+      "median_works": 1.0,
+      "mean_citations": 386.1,
+      "median_citations": 117.0,
+      "mean_h": 2.36
+    },
+    "funded_researchers": {
+      "n": 59180,
+      "pct_orcid": 89.9,
+      "mean_works": 5.12,
+      "median_works": 3.0,
+      "mean_citations": 826.2,
+      "median_citations": 303.0,
+      "mean_h": 5.02
+    },
+    "naive_works_ratio_funded_over_all": 2.124,
+    "naive_citations_ratio_funded_over_all": 2.14,
+    "orcid_gap_pp": 20.8
+  },
+  "stage_composition": {
+    "n_researchers": 59180,
+    "share_pct": {
+      "eminent": 4.6,
+      "established": 19.2,
+      "rising-star": 58.8,
+      "early/unknown": 17.4
+    },
+    "counts": {
+      "eminent": 2740,
+      "established": 11333,
+      "rising-star": 34781,
+      "early/unknown": 10326
+    }
+  },
+  "portfolio_concentration": {
+    "mean_grants_per_researcher": 8.9,
+    "median_grants_per_researcher": 4.0,
+    "max_grants_per_researcher": 394,
+    "single_grant_researchers": 11532,
+    "ten_plus_grant_researchers": 15947,
+    "multi_funder_share_pct": 6.55,
+    "by_distinct_funders": {
+      "1": 55303,
+      "2": 3837,
+      "3": 40
+    }
+  },
+  "funder_portfolios": {
+    "min_people": 300,
+    "funders": [
+      {
+        "funder": "nih",
+        "n_researchers": 38962,
+        "stage_share_pct": {
+          "eminent": 5.1,
+          "established": 20.6,
+          "rising-star": 57.2,
+          "early/unknown": 17.1
+        },
+        "top_fields": [
+          {
+            "field": "biomed-bio",
+            "share_pct": 88.0
+          },
+          {
+            "field": "econ-social",
+            "share_pct": 3.7
+          },
+          {
+            "field": "engineering",
+            "share_pct": 2.5
+          },
+          {
+            "field": "earth-climate",
+            "share_pct": 2.2
+          }
+        ],
+        "median_works": 3.0,
+        "median_h_index": 3.0,
+        "median_citations": 332.0
+      },
+      {
+        "funder": "nsf",
+        "n_researchers": 20518,
+        "stage_share_pct": {
+          "eminent": 4.1,
+          "established": 19.1,
+          "rising-star": 58.9,
+          "early/unknown": 17.9
+        },
+        "top_fields": [
+          {
+            "field": "biomed-bio",
+            "share_pct": 28.0
+          },
+          {
+            "field": "earth-climate",
+            "share_pct": 22.0
+          },
+          {
+            "field": "engineering",
+            "share_pct": 13.5
+          },
+          {
+            "field": "cs-ml",
+            "share_pct": 10.7
+          }
+        ],
+        "median_works": 3.0,
+        "median_h_index": 3.0,
+        "median_citations": 283.0
+      },
+      {
+        "funder": "wellcome",
+        "n_researchers": 2901,
+        "stage_share_pct": {
+          "eminent": 6.1,
+          "established": 14.2,
+          "rising-star": 63.0,
+          "early/unknown": 16.7
+        },
+        "top_fields": [
+          {
+            "field": "biomed-bio",
+            "share_pct": 87.7
+          },
+          {
+            "field": "earth-climate",
+            "share_pct": 3.2
+          },
+          {
+            "field": "econ-social",
+            "share_pct": 3.2
+          },
+          {
+            "field": "engineering",
+            "share_pct": 1.6
+          }
+        ],
+        "median_works": 2.0,
+        "median_h_index": 2.0,
+        "median_citations": 282.0
+      },
+      {
+        "funder": "sloan",
+        "n_researchers": 368,
+        "stage_share_pct": {
+          "eminent": 9.5,
+          "established": 19.6,
+          "rising-star": 58.4,
+          "early/unknown": 12.5
+        },
+        "top_fields": [
+          {
+            "field": "earth-climate",
+            "share_pct": 22.6
+          },
+          {
+            "field": "biomed-bio",
+            "share_pct": 22.0
+          },
+          {
+            "field": "econ-social",
+            "share_pct": 20.1
+          },
+          {
+            "field": "cs-ml",
+            "share_pct": 13.3
+          }
+        ],
+        "median_works": 3.0,
+        "median_h_index": 3.0,
+        "median_citations": 451.5
+      },
+      {
+        "funder": "dfg",
+        "n_researchers": 348,
+        "stage_share_pct": {
+          "eminent": 2.9,
+          "established": 8.3,
+          "rising-star": 69.0,
+          "early/unknown": 19.8
+        },
+        "top_fields": [
+          {
+            "field": "biomed-bio",
+            "share_pct": 60.3
+          },
+          {
+            "field": "physics-astro",
+            "share_pct": 10.6
+          },
+          {
+            "field": "earth-climate",
+            "share_pct": 8.3
+          },
+          {
+            "field": "materials",
+            "share_pct": 6.9
+          }
+        ],
+        "median_works": 2.0,
+        "median_h_index": 2.0,
+        "median_citations": 161.0
+      }
+    ]
+  },
+  "matched_productivity": {
+    "n_resolvable_population": 565867,
+    "n_funded": 59180,
+    "n_comparison": 506687,
+    "n_strata": 193,
+    "min_stratum": 30,
+    "n_funded_in_strata": 57466,
+    "naive_works_ratio_within_resolvable": 2.111,
+    "matched_works_ratio": 1.227,
+    "matched_works_ci": [
+      1.183,
+      1.281
+    ],
+    "matched_h_ratio": 1.234,
+    "matched_h_ci": [
+      1.197,
+      1.283
+    ],
+    "matched_citations_ratio": 1.057,
+    "matched_citations_ci": [
+      1.027,
+      1.098
+    ]
+  },
+  "matched_by_stage": {
+    "eminent": {
+      "n_strata": 12,
+      "n_funded": 2321,
+      "matched_works_ratio": 1.195
+    },
+    "established": {
+      "n_strata": 31,
+      "n_funded": 11087,
+      "matched_works_ratio": 1.156
+    },
+    "rising-star": {
+      "n_strata": 93,
+      "n_funded": 34504,
+      "matched_works_ratio": 1.375
+    },
+    "early/unknown": {
+      "n_strata": 57,
+      "n_funded": 9554,
+      "matched_works_ratio": 1.178
+    }
+  },
+  "figures": [
+    "fig1_selection_vs_matched.png",
+    "fig2_funder_stage_portfolios.png",
+    "fig3_funder_eminence_productivity.png",
+    "fig4_matched_by_stage.png"
+  ]
+}
