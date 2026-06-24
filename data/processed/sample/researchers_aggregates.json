@@ -4,17 +4,21 @@
   "with_orcid": 805931,
   "corresponding_authors": 169268,
   "high_value_segment_total": 83996,
-  "high_value_with_email": 328,
-  "high_value_coverage_pct": 0.39,
-  "contactable_total": 328,
-  "with_public_email_total": 328,
+  "high_value_with_email": 750,
+  "high_value_coverage_pct": 0.89,
+  "contactable_total": 750,
+  "with_public_email_total": 750,
   "by_email_source": {
-    "orcid": 184,
-    "europepmc": 144
+    "europepmc": 522,
+    "orcid": 211,
+    "labpage": 16,
+    "crossref": 1
   },
   "by_email_method": {
-    "orcid-public": 184,
-    "corresponding-author-metadata": 144
+    "corresponding-author-metadata": 522,
+    "orcid-public": 211,
+    "public-homepage": 16,
+    "crossref-author-metadata": 1
   },
   "by_field": {
     "biomed-bio": 689684,
@@ -41,11 +45,11 @@
   "contact_coverage_by_field": {
     "biomed-bio": {
       "profiles": 689684,
-      "with_public_email": 80,
-      "contact_coverage_pct": 0.012,
+      "with_public_email": 501,
+      "contact_coverage_pct": 0.073,
       "high_value_profiles": 46868,
-      "high_value_with_email": 80,
-      "high_value_coverage_pct": 0.17
+      "high_value_with_email": 501,
+      "high_value_coverage_pct": 1.07
     },
     "earth-climate": {
       "profiles": 116840,
@@ -97,11 +101,11 @@
     },
     "chemistry": {
       "profiles": 20531,
-      "with_public_email": 60,
-      "contact_coverage_pct": 0.292,
+      "with_public_email": 61,
+      "contact_coverage_pct": 0.297,
       "high_value_profiles": 1830,
-      "high_value_with_email": 60,
-      "high_value_coverage_pct": 3.28
+      "high_value_with_email": 61,
+      "high_value_coverage_pct": 3.33
     },
     "math": {
       "profiles": 5198,
