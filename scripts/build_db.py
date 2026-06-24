@@ -93,6 +93,26 @@ def main() -> int:
             n = con.execute("SELECT count(*) FROM researchers_public").fetchone()[0]
             loaded.append(("researchers_public (sample)", n))
 
+    # ---- funding<->researcher bridge ------------------------------------- #
+    # grant_pi_person resolves grant PIs (name-only, no ORCID, from the funder
+    # feeds) to canonical OpenAlex-author Person nodes (ORCID + ROR). This is the
+    # join that makes funding<->researcher analysis possible (see
+    # scripts/resolve_pis.py / atlas/users/pi_resolve.py). Indexed on both ends
+    # so it traverses fast in either direction.
+    bridge_pq = processed / "grant_pi_person.parquet"
+    if bridge_pq.exists():
+        con.execute(
+            "CREATE TABLE grant_pi_person AS "
+            f"SELECT * FROM read_parquet('{bridge_pq}')")
+        con.execute(
+            "CREATE INDEX idx_gpp_grant ON grant_pi_person(grant_id)")
+        con.execute(
+            "CREATE INDEX idx_gpp_person ON grant_pi_person(person_atlas_id)")
+        con.execute(
+            "CREATE INDEX idx_gpp_pi ON grant_pi_person(pi_person_id)")
+        n = con.execute("SELECT count(*) FROM grant_pi_person").fetchone()[0]
+        loaded.append(("grant_pi_person", n))
+
     con.close()
     print(f"Built {db_path}")
     for table, n in loaded:

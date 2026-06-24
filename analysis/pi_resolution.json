@@ -1,0 +1,115 @@
+{
+  "generated_at": "2026-06-24T20:17:39Z",
+  "pi_edges": 1740326,
+  "resolved": 528570,
+  "resolved_pct": 30.37,
+  "resolved_to_orcid": 490839,
+  "resolved_to_orcid_pct": 28.2,
+  "distinct_resolved_people": 59180,
+  "by_method": {
+    "name+org": 478612,
+    "name+org+field": 49958
+  },
+  "by_reason": {
+    "no-org-overlap": 1020486,
+    "ambiguous": 55411,
+    "no-name-overlap": 119132,
+    "field-conflict": 7651,
+    "ambiguous-field": 6475,
+    "unparseable-name": 2601
+  },
+  "by_funder": {
+    "nih": {
+      "edges": 1498105,
+      "resolved": 468148,
+      "with_orcid": 434882,
+      "resolved_pct": 31.25
+    },
+    "nsf": {
+      "edges": 201354,
+      "resolved": 54366,
+      "with_orcid": 50340,
+      "resolved_pct": 27.0
+    },
+    "wellcome": {
+      "edges": 32137,
+      "resolved": 5142,
+      "with_orcid": 4825,
+      "resolved_pct": 16.0
+    },
+    "dfg": {
+      "edges": 5319,
+      "resolved": 387,
+      "with_orcid": 317,
+      "resolved_pct": 7.28
+    },
+    "sloan": {
+      "edges": 3411,
+      "resolved": 527,
+      "with_orcid": 475,
+      "resolved_pct": 15.45
+    }
+  },
+  "by_field": {
+    "no-field-signal": {
+      "edges": 1606235,
+      "resolved": 478612,
+      "with_orcid": 444142,
+      "resolved_pct": 29.8
+    },
+    "biomed-bio": {
+      "edges": 91772,
+      "resolved": 34898,
+      "with_orcid": 32814,
+      "resolved_pct": 38.03
+    },
+    "earth-climate": {
+      "edges": 10737,
+      "resolved": 4507,
+      "with_orcid": 4263,
+      "resolved_pct": 41.98
+    },
+    "engineering": {
+      "edges": 8338,
+      "resolved": 2951,
+      "with_orcid": 2761,
+      "resolved_pct": 35.39
+    },
+    "cs-ml": {
+      "edges": 6679,
+      "resolved": 2443,
+      "with_orcid": 2246,
+      "resolved_pct": 36.58
+    },
+    "physics-astro": {
+      "edges": 4997,
+      "resolved": 1705,
+      "with_orcid": 1420,
+      "resolved_pct": 34.12
+    },
+    "econ-social": {
+      "edges": 4780,
+      "resolved": 1277,
+      "with_orcid": 1179,
+      "resolved_pct": 26.72
+    },
+    "materials": {
+      "edges": 3518,
+      "resolved": 1161,
+      "with_orcid": 1082,
+      "resolved_pct": 33.0
+    },
+    "chemistry": {
+      "edges": 2204,
+      "resolved": 727,
+      "with_orcid": 708,
+      "resolved_pct": 32.99
+    },
+    "math": {
+      "edges": 1066,
+      "resolved": 289,
+      "with_orcid": 224,
+      "resolved_pct": 27.11
+    }
+  }
+}

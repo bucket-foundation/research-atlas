@@ -2,7 +2,7 @@
   "name": "research-atlas",
   "description": "Normalized graph of the global research economy.",
   "schema_version": "0.1.0",
-  "generated_at": "2026-06-22T00:22:53Z",
+  "generated_at": "2026-06-24T20:19:26Z",
   "license": "MIT (code) / CC-BY-4.0 (data)",
   "publisher": "bucket-foundation",
   "datasets": [
@@ -521,11 +521,40 @@
         "openalex"
       ],
       "as_of": "2026-06-21T17:54:08Z"
+    },
+    {
+      "table": "grant_pi_person",
+      "kind": "bridge",
+      "path": "data/processed/grant_pi_person.parquet",
+      "schema_version": "0.1.0",
+      "row_count": 528570,
+      "columns": [
+        "grant_id",
+        "pi_person_id",
+        "role",
+        "person_atlas_id",
+        "orcid",
+        "match_method",
+        "match_score",
+        "recipient_ror",
+        "field_slug",
+        "source",
+        "as_of"
+      ],
+      "sources": [
+        "dfg",
+        "nih",
+        "nsf",
+        "sloan",
+        "wellcome"
+      ],
+      "as_of": "2026-06-24T20:17:39Z",
+      "description": "Resolves grant PIs to canonical (OpenAlex-author) Person nodes -- the funding<->researcher bridge. Conservative tiered match (orcid | name+org+field | name+org); ambiguous/no-org -> no row. See atlas/users/pi_resolve.py."
     }
   ],
   "totals": {
-    "tables": 12,
-    "rows": 12202814,
+    "tables": 13,
+    "rows": 12731384,
     "by_source": {
       "cordis": {
         "grants": 92463,

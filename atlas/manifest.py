@@ -47,6 +47,30 @@ def build_manifest(processed_dir: Path | None = None,
             "as_of": as_of,
         })
 
+    # Derived bridge tables (not in schema.all_tables()): list them explicitly so
+    # they are part of the published manifest. grant_pi_person resolves grant PIs
+    # to canonical OpenAlex-author Person nodes (the funding<->researcher join).
+    bridge_path = processed_dir / "grant_pi_person.parquet"
+    if bridge_path.exists():
+        bdf = pd.read_parquet(bridge_path)
+        datasets.append({
+            "table": "grant_pi_person",
+            "kind": "bridge",
+            "path": str(bridge_path.relative_to(REPO_ROOT)),
+            "schema_version": schema.SCHEMA_VERSION,
+            "row_count": int(len(bdf)),
+            "columns": list(bdf.columns),
+            "sources": sorted(bdf["source"].dropna().unique().tolist())
+            if "source" in bdf.columns else [],
+            "as_of": max(bdf["as_of"].dropna())
+            if "as_of" in bdf.columns and len(bdf) else None,
+            "description": "Resolves grant PIs to canonical (OpenAlex-author) "
+                           "Person nodes -- the funding<->researcher bridge. "
+                           "Conservative tiered match (orcid | name+org+field | "
+                           "name+org); ambiguous/no-org -> no row. See "
+                           "atlas/users/pi_resolve.py.",
+        })
+
     # Per-source grant + $ breakdown (real funder totals) when a grant parquet
     # is present. Money is USD-normalized; unknown amounts contribute null.
     by_source: dict = {}
