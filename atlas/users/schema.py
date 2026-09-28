@@ -6,7 +6,7 @@ researcher profile built on top of it -- the platform's **users**.
 
 A researcher profile is a Person joined to:
 
-- the fields/topics they actually publish in (from their works' OpenAlex topics),
+- the fields/topics they publish in (from their works' OpenAlex topics),
 - an activity/impact summary (works count, citations, recency, an h-index
   *proxy*, a career-stage proxy),
 - their primary institution (ROR-resolved),
@@ -15,7 +15,7 @@ A researcher profile is a Person joined to:
   ORCID public profile), every contact row carrying its own provenance and a
   ``contactable`` / ``opt_out`` flag.
 
-Compliance is structural, not a side note:
+Compliance is structural:
 
 - ``email`` is **null unless** it came from a public professional source
   (PubMed/EuropePMC corresponding-author metadata, an ORCID public email, or a
@@ -107,9 +107,7 @@ PII_COLUMNS = [
     "email_method",
 ]
 
-# Allowed public email sources. An email is only ever stored if its source is in
-# this set; anything else (including a guessed firstname.lastname@) is rejected.
-ALLOWED_EMAIL_SOURCES = {"pubmed", "europepmc", "orcid", "labpage", "crossref"}
+ALLOWED_EMAIL_SOURCES = {"pubmed", "europepmc", "orcid", "labpage", "crossref", "official_directory"}
 
 # Engagement-status state machine (CRM lifecycle). Default = not-contacted.
 ENGAGEMENT_STATES = [
