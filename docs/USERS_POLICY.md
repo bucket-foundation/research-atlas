@@ -1,26 +1,26 @@
-# research-atlas — Researcher / Users Data Policy
+# Researcher Data Policy
 
 **Version 0.1.0** · applies to the researcher/users (CRM) layer
 (`atlas/users/`, `data/processed/researchers.parquet`, the
 `researchers_public` / `researchers_contactable` DuckDB views).
 
-This document is the binding contract for how the platform collects, stores, and
+The binding contract for how the platform collects, stores, and
 uses researcher contact data. It exists to protect both researchers and the
 project. **If anything below conflicts with code, the document wins and the code
 is the bug.**
 
 ---
 
-## 1. What this layer is — and is not
+## 1. Scope
 
 The researcher/users layer turns the atlas's **Person** nodes into rich,
-segmented, *contactable* profiles — the platform's users — so that relevant
+segmented, *contactable* profiles, the platform's users, so that relevant
 research tools and collaboration can be offered to the right researchers. It is
 the all-field generalization of the single-field biophysics-PhD outreach funnel
 prototype (`advisors_to_email.csv` / `funnel_targets.csv`).
 
 It **is** a CRM for **targeted, relevant outreach** about computational research
-tools and collaboration — the right tool offered to a researcher who actually
+tools and collaboration, the right tool offered to a researcher who
 works in that area.
 
 It is **NOT** a marketing spam list, **NOT** a sold/rented dataset, and **NOT**
@@ -28,7 +28,7 @@ a collection of private or purchased contact data.
 
 ---
 
-## 2. Public-source-only (the core rule)
+## 2. Public-source-only
 
 Every piece of contact data is drawn from **public professional sources** and
 nothing else:
@@ -36,9 +36,10 @@ nothing else:
 | Source (`email_source`) | What it is | Why it is public |
 |---|---|---|
 | `europepmc` / `pubmed` | Corresponding-author email embedded in the PubMed/EuropePMC record's affiliation string (`"Electronic address: …"`) | The author published it as their point of contact on a public paper |
-| `orcid` | Email on the researcher's ORCID profile | Returned by the ORCID **public** API only when the researcher set it public — explicit opt-in |
-| `crossref` | Author email in public Crossref metadata (author object or `affiliation[].name`), when literally present | Public scholarly metadata deposited by the publisher; citeable to the DOI |
-| `labpage` | Email literally present on the researcher's **own** public homepage / lab page (a `mailto:` link or visible address), read from a URL the researcher listed on their public ORCID `researcher-urls` | Public web page the researcher/institution publishes; citeable to the exact URL. **Conservative**: public pages only, capped count + size, boilerplate (`info@`, `no-reply@`, …) filtered, never guessed |
+| `orcid` | Email on the researcher's ORCID profile | Returned by the ORCID **public** API only when the researcher set it public, explicit opt-in |
+| `crossref` | Author email in public Crossref metadata (author object or `affiliation[].name`), when present | Public scholarly metadata deposited by the publisher; citeable to the DOI |
+| `labpage` | Email present on the researcher's **own** public homepage / lab page (a `mailto:` link or visible address), read from a URL the researcher listed on their public ORCID `researcher-urls` | Public web page the researcher/institution publishes; citeable to the exact URL. **Conservative**: public pages only, capped count + size, boilerplate (`info@`, `no-reply@`, …) filtered, never guessed |
+| `official_directory` | Email printed on the researcher's profile page on their university's own website, in the page's structured data or a `mailto:` link, with an address under the domain listed in the institution's ROR record | The institution publishes it as the official point of contact; citeable to the profile URL. One adapter per institution (`atlas/users/directories/`), robots.txt obeyed, one request per second per host, 30-day cache, stored only under the gitignored `data/raw/contacts/official/` |
 
 **Source priority is per-field.** Biomed/chemistry authors are tried against
 **EuropePMC corresponding-author metadata first** (their highest-yield public
@@ -46,7 +47,7 @@ source); other fields lead with the ORCID public email (explicit opt-in, highest
 trust). In all cases the first source that yields a literal, public, provenanced
 email wins; `labpage` is the conservative last resort. An anti-noise filter
 removes obvious institutional/automated mailboxes (`info@`, `no-reply@`,
-`webmaster@`, placeholder/example domains) — it only ever *removes* candidates,
+`webmaster@`, placeholder/example domains), it only ever *removes* candidates,
 it never invents one.
 
 **Hard prohibitions, enforced in code (`atlas/users/schema.py::coerce_user`):**
@@ -60,9 +61,9 @@ it never invents one.
   emails, or any data behind authentication.
 - **No purchased or scraped contact lists.**
 
-Honest coverage: we report the **real** contact-coverage % per field
+Coverage: we report the **real** contact-coverage % per field
 (`data/processed/sample/researchers_aggregates.json`). We never claim more
-contacts than we actually sourced.
+contacts than we sourced.
 
 ---
 
@@ -70,12 +71,12 @@ contacts than we actually sourced.
 
 Every contact row carries, inline:
 
-- `email_source` — which public source (must be in the allowed set above)
-- `email_source_url` — the citeable URL the email was read from
-- `email_as_of` — ISO-8601 UTC timestamp it was harvested
-- `email_method` — `corresponding-author-metadata` | `orcid-public` | …
+- `email_source`, which public source (must be in the allowed set above)
+- `email_source_url`, the citeable URL the email was read from
+- `email_as_of`, ISO-8601 UTC timestamp it was harvested
+- `email_method`, `corresponding-author-metadata` | `orcid-public` | …
 
-A contact with no provenance cannot exist in the dataset — `coerce_user` refuses
+A contact with no provenance cannot exist in the dataset, `coerce_user` refuses
 to build it.
 
 ---
@@ -99,12 +100,12 @@ contacted again.
 
 ## 5. Regulatory awareness
 
-This is operational awareness, not legal advice; consult counsel before any
+This is operational awareness and carries no legal weight. Consult counsel before any
 large outreach campaign.
 
-### GDPR (EU/EEA researchers)
+### GDPR
 - **Lawful basis:** legitimate interest in relevant, low-volume, professional
-  research-tool outreach to researchers whose work is directly relevant — *not*
+  research-tool outreach to researchers whose work is directly relevant, *not*
   bulk marketing. Keep volume low and relevance high; the segmentation +
   `tool_fit` fields exist precisely to keep outreach relevant.
 - **Public-source + transparency:** all data is from public professional
@@ -112,25 +113,25 @@ large outreach campaign.
   data came from (`email_source_url`).
 - **Right to object / erasure:** honored via `opt_out` (stops processing for
   outreach) and, on request, full removal of contact fields.
-- **Data minimization:** we store the minimum — a professional email + the
+- **Data minimization:** we store the minimum, a professional email + the
   public scholarly metadata needed to make outreach relevant. No special-category
   data.
 
-### CAN-SPAM (US) — for any email sent
+### CAN-SPAM
 - Accurate `From`/subject lines; clear identification as outreach.
 - A working **unsubscribe** mechanism in every message, honored promptly →
   recorded as `opt_out = true`.
 - A valid physical postal address in the message.
 - No deceptive routing.
 
-### Targeted-relevant, not spam
+### Targeted and Relevant
 Outreach must be **relevant** to the recipient's actual research (matched via
 `field_slug` / `top_topics` / `tool_fit`) and **low-volume**. A blast to the
 whole table is a policy violation regardless of legal technicalities.
 
 ---
 
-## 6. What is committed to git (and what is never)
+## 6. What is committed to git
 
 The repository is public. Therefore:
 
