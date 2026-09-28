@@ -106,6 +106,8 @@ def _t2_candidates(con: duckdb.DuckDBPyConnection, surnames: list[str], rors: li
         JOIN person_org po ON po.src_id = p.atlas_id
         JOIN organization o ON o.atlas_id = po.dst_id
         WHERE o.ror_id IS NOT NULL
+          AND p.source <> 'openalex'
+          AND EXISTS (SELECT 1 FROM grant_person gp WHERE gp.dst_id = p.atlas_id AND gp.role IN ('pi', 'co-pi'))
           AND regexp_extract(lower(o.ror_id), '([0-9a-z]{9})/?$', 1) IN (SELECT UNNEST(?))
           AND list_last(string_split(trim(regexp_replace(
                 lower(strip_accents(coalesce(p.last_name, ''))), '[^a-z0-9]+', ' ', 'g')), ' '))

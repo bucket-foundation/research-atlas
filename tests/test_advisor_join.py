@@ -15,6 +15,7 @@ def con():
               "orcid VARCHAR, openalex_author_id VARCHAR, source VARCHAR)")
     c.execute("CREATE TABLE organization (atlas_id VARCHAR, ror_id VARCHAR)")
     c.execute("CREATE TABLE person_org (src_id VARCHAR, dst_id VARCHAR)")
+    c.execute("CREATE TABLE grant_person (src_id VARCHAR, dst_id VARCHAR, role VARCHAR)")
     c.executemany("INSERT INTO person VALUES (?,?,?,?,?,?,?)", [
         ("p1", "Ada Lovelace", None, None, "0000-0001", "A1", "openalex"),
         ("p2", "Grace Hopper", None, None, None, "A2", "openalex"),
@@ -24,11 +25,18 @@ def con():
         ("n3", "SMITH, JANE", "JANE", "SMITH", None, None, "nsf"),
         ("n4", "SMITH, JILL", "JILL", "SMITH", None, None, "nsf"),
         ("n5", "SMITH, JOHN", "JOHN", "SMITH", None, None, "nih"),
+        ("x1", "Rosalind Franklin", "Rosalind", "Franklin", None, "A77", "openalex"),
+        ("x2", "FRANKLIN, ROSA", "ROSA", "FRANKLIN", None, None, "nih"),
+        ("x3", "FRANKLIN, RUTH", "RUTH", "FRANKLIN", None, None, "nsf"),
     ])
     c.executemany("INSERT INTO organization VALUES (?,?)", [
         ("o1", "https://ror.org/0abcdefg1"), ("o2", "https://ror.org/0zzzzzzz9"), ("o3", None)])
     c.executemany("INSERT INTO person_org VALUES (?,?)", [
-        ("n1", "o1"), ("n2", "o1"), ("n3", "o1"), ("n4", "o1"), ("n5", "o2")])
+        ("n1", "o1"), ("n2", "o1"), ("n3", "o1"), ("n4", "o1"), ("n5", "o2"),
+        ("x1", "o2"), ("x2", "o2"), ("x3", "o2")])
+    c.executemany("INSERT INTO grant_person VALUES (?,?,?)", [
+        ("g1", "n1", "pi"), ("g2", "n2", "pi"), ("g3", "n3", "co-pi"), ("g4", "n4", "pi"),
+        ("g5", "n5", "pi"), ("g6", "x1", "pi"), ("g7", "x2", "pi"), ("g8", "x3", "program-officer")])
     return c
 
 
@@ -103,3 +111,8 @@ def test_report_carries_no_names_or_ids(con):
 def test_empty_input(con):
     r = summarize(match_advisors(con, []))
     assert r.total == 0 and r.rates["t1_any"] == 0.0
+
+
+def test_t2_pool_excludes_openalex_and_non_pi_rows(con):
+    [m] = match_advisors(con, [adv("A4", "R. Franklin", None, "0zzzzzzz9")])
+    assert m.t2 == ("x2",) and m.t2_sources == ("nih",)
