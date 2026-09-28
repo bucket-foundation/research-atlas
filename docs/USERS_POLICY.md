@@ -81,6 +81,17 @@ to build it.
 
 ---
 
+## 3a. Inferred addresses
+
+Set by the founder on 2026-09-28 for his private advisor review. It amends the no-guessed-emails rule in section 2 for one private use only.
+
+- An inferred address is stored in `email_inferred`, a separate field with `email_inferred_pattern`, `email_inferred_domain` and the ids of the colleagues whose verified addresses show the pattern. It never enters `email`, `researchers.parquet`, any view, or `coerce_user`, and `ALLOWED_EMAIL_SOURCES` never includes it.
+- A pattern counts only when at least 3 colleagues at the same ROR institution have addresses from the section 2 sources that fit it and no verified colleague contradicts it.
+- No SMTP check, test send or other probe of an inferred address. The code that infers has no network path.
+- Every display labels it "inferred, unverified". Sending to one is a manual decision by the founder and happens outside this project's tools.
+- Storage is the founder's private machine only; nothing inferred is committed, synced to Drive, or served by atlas-api.
+- `opt_out` removes the inferred address along with every other contact field.
+
 ## 4. `contactable` and `opt_out`
 
 - **`contactable`** defaults to *public-source-only*: it is `true` **only** when
