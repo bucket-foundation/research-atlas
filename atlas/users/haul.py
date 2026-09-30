@@ -358,6 +358,7 @@ class HaulState:
         c["profiles"] = sum(r.get("profiles", 0) for r in self.institutions.values())
         c["emails"] = sum(r.get("emails", 0) for r in self.institutions.values())
         c["opt_out_skipped"] = sum(r.get("opt_out_skipped", 0) for r in self.institutions.values())
+        c["student_skipped"] = sum(sum((r.get("student_skipped") or {}).values()) for r in self.institutions.values())
         return c
 
     def todo(self, retry_after: timedelta = timedelta(hours=6)) -> list[str]:
@@ -378,4 +379,4 @@ def status_line(state: HaulState, cache_root: Path) -> str:
     c = state.counts()
     size = cache_bytes(cache_root)
     return (f"institutions done={c['done']} running={c['running']} pending={c['pending']} pending_adapter={c['pending_adapter']} failed={c['failed']} "
-            f"zero_yield={c['zero_yield']} low_yield={c['low_yield']} profiles={c['profiles']} emails={c['emails']} opt_out_skipped={c['opt_out_skipped']} cache={size / 1e9:.2f}GB")
+            f"zero_yield={c['zero_yield']} low_yield={c['low_yield']} profiles={c['profiles']} emails={c['emails']} opt_out_skipped={c['opt_out_skipped']} student_skipped={c['student_skipped']} cache={size / 1e9:.2f}GB")

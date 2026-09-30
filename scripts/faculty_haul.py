@@ -17,6 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from atlas.connectors.base import REPO_ROOT
 from atlas.users.directories.base import (
     OFFICIAL_CACHE,
+    BudgetExhausted,
+    RobotsDenied,
     crawl,
     retrieved_by,
 )
@@ -70,6 +72,33 @@ def adapter_for(row: dict, fetcher: HaulFetcher):
         return None
     entries = list(dict.fromkeys(([base] if base else []) + _split(row.get("directory_entry_urls"))))
     return cls(row["ror_id"], entries, domains=domains, max_pages=fetcher.budget or 400)
+
+
+def school_adapter_for(row: dict, fetcher: HaulFetcher):
+    from atlas.users.directories.k12 import K12_REGISTRY, detect_k12, site_domains
+
+    entries = _split(row.get("directory_entry_urls"))
+    cls = K12_REGISTRY.get(row.get("platform_guess") or "")
+    if cls is None and row.get("homepage"):
+        try:
+            page = fetcher.fetch(row["homepage"])
+            cls = detect_k12(page.text) if page.status == 200 else None
+        except (RobotsDenied, BudgetExhausted):
+            cls = None
+    if cls is None or not entries:
+        return None
+    return cls(row["ror_id"], entries, domains=site_domains(row.get("homepage"), *entries),
+               max_pages=fetcher.budget or 50, school=row.get("name"))
+
+
+def school_rows(path: Path) -> list[dict]:
+    return [{**r, "ror_id": f"nces-{r['nces_id']}", "homepage": r.get("website", "")} for r in _read(path)
+            if r.get("nces_id")]
+
+
+def is_school_seeds(path: Path) -> bool:
+    with path.open(newline="") as f:
+        return "nces_id" in (next(csv.reader(f), None) or [])
 
 
 def purge_opt_outs(ror: str, suppression: Suppression, opt_rows: list[dict], cache_root: Path,
@@ -133,6 +162,7 @@ def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, budget: DiskBu
     if stop.is_set():
         state.update(ror, status="pending", error="disk_budget" if budget.exceeded else "deadline")
         return "pending"
+    skips = getattr(adapter, "student_skips", None)
     by = retrieved_by(adapter) if not isinstance(adapter, StevensAdapter) else f"stevens/{VERSION}"
     root.mkdir(parents=True, exist_ok=True)
     tmp = root / "records.jsonl.tmp"
@@ -146,7 +176,7 @@ def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, budget: DiskBu
                  opt_out_skipped=stats.get("suppressed_records", 0) + stats.get("suppressed_seeds", 0)
                  + fetcher.suppressed, purged_items=purged, robots_denied=stats.get("robots_denied", 0),
                  http_errors=stats.get("http_errors", 0), capped=stats.get("budget_exhausted", False),
-                 adapter=by, finished_at=_now())
+                 adapter=by, finished_at=_now(), **({"student_skipped": skips} if skips is not None else {}))
     return status
 
 
@@ -220,7 +250,7 @@ def run(rows: list[dict], *, cache_root: Path, workers: int, max_pages: int, bud
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Polite, resumable crawl of official faculty directories over the seed list.")
     ap.add_argument("--seeds", type=Path, default=SEEDS)
-    ap.add_argument("--cache-root", type=Path, default=OFFICIAL_CACHE)
+    ap.add_argument("--cache-root", type=Path)
     ap.add_argument("--opt-out", type=Path, default=OPT_OUT)
     ap.add_argument("--tombstones", type=Path, default=TOMBSTONES)
     ap.add_argument("--workers", type=int, default=40)
@@ -233,6 +263,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--status", action="store_true")
     args = ap.parse_args(argv)
+    if not args.seeds.is_absolute() and not args.seeds.exists():
+        args.seeds = SEEDS.parent / args.seeds
+    if args.cache_root is None:
+        args.cache_root = OFFICIAL_CACHE / "k12" if is_school_seeds(args.seeds) else OFFICIAL_CACHE
     if args.status:
         print(status_line(HaulState.load(args.cache_root / "_state.json", reset_running=False), args.cache_root))
         return 0
@@ -244,7 +278,9 @@ def main(argv: list[str] | None = None) -> int:
         print("another faculty haul is running", file=sys.stderr)
         return 0
     started = time.monotonic()
-    code, state = run(load_seeds(args.seeds), cache_root=args.cache_root, workers=args.workers,
+    schools = is_school_seeds(args.seeds)
+    rows = school_rows(args.seeds) if schools else load_seeds(args.seeds)
+    code, state = run(rows, cache_root=args.cache_root, adapter_factory=school_adapter_for if schools else adapter_for, workers=args.workers,
                       max_pages=args.max_pages, budget_bytes=int(args.budget_gb * 1e9), only=args.only,
                       limit=args.limit, refresh=args.refresh, min_free=int(args.min_free_gb * 1e9),
                       suppression=Suppression.load(args.opt_out, args.tombstones),

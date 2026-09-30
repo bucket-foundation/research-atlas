@@ -223,7 +223,8 @@ def test_challenge_pages_are_counted(tmp_path):
 
 
 def test_registry_and_detection(tmp_path):
-    assert set(REGISTRY) == {"generic", "pure", "vivo", "symplectic", "cms"}
+    assert set(REGISTRY) == {"generic", "pure", "vivo", "symplectic", "cms", "k12_finalsite", "k12_blackboard",
+                             "k12_edlio", "k12_apptegy"}
     site = FakeSite({
         "https://www.example.edu/robots.txt": (200, ""),
         "https://www.example.edu/": (200, "<html><p>welcome</p></html>"),
