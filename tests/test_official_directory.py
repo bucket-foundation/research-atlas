@@ -175,11 +175,12 @@ def test_tracked_files_hold_no_institutional_emails():
         if f == "tests/test_official_directory.py":
             continue
         p = REPO / f
-        if p.suffix not in {".py", ".md", ".json", ".jsonl", ".csv", ".txt", ".toml", ".yml", ".yaml", ".cff"}:
+        if p.suffix not in {".py", ".md", ".json", ".jsonl", ".csv", ".txt", ".toml", ".yml", ".yaml", ".cff", ".html", ".xml"}:
             continue
         for e in EMAIL_RE.findall(p.read_text(errors="ignore")):
             e = e.lower()
-            if e.split("@")[1] not in placeholder_domains and re.search(r"\.edu$|\.ac\.[a-z]+$", e):
+            dom = e.split("@")[1]
+            if not any(dom == ph or dom.endswith("." + ph) for ph in placeholder_domains) and re.search(r"\.edu$|\.ac\.[a-z]+$", e):
                 hits.append((f, e))
     assert hits == []
 
