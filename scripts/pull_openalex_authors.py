@@ -49,7 +49,16 @@ SCHEMA = pa.schema([
     ("topics", pa.list_(TOPIC)),
     ("updated_date", pa.string()),
     ("pulled_at", pa.string()),
+    ("source", pa.string()),
+    ("source_id", pa.string()),
+    ("source_url", pa.string()),
+    ("as_of", pa.string()),
+    ("match_tier", pa.string()),
+    ("licence", pa.string()),
 ])
+LICENCE = "CC0-1.0"
+PROVENANCE_SQL = (f"'openalex' AS source, id AS source_id, '{API}/' || id AS source_url, pulled_at AS as_of, "
+                  f"CASE WHEN orcid IS NOT NULL THEN 'T0' ELSE 'T1' END AS match_tier, '{LICENCE}' AS licence")
 
 
 def tail(value: str | None, marker: str) -> str | None:
@@ -60,7 +69,16 @@ def tail(value: str | None, marker: str) -> str | None:
     return s[i + len(marker):] if i >= 0 else s
 
 
+def provenance(row: dict) -> dict:
+    return {**row, "source": "openalex", "source_id": row["id"], "source_url": f"{API}/{row['id']}",
+            "as_of": row["pulled_at"], "match_tier": "T0" if row["orcid"] else "T1", "licence": LICENCE}
+
+
 def normalize(rec: dict, pulled_at: str) -> dict:
+    return provenance(_normalize(rec, pulled_at))
+
+
+def _normalize(rec: dict, pulled_at: str) -> dict:
     stats = rec.get("summary_stats") or {}
     topics = sorted(rec.get("topics") or [], key=lambda t: (t.get("count") or 0, t.get("id") or ""),
                     reverse=True)[:5]
@@ -222,6 +240,7 @@ def snapshot_files(opener: Callable[[str], dict] | None = None) -> list[str]:
 
 
 NORMALIZE_SQL = f"""
+    SELECT *, {PROVENANCE_SQL} FROM (
     SELECT regexp_replace(id, '^.*/', '') AS id,
            display_name,
            coalesce(display_name_alternatives, []) AS display_name_alternatives,
@@ -241,8 +260,25 @@ NORMALIZE_SQL = f"""
            ? AS pulled_at
     FROM read_parquet(?)
     WHERE works_count > {MIN_WORKS}
-      AND list_has_any(list_transform(last_known_institutions, x -> x.country_code), ?)
+      AND list_has_any(list_transform(last_known_institutions, x -> x.country_code), ?))
 """
+
+
+def backfill_provenance(out: Path) -> int:
+    import duckdb
+    n = 0
+    for path in sorted(out.glob("country=*/part-*.parquet")):
+        if "licence" in pq.read_schema(path).names:
+            continue
+        con = duckdb.connect()
+        tbl = con.execute(f"SELECT *, {PROVENANCE_SQL} FROM read_parquet(?, hive_partitioning = false)",
+                          [str(path)]).to_arrow_table().cast(SCHEMA)
+        con.close()
+        tmp = path.with_suffix(".tmp")
+        pq.write_table(tbl, tmp, compression="zstd")
+        tmp.replace(path)
+        n += 1
+    return n
 
 
 def read_snapshot_file(url: str, countries: list[str], pulled_at: str) -> pa.Table:
@@ -313,10 +349,15 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-minutes", type=float)
     ap.add_argument("--max-rps", type=float, default=MAX_RPS)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--backfill-only", action="store_true")
     args = ap.parse_args(argv)
     budget = int(args.budget_gb * 1024 ** 3)
     deadline = time.monotonic() + args.max_minutes * 60 if args.max_minutes else None
     state = State(args.out / "_state.json")
+    fixed = backfill_provenance(args.out)
+    if args.backfill_only:
+        print(json.dumps({"backfilled": fixed}))
+        return 0
     http = Http(args.max_rps, os.environ.get("OPENALEX_API_KEY"))
     if not state.data["countries"]:
         state.save(countries=fetch_countries(http), source=args.source)

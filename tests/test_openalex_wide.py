@@ -110,6 +110,20 @@ def test_snapshot_normalize_matches_api(tmp_path: Path):
     assert got["orcid"] == "0000-0001-0000-0001"
     assert [t["id"] for t in got["topics"]] == ["T7", "T6", "T5", "T4", "T3"]
     assert got["affiliations"][0]["years"] == [2019, 2021]
+    assert (got["source"], got["source_id"], got["as_of"], got["match_tier"], got["licence"]) == (
+        "openalex", "A1", "T", "T0", "CC0-1.0")
+    assert got["source_url"] == "https://api.openalex.org/authors/A1"
+
+
+def test_backfill_adds_provenance(tmp_path: Path):
+    old = [{k: v for k, v in poa.normalize(author(1), "T").items()
+            if k not in ("source", "source_id", "source_url", "as_of", "match_tier", "licence")}]
+    (tmp_path / "country=US").mkdir()
+    pq.write_table(pa.Table.from_pylist(old), tmp_path / "country=US" / "part-0.parquet")
+    assert poa.backfill_provenance(tmp_path) == 1
+    assert poa.backfill_provenance(tmp_path) == 0
+    row = pq.ParquetFile(tmp_path / "country=US" / "part-0.parquet").read().to_pylist()[0]
+    assert row == poa.normalize(author(1), "T")
 
 
 def test_snapshot_resume_and_budget(tmp_path: Path):
@@ -172,7 +186,10 @@ def test_dedupe_rules(atlas):
     assert by_id["person:nih"]["works_count"] is None
     assert by_id[make_id("person", "orcid:0000-0003-0000-0003")]["openalex_author_id"] == "A3"
     minted = by_id[make_id("person", "openalex:A4")]
-    assert minted["source"] == "openalex_authors" and minted["last_known_ror"] == "https://ror.org/0abcdefg1"
+    assert (minted["source"], minted["match_tier"], minted["licence"]) == ("openalex", "T1", "CC0-1.0")
+    assert by_id[make_id("person", "orcid:0000-0003-0000-0003")]["match_tier"] == "T0"
+    assert by_id["person:nih"]["licence"] is None and by_id["person:oa"]["match_tier"] == "T1"
+    assert minted["last_known_ror"] == "https://ror.org/0abcdefg1"
     assert pw.column("atlas_id").to_pylist().count(make_id("person", "openalex:A4")) == 1
 
 

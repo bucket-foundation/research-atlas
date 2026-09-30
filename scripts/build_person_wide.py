@@ -17,7 +17,9 @@ PERSON_COLS = ["atlas_id", "full_name", "first_name", "last_name", "orcid", "ope
                "source", "source_id", "source_url", "as_of"]
 METRIC_COLS = ["works_count", "cited_by_count", "h_index", "i10_index", "last_known_ror",
                "last_known_country", "in_person"]
-SOURCE = "openalex_authors"
+SOURCE = "openalex"
+LICENCE = "CC0-1.0"
+API_AUTHORS = "https://api.openalex.org/authors/"
 
 
 MINT_SQL = ("'person:' || left(sha1('person|' || lower(trim(CASE WHEN a.orcid IS NOT NULL "
@@ -62,7 +64,7 @@ def build(con: duckdb.DuckDBPyConnection, person: str, authors: str, organizatio
     con.execute("""
         CREATE OR REPLACE TEMP TABLE metrics AS
         SELECT atlas_id, arg_max(id, works_count) AS oa, max(works_count) AS works_count,
-               max(cited_by_count) AS cited_by_count, max(h_index) AS h_index, max(i10_index) AS i10_index,
+               max(cited_by_count) AS cited_by_count, max(orcid) AS orcid, max(h_index) AS h_index, max(i10_index) AS i10_index,
                arg_max(last_known_ror, works_count) AS last_known_ror,
                arg_max(last_known_country, works_count) AS last_known_country
         FROM resolved WHERE match_rule <> 'minted' GROUP BY 1
@@ -74,12 +76,16 @@ def build(con: duckdb.DuckDBPyConnection, person: str, authors: str, organizatio
                coalesce(p.openalex_author_id, m.oa) AS openalex_author_id,
                p.source, p.source_id, p.source_url, p.as_of,
                m.works_count, m.cited_by_count, m.h_index, m.i10_index,
-               m.last_known_ror, m.last_known_country, true AS in_person
+               m.last_known_ror, m.last_known_country, true AS in_person,
+               CASE WHEN m.oa IS NULL THEN NULL WHEN coalesce(p.orcid, m.orcid) IS NOT NULL THEN 'T0' ELSE 'T1' END
+                   AS match_tier,
+               CASE WHEN p.source = 'openalex' OR m.oa IS NOT NULL THEN '{LICENCE}' END AS licence
         FROM p LEFT JOIN metrics m ON m.atlas_id = p.atlas_id
         UNION ALL
         SELECT atlas_id, display_name, NULL, NULL, orcid, id, '{SOURCE}', id,
-               'https://openalex.org/' || id, pulled_at,
-               works_count, cited_by_count, h_index, i10_index, last_known_ror, last_known_country, false
+               '{API_AUTHORS}' || id, pulled_at,
+               works_count, cited_by_count, h_index, i10_index, last_known_ror, last_known_country, false,
+               CASE WHEN orcid IS NOT NULL THEN 'T0' ELSE 'T1' END, '{LICENCE}'
         FROM (SELECT *, row_number() OVER (PARTITION BY atlas_id ORDER BY works_count DESC, id) k
               FROM resolved WHERE match_rule = 'minted') WHERE k = 1
     """)
@@ -97,8 +103,8 @@ def build(con: duckdb.DuckDBPyConnection, person: str, authors: str, organizatio
         SELECT DISTINCT ON (e.src_id, o.atlas_id, e.role)
                e.src_id, o.atlas_id AS dst_id, e.role, e.ror AS ror_id,
                list_min(e.years) AS first_year, list_max(e.years) AS last_year,
-               '{SOURCE}' AS source, e.id AS source_id, 'https://openalex.org/' || e.id AS source_url,
-               '{stamp}' AS as_of
+               '{SOURCE}' AS source, e.id AS source_id, '{API_AUTHORS}' || e.id AS source_url,
+               '{stamp}' AS as_of, '{LICENCE}' AS licence
         FROM edges e JOIN (SELECT ror, min(atlas_id) AS atlas_id FROM org GROUP BY 1) o ON o.ror = e.ror
         ORDER BY e.src_id, o.atlas_id, e.role, e.id
     """)
