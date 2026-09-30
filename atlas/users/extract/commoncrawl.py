@@ -26,7 +26,7 @@ def _get(url: str, headers: dict) -> tuple[int, bytes]:
 
 
 def needs_archive(status: int, body: str) -> bool:
-    return status == 403 or (status in (403, 429, 503) and bool(CHALLENGE_RE.search(body[:4000])))
+    return status == 403 or (status in (429, 503) and bool(CHALLENGE_RE.search(body[:4000])))
 
 
 @dataclass
@@ -37,6 +37,12 @@ class ArchiveRecord:
     warc_date: str | None
     filename: str
     offset: int
+    length: int = 0
+    crawl_id: str = COLLECTION
+
+    @property
+    def location(self) -> str:
+        return f"{DATA}/{self.filename}#offset={self.offset}&length={self.length}"
 
 
 def parse_warc(blob: bytes) -> tuple[dict, int, str]:
@@ -96,4 +102,18 @@ class CommonCrawl:
             return None
         warc, http_status, html = parse_warc(blob)
         return ArchiveRecord(url=warc.get("warc-target-uri", row["url"]), status=http_status, html=html,
-                             warc_date=warc.get("warc-date"), filename=row["filename"], offset=start)
+                             warc_date=warc.get("warc-date"), filename=row["filename"], offset=start,
+                             length=int(row["length"]), crawl_id=self.collection)
+
+    def archive_for(self, url: str) -> ArchiveRecord | None:
+        rows = [r for r in self.lookup(url, limit=20) if same_host(r["url"], url)]
+        if not rows:
+            return None
+        rec = self.record(max(rows, key=lambda r: r.get("timestamp", "")))
+        if rec is None or rec.status != 200 or not same_host(rec.url, url):
+            return None
+        return rec
+
+
+def same_host(a: str, b: str) -> bool:
+    return (urlparse(a).hostname or "").lower() == (urlparse(b).hostname or "").lower()

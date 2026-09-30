@@ -33,7 +33,7 @@ def apply_selectors(page_html: str, selectors: dict) -> dict:
     import lxml.html
     from cssselect import SelectorError
 
-    tree = lxml.html.fromstring(page_html)
+    tree = lxml.html.fromstring(page_html.encode("utf-8", "replace"))
     out: dict = {"departments": []}
     for key in SELECTOR_FIELDS:
         sel = selectors.get(key)
@@ -64,6 +64,23 @@ def _same(a, b) -> bool:
     if isinstance(a, list) or isinstance(b, list):
         return {x.lower() for x in a or []} == {x.lower() for x in b or []}
     return (a or "").strip().lower() == (b or "").strip().lower()
+
+
+def field_agreement(predicted: list[dict], reference: list[dict]) -> dict[str, float]:
+    out = {}
+    for k in SELECTOR_FIELDS:
+        pairs = [(p, r) for p, r in zip(predicted, reference) if r.get(k)]
+        if pairs:
+            out[k] = round(sum(_same(p.get(k), r.get(k)) for p, r in pairs) / len(pairs), 3)
+    return out
+
+
+def load_selectors(store: Path, host: str) -> dict | None:
+    path = store / f"{host}.json"
+    if not path.exists():
+        return None
+    data = json.loads(path.read_text())
+    return {k: v for k, v in (data.get("selectors") or {}).items() if k in data.get("accepted_fields", [])}
 
 
 def agreement(predicted: list[dict], reference: list[dict]) -> float:
@@ -99,7 +116,8 @@ class Synthesizer:
 
     def run(self, host: str, pages: list[str], reference: Callable[[str], dict | None],
             queue: Path, store: Path) -> dict:
-        result = {"host": host, "pages": len(pages), "accepted": False, "agreement": 0.0, "selectors": None}
+        result = {"host": host, "pages": len(pages), "accepted": False, "agreement": 0.0, "selectors": None,
+                  "field_agreement": {}, "accepted_fields": [], "rejected_fields": []}
         if len(pages) < 13:
             result["reason"] = "fewer than 13 cached pages"
         else:
@@ -107,15 +125,19 @@ class Synthesizer:
             held = pages[3:13]
             refs = [reference(h) for h in held]
             pairs = [(apply_selectors(h, selectors), r) for h, r in zip(held, refs) if r] if selectors else []
+            preds, rs = [p for p, _ in pairs], [r for _, r in pairs]
             result["selectors"] = selectors
-            result["agreement"] = round(agreement([p for p, _ in pairs], [r for _, r in pairs]), 3)
-            result["accepted"] = bool(pairs) and result["agreement"] >= ACCEPT
+            result["agreement"] = round(agreement(preds, rs), 3)
+            result["field_agreement"] = field_agreement(preds, rs)
+            result["accepted_fields"] = sorted(k for k, v in result["field_agreement"].items() if v >= ACCEPT)
+            result["rejected_fields"] = sorted(k for k, v in result["field_agreement"].items() if v < ACCEPT)
+            result["accepted"] = "name" in result["accepted_fields"]
             if not result["accepted"]:
-                result["reason"] = "no selectors" if not selectors else "agreement below 0.9"
-        if result["accepted"]:
+                result["reason"] = "no selectors" if not selectors else "name selector below 0.9"
+        if result["accepted_fields"]:
             store.mkdir(parents=True, exist_ok=True)
             (store / f"{host}.json").write_text(json.dumps(result, indent=1))
-        else:
+        if not result["accepted"] or result["rejected_fields"]:
             queue.parent.mkdir(parents=True, exist_ok=True)
             with queue.open("a") as f:
                 f.write(json.dumps({"host": host, "escalate_to": "claude", **result}) + "\n")

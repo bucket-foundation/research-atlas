@@ -379,7 +379,8 @@ def profile_invalid_reason(page_text: str, url: str, domains: Iterable[str] = ()
     if len({p["name"] for p in people}) > 1:
         return "listing page"
     p = people[0]
-    if not any(p.get(k) for k in ("title", "email", "departments", "research_areas", "school", "orcid")):
+    in_domain = any(email_domain_ok(e, domains) for e in p.get("dropped_emails") or [])
+    if not in_domain and not any(p.get(k) for k in ("title", "email", "departments", "research_areas", "school", "orcid")):
         return "no schema field"
     return None
 

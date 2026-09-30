@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import gzip
+import hashlib
 import json
 import re
 import sys
@@ -13,9 +14,10 @@ from urllib.parse import urlparse
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from atlas.users.directories.base import OFFICIAL_CACHE  # noqa: E402
-from atlas.users.extract.local_llm import LocalExtractor  # noqa: E402
+from atlas.users.extract.commoncrawl import CommonCrawl, needs_archive, same_host  # noqa: E402
+from atlas.users.extract.local_llm import LocalExtractor, verified_email  # noqa: E402
 from atlas.users.extract.structured import page_people, profile_invalid_reason  # noqa: E402
-from atlas.users.extract.synthesize import Synthesizer  # noqa: E402
+from atlas.users.extract.synthesize import Synthesizer, apply_selectors, load_selectors  # noqa: E402
 
 LICENCE = "institution-copyright"
 PROFILE_PATH = re.compile(r"/(profile|profiles|people|person|persons|faculty|directory|staff|experts|scientists|"
@@ -59,29 +61,41 @@ def mark_invalid(ror_dir: Path, meta: dict, reason: str) -> None:
         path.write_text(json.dumps({**meta, "invalid": reason}))
 
 
-def domains_for(ror: str, pages: list[tuple[dict, str]]) -> tuple[str, ...]:
-    try:
-        from atlas.users.directories.domains import allowed_domains
+ROR_DOMAINS = Path(__file__).resolve().parents[1] / "data" / "processed" / "ror_domains.parquet"
 
-        doms = allowed_domains(ror)
-        if doms:
-            return doms
-    except (ImportError, FileNotFoundError):
-        pass
-    hosts = {urlparse(m["url"]).hostname or "" for m, _ in pages}
-    return tuple(sorted({h[4:] if h.startswith("www.") else h for h in hosts if h}))
+
+class DomainLookupError(RuntimeError):
+    pass
+
+
+def domains_for(ror: str, table: Path | None = None) -> tuple[str, ...]:
+    import pandas as pd
+
+    path = table or ROR_DOMAINS
+    if not path.exists():
+        raise DomainLookupError(f"ror_domains table missing at {path}; run scripts/build_ror_domains.py")
+    df = pd.read_parquet(path, columns=["ror_id", "domains"])
+    hit = df[df["ror_id"] == ror.rsplit("/", 1)[-1].lower()]
+    if hit.empty or len(hit.iloc[0]["domains"]) == 0:
+        raise DomainLookupError(f"no domains for ROR {ror} in {path}")
+    return tuple(hit.iloc[0]["domains"])
 
 
 def is_profile(url: str) -> bool:
     return bool(PROFILE_PATH.search(urlparse(url).path))
 
 
+RETRIEVED_BY = "extract_local/0.2"
+
+
 def record(ror: str, meta: dict, person: dict, extractor: str, digest: str | None = None) -> dict:
     url = person.get("profile_url") or meta["url"]
     rec = {k: person.get(k) for k in ("name", "title", "departments", "school", "research_areas", "email", "orcid")}
-    rec.update(profile_url=url, ror_id=ror, source="official_directory", source_id=url, source_url=meta["url"],
-               as_of=meta.get("fetched_at"), match_tier=None, licence=LICENCE, extractor=extractor,
-               extractor_digest=digest, html_sha256=meta.get("sha256"))
+    rec.update(profile_url=url, page_url=meta["url"], ror_id=ror, source=meta.get("source", "official_directory"),
+               source_id=url, source_url=meta.get("source_url") or meta["url"], crawl_id=meta.get("crawl_id"),
+               as_of=meta.get("fetched_at"), match_tier=None, licence=LICENCE, storage="link_only",
+               retrieved_by=f"{RETRIEVED_BY}+{extractor}", extractor=extractor, extractor_digest=digest,
+               html_sha256=meta.get("sha256"))
     rec["departments"] = rec["departments"] or []
     return rec
 
@@ -90,11 +104,21 @@ def is_miss(url: str, people: list[dict]) -> bool:
     return is_profile(url) and not any(p.get("name") and p.get("email") for p in people)
 
 
+def selector_person(html: str, url: str, selectors: dict, doms: tuple[str, ...]) -> dict | None:
+    got = apply_selectors(html, selectors)
+    if not got.get("name"):
+        return None
+    got["email"] = verified_email(got.get("email"), html, doms)
+    got["profile_url"] = url
+    return got
+
+
 def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = None,
-        limit: int | None = None) -> tuple[list[dict], dict]:
+        limit: int | None = None, domains: tuple[str, ...] | None = None,
+        table: Path | None = None) -> tuple[list[dict], dict]:
     ror_dir = root / ror
-    pages, invalid = split_invalid(load_pages(ror_dir)[:limit], domains_for(ror, load_pages(ror_dir)[:limit]), ror_dir)
-    doms = domains_for(ror, pages)
+    doms = domains if domains is not None else domains_for(ror, table)
+    pages, invalid = split_invalid(load_pages(ror_dir)[:limit], doms, ror_dir)
     out, misses = [], []
     started = time.monotonic()
     for meta, html in pages:
@@ -103,13 +127,24 @@ def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = 
             out += [record(ror, meta, p, "structured") for p in people]
         else:
             misses.append((meta, html, people))
+    selector_hits, still = 0, []
+    for meta, html, people in misses:
+        sel = load_selectors(root / "_selectors", urlparse(meta["url"]).netloc)
+        got = selector_person(html, meta["url"], sel, doms) if sel else None
+        if got and got.get("email"):
+            out.append(record(ror, meta, got, "selectors"))
+            selector_hits += 1
+        else:
+            still.append((meta, html, people))
+    misses = still
     structured_s = time.monotonic() - started
-    llm_s = 0.0
+    llm_s, failures = 0.0, []
     if use_llm and misses:
         ex = extractor or LocalExtractor()
         t0 = time.monotonic()
-        results = ex.extract_many([(html, meta["url"]) for meta, html, _ in misses])
+        results = ex.extract_many([(html, meta["url"]) for meta, html, _ in misses], doms)
         llm_s = time.monotonic() - t0
+        failures = list(ex.failures)
         for (meta, _, people), res in zip(misses, results):
             if res and res.get("name"):
                 out.append(record(ror, meta, res, res["extractor"], res.get("extractor_digest")))
@@ -118,11 +153,37 @@ def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = 
     else:
         for meta, _, people in misses:
             out += [record(ror, meta, p, "structured") for p in people]
-    stats = {"invalid_pages": sum(invalid.values()), "invalid_reasons": dict(invalid), "pages": len(pages), "structured_hits": len(pages) - len(misses), "llm_pages": len(misses) if use_llm else 0,
+    stats = {"invalid_pages": sum(invalid.values()), "invalid_reasons": dict(invalid), "pages": len(pages),
+             "structured_hits": len(pages) - len(misses) - selector_hits, "selector_hits": selector_hits,
+             "llm_pages": len(misses) if use_llm else 0, "llm_failures": len(failures), "llm_failure_urls": failures,
+             "archived_pages": sum(1 for m, _ in pages if m.get("source") == "commoncrawl"),
              "records": len(out), "emails": sum(1 for r in out if r["email"]),
              "structured_pages_per_min": round(len(pages) / structured_s * 60, 1) if structured_s else None,
              "llm_pages_per_min": round(len(misses) / llm_s * 60, 1) if llm_s else None}
     return out, stats
+
+
+def archive_host(ror: str, host: str, root: Path, cc: CommonCrawl, live_status: tuple[int, str],
+                 limit: int = 400) -> dict:
+    if not needs_archive(*live_status):
+        return {"host": host, "archived": 0, "reason": "live host is reachable; fetch it live"}
+    pages = root / ror / "pages"
+    pages.mkdir(parents=True, exist_ok=True)
+    rows = cc.profile_urls(host, PROFILE_PATH, limit)[:limit]
+    written = rejected = 0
+    for row in rows:
+        rec = cc.record(row)
+        if rec is None or rec.status != 200 or not same_host(rec.url, f"https://{host}/"):
+            rejected += 1
+            continue
+        key = hashlib.sha256(row["url"].encode()).hexdigest()
+        (pages / f"{key}.html.gz").write_bytes(gzip.compress(rec.html.encode()))
+        (pages / f"{key}.json").write_text(json.dumps({
+            "url": row["url"], "status": 200, "fetched_at": rec.warc_date,
+            "sha256": hashlib.sha256(rec.html.encode()).hexdigest(), "source": "commoncrawl",
+            "source_url": rec.location, "crawl_id": rec.crawl_id}))
+        written += 1
+    return {"host": host, "archived": written, "rejected": rejected, "crawl_id": cc.collection}
 
 
 def _norm(v) -> str:
@@ -141,7 +202,7 @@ def dedupe(pred: list[dict]) -> list[dict]:
         key = _norm(p.get("name"))
         if not key:
             continue
-        rank = (bool(p.get("email")), is_profile(p["source_url"]), sum(bool(p.get(f)) for f in EVAL_FIELDS))
+        rank = (bool(p.get("email")), is_profile(p["page_url"]), sum(bool(p.get(f)) for f in EVAL_FIELDS))
         if key not in best or rank > best[key][0]:
             best[key] = (rank, p)
     return [p for _, p in best.values()]
@@ -166,22 +227,22 @@ def score(pred: list[dict], gold: list[dict], page_urls: set[str]) -> dict:
     return result
 
 
-def gold_eval(ror: str, root: Path, limit: int | None, synth: bool) -> dict:
+def gold_eval(ror: str, root: Path, limit: int | None, synth: bool, table: Path | None = None) -> dict:
     gold = [json.loads(line) for line in (root / ror / "faculty.jsonl").open()]
-    loaded = load_pages(root / ror)[:limit]
-    pages, _ = split_invalid(loaded, domains_for(ror, loaded), root / ror)
+    doms = domains_for(ror, table)
+    pages, _ = split_invalid(load_pages(root / ror)[:limit], doms, root / ror)
     urls = {m["url"] for m, _ in pages}
-    s_only, s_stats = run(ror, root, use_llm=False, limit=limit)
-    s_llm, l_stats = run(ror, root, use_llm=True, limit=limit)
-    report = {"ror_id": ror, "pages": len(pages), "structured_only": score(s_only, gold, urls),
-              "structured_plus_llm": score(s_llm, gold, urls), "stats": {"structured": s_stats, "llm": l_stats}}
+    report = {"ror_id": ror, "pages": len(pages)}
     if synth:
-        report["synthesis"] = synthesize_hosts(ror, root, pages)
+        report["synthesis"] = synthesize_hosts(ror, root, pages, doms)
+    s_only, s_stats = run(ror, root, use_llm=False, limit=limit, domains=doms)
+    s_llm, l_stats = run(ror, root, use_llm=True, limit=limit, domains=doms)
+    report.update(structured_only=score(s_only, gold, urls), structured_plus_llm=score(s_llm, gold, urls),
+                  stats={"structured": s_stats, "llm": l_stats})
     return report
 
 
-def synthesize_hosts(ror: str, root: Path, pages: list[tuple[dict, str]]) -> list[dict]:
-    doms = domains_for(ror, pages)
+def synthesize_hosts(ror: str, root: Path, pages: list[tuple[dict, str]], doms: tuple[str, ...]) -> list[dict]:
     by_host: dict[str, list[str]] = defaultdict(list)
     for meta, html in pages:
         people = page_people(html, meta["url"], doms, profile=True)
@@ -197,28 +258,52 @@ def synthesize_hosts(ror: str, root: Path, pages: list[tuple[dict, str]]) -> lis
             for host, htmls in by_host.items()]
 
 
+def table_line(report: dict) -> str:
+    rows = ["| Field | Structured P / R | Structured plus LLM P / R |", "|---|---|---|"]
+    for f in EVAL_FIELDS:
+        a, b = report["structured_only"][f], report["structured_plus_llm"][f]
+        rows.append(f"| {f} | {a['precision']} / {a['recall']} | {b['precision']} / {b['recall']} |")
+    return "\n".join(rows)
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Extract faculty records from the local page cache.")
     ap.add_argument("ror", nargs="?", help="one ROR id; omit to walk every cached institution")
     ap.add_argument("--root", type=Path, default=OFFICIAL_CACHE)
+    ap.add_argument("--ror-domains", type=Path, default=ROR_DOMAINS)
     ap.add_argument("--no-llm", action="store_true")
     ap.add_argument("--gold", action="store_true")
     ap.add_argument("--synthesize", action="store_true")
+    ap.add_argument("--archive-host", help="host that returned 403 or a challenge; read it from Common Crawl")
     ap.add_argument("--limit", type=int)
     args = ap.parse_args(argv)
     if args.gold:
-        print(json.dumps(gold_eval(args.ror, args.root, args.limit, args.synthesize), indent=1))
+        report = gold_eval(args.ror, args.root, args.limit, args.synthesize, args.ror_domains)
+        print(json.dumps(report, indent=1))
+        print(table_line(report), file=sys.stderr)
+        return 0
+    if args.archive_host:
+        from atlas.users.directories.base import _requests_get
+
+        live = _requests_get(f"https://{args.archive_host}/")
+        print(json.dumps(archive_host(args.ror, args.archive_host, args.root, CommonCrawl(), live,
+                                      args.limit or 400)))
         return 0
     rors = [args.ror] if args.ror else sorted(p.name for p in args.root.iterdir() if (p / "pages").is_dir())
+    code = 0
     for ror in rors:
-        recs, stats = run(ror, args.root, use_llm=not args.no_llm, limit=args.limit)
+        recs, stats = run(ror, args.root, use_llm=not args.no_llm, limit=args.limit, table=args.ror_domains)
         with (args.root / ror / "extracted.jsonl").open("w") as f:
             for r in recs:
                 f.write(json.dumps(r, sort_keys=True) + "\n")
         print(f"{ror}: {stats['pages']} pages, {stats['invalid_pages']} invalid {stats['invalid_reasons']}, "
-              f"{stats['records']} records, {stats['emails']} emails", file=sys.stderr)
+              f"{stats['records']} records, {stats['emails']} emails, {stats['llm_failures']} llm failures",
+              file=sys.stderr)
+        for u in stats["llm_failure_urls"]:
+            print(f"llm failure {u}", file=sys.stderr)
+        code = code or (3 if stats["llm_failures"] else 0)
         print(json.dumps({"ror_id": ror, **stats}))
-    return 0
+    return code
 
 
 if __name__ == "__main__":

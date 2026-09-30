@@ -52,7 +52,7 @@ def extractor(replies):
 def test_ollama_client_uses_fixed_options_and_tags_output():
     reply = json.loads(fx("ollama_chat.json"))
     ex = extractor([reply])
-    out = ex.extract(fx("profile.html"), URL)
+    out = ex.extract(fx("profile.html"), URL, DOMAINS)
     payload = ex.post.payloads[0]
     assert payload["model"] == "qwen3:4b" and payload["think"] is False and payload["stream"] is False
     assert payload["options"] == {"temperature": 0, "num_ctx": 4096}
@@ -199,7 +199,7 @@ def test_extract_local_walks_cache_and_scores_gold(tmp_path):
     reply = {"message": {"content": json.dumps({"name": None, "title": None, "departments": [], "school": None,
                                                 "research_areas": None, "email": None, "orcid": None,
                                                 "profile_url": None})}}
-    recs, stats = run("0abcde123", tmp_path, use_llm=True, extractor=extractor([reply]))
+    recs, stats = run("0abcde123", tmp_path, use_llm=True, extractor=extractor([reply]), domains=DOMAINS)
     assert stats["pages"] == 1 and stats["structured_hits"] == 1 and stats["invalid_pages"] == 1
     [r] = recs
     assert r["extractor"] == "structured" and r["licence"] == "institution-copyright" and r["match_tier"] is None
@@ -237,7 +237,7 @@ def test_validator_marks_cache_entry_at_write(tmp_path):
     [(meta, _)] = load_pages(tmp_path / "0abcde123")
     assert meta["invalid"] == "search page"
     assert f.fetch(URL).invalid == "search page"
-    _, stats = run("0abcde123", tmp_path, use_llm=False)
+    _, stats = run("0abcde123", tmp_path, use_llm=False, domains=DOMAINS)
     assert stats["invalid_pages"] == 1 and stats["invalid_reasons"] == {"search page": 1}
 
     class One:
@@ -270,3 +270,138 @@ def test_structured_maps_next_data_positions_and_jsonld_school():
                         '<div class="profile-department">Dept of Y</div></html>')
     assert ctx == ["Home / School of X / Dept of Y", "Dept of Y"]
     assert "Page context:" in clean_text('<html><div id="school-name">School of X</div><p>body</p></html>')
+
+
+def llm_reply(**over):
+    base = json.loads(json.loads(fx("ollama_chat.json"))["message"]["content"])
+    return {"message": {"content": json.dumps({**base, **over})}}
+
+
+PAGE_WITH_ROLE = fx("profile.html").replace("</main>", '<a href="mailto:registrar@example.edu">Registrar</a>'
+                                            '<p>other: pal@gmail.com</p></main>')
+
+
+@pytest.mark.parametrize("email", ["pal@gmail.com", "registrar@example.edu", "ada@example.edu",
+                                   "testperson@example.edu"])
+def test_llm_email_must_pass_the_structured_pipeline(email):
+    out = extractor([llm_reply(email=email)]).extract(PAGE_WITH_ROLE, URL, DOMAINS)
+    assert out["name"] == "Ada Testperson" and out["email"] is None
+
+
+def test_llm_email_accepts_decoded_obfuscated_address():
+    page = fx("profile.html").replace('<a class="mail" href="mailto:ada.testperson@example.edu">'
+                                      'ada.testperson@example.edu</a>', "ada.testperson [at] example [dot] edu")
+    out = extractor([llm_reply(email="ada.testperson@example.edu")]).extract(page, URL, DOMAINS)
+    assert out["email"] == "ada.testperson@example.edu"
+
+
+def test_ollama_url_must_be_loopback_and_failures_are_counted():
+    with pytest.raises(ValueError, match="loopback"):
+        LocalExtractor(base_url="http://10.0.0.5:11434")
+
+    def down(url, payload):
+        raise ConnectionError("refused")
+
+    ex = LocalExtractor(post=down, get=lambda u: {})
+    assert ex.extract(fx("profile.html"), URL, DOMAINS) is None
+    assert ex.failures and ex.failures[0].startswith(URL)
+    bad = extractor([{"message": {"content": "{"}}, {"message": {"content": "{"}}])
+    bad.extract(fx("profile.html"), URL, DOMAINS)
+    assert bad.failures == [f"{URL}: invalid JSON twice"]
+
+
+def test_domain_lookup_fails_loudly(tmp_path):
+    from scripts.extract_local import DomainLookupError, domains_for
+    with pytest.raises(DomainLookupError, match="missing"):
+        domains_for("0abcde123", tmp_path / "absent.parquet")
+    import pandas as pd
+    t = tmp_path / "ror_domains.parquet"
+    pd.DataFrame([{"ror_id": "0abcde123", "domains": ["example.edu"]}]).to_parquet(t)
+    assert domains_for("https://ror.org/0abcde123", t) == ("example.edu",)
+    with pytest.raises(DomainLookupError, match="no domains"):
+        domains_for("0zzzzz999", t)
+
+
+INDEX_ROWS = fx("cc_index.jsonl")
+
+
+def cc_site(blob):
+    calls = []
+
+    def get(url, headers):
+        calls.append(url)
+        if "index.commoncrawl.org" in url:
+            return 200, INDEX_ROWS.encode()
+        return 206, blob
+
+    return get, calls
+
+
+def test_fetcher_falls_back_to_archive_on_challenge(tmp_path):
+    from atlas.users.directories.base import PoliteFetcher
+    blob = warc_blob(URL, fx("profile.html"))
+    get, calls = cc_site(blob)
+    cc = CommonCrawl(get=get, sleep=lambda s: None)
+    site = {"https://www.example.edu/robots.txt": (200, ""),
+            URL: (403, "<html><title>Just a moment...</title></html>")}
+    f = PoliteFetcher(tmp_path / "pages", delay=0, get=lambda u: site.get(u, (404, "")), sleep=lambda s: None,
+                      archive=cc.archive_for)
+    page = f.fetch(URL)
+    assert page.status == 200 and page.source == "commoncrawl" and page.crawl_id == "CC-MAIN-2026-39"
+    assert page.source_url.startswith("https://data.commoncrawl.org/crawl-data/CC-MAIN-2026-39/")
+    assert f.archived == 1 and "Ada Testperson" in page.text
+    meta = json.loads(next((tmp_path / "pages").glob("*.json")).read_text())
+    assert meta["source"] == "commoncrawl" and meta["crawl_id"] == "CC-MAIN-2026-39"
+
+
+def test_archive_rejects_a_record_from_another_host():
+    blob = warc_blob("https://evil.example.org/people/ada-testperson", fx("profile.html"))
+    get, _ = cc_site(blob)
+    assert CommonCrawl(get=get, sleep=lambda s: None).archive_for(URL) is None
+
+
+def test_archive_host_writes_provenance_and_extracts(tmp_path):
+    from scripts.extract_local import archive_host, run
+    blob = warc_blob(URL, fx("profile.html"))
+    get, _ = cc_site(blob)
+    cc = CommonCrawl(get=get, sleep=lambda s: None)
+    live_ok = archive_host("0abcde123", "www.example.edu", tmp_path, cc, (200, "<html>hi</html>"))
+    assert live_ok["archived"] == 0 and "live" in live_ok["reason"]
+    res = archive_host("0abcde123", "www.example.edu", tmp_path, cc, (403, ""))
+    assert res == {"host": "www.example.edu", "archived": 1, "rejected": 0, "crawl_id": "CC-MAIN-2026-39"}
+    [rec], stats = run("0abcde123", tmp_path, use_llm=False, domains=DOMAINS)
+    assert rec["source"] == "commoncrawl" and rec["crawl_id"] == "CC-MAIN-2026-39"
+    assert rec["source_url"].startswith("https://data.commoncrawl.org/") and rec["page_url"] == URL
+    assert rec["storage"] == "link_only" and rec["retrieved_by"] == "extract_local/0.2+structured"
+    assert stats["archived_pages"] == 1
+
+
+def test_accepted_selectors_run_before_the_llm(tmp_path):
+    from scripts.extract_local import run
+    sel = tmp_path / "_selectors"
+    sel.mkdir()
+    (sel / "www.example.edu.json").write_text(json.dumps({
+        "selectors": {"name": "h1.who", "email": "a.m", "title": "h1"}, "accepted_fields": ["name", "email"]}))
+    pages = tmp_path / "0abcde123" / "pages"
+    pages.mkdir(parents=True)
+    html = ("<html><head><title>T</title></head><body><h1 class='who'>Gil Fakeson</h1><p class='r'>Lecturer</p>"
+            "<a class='m' href='mailto:gf12@example.edu'>mail</a><a href='mailto:lab77@example.edu'>lab</a></body></html>")
+    (pages / "k.json").write_text(json.dumps({"url": "https://www.example.edu/people/gil", "status": 200,
+                                              "fetched_at": "t", "sha256": "0"}))
+    (pages / "k.html").write_text(html)
+    ex = extractor([])
+    [rec], stats = run("0abcde123", tmp_path, use_llm=True, extractor=ex, domains=DOMAINS)
+    assert rec["extractor"] == "selectors" and rec["email"] == "gf12@example.edu" and rec["title"] is None
+    assert stats["selector_hits"] == 1 and stats["llm_pages"] == 0 and ex.post.payloads == []
+
+
+def test_synthesis_gate_is_per_field(tmp_path):
+    reply = {"message": {"content": json.dumps({**SELECTORS, "email": "h1"})}}
+    s = Synthesizer(post=lambda url, payload: reply)
+    ref = lambda h: {**page_people(h, URL, DOMAINS)[0], "orcid": None}  # noqa: E731
+    q = tmp_path / "q.jsonl"
+    out = s.run("www.example.edu", pages(13), ref, q, tmp_path / "sel")
+    assert out["accepted_fields"] == ["name"] and out["rejected_fields"] == ["email"]
+    from atlas.users.extract.synthesize import load_selectors
+    assert load_selectors(tmp_path / "sel", "www.example.edu") == {"name": "h1.person-name"}
+    assert json.loads(q.read_text())["rejected_fields"] == ["email"]

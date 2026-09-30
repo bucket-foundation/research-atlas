@@ -4,7 +4,8 @@ import json
 import os
 import re
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from urllib.parse import urlparse
 from typing import Callable, Iterable
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
@@ -70,6 +71,16 @@ def clean_text(page_html: str, max_tokens: int = MAX_TOKENS) -> str:
     return text[: max_tokens * CHARS_PER_TOKEN]
 
 
+LOOPBACK = {"127.0.0.1", "localhost", "::1"}
+
+
+def check_loopback(url: str) -> str:
+    host = urlparse(url).hostname or ""
+    if host not in LOOPBACK:
+        raise ValueError(f"Ollama URL must be loopback, got host {host!r}")
+    return url
+
+
 @dataclass
 class LocalExtractor:
     model: str = MODEL
@@ -78,6 +89,10 @@ class LocalExtractor:
     get: Get = _get
     workers: int = WORKERS
     _digest: str | None = None
+    failures: list = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        check_loopback(self.base_url)
 
     def digest(self) -> str | None:
         if self._digest is None:
@@ -95,27 +110,31 @@ class LocalExtractor:
             "messages": [{"role": "user", "content": PROMPT.format(url=url, text=text)}],
         }
 
-    def extract_text(self, text: str, url: str) -> dict | None:
+    def extract_text(self, text: str, url: str, page_html: str | None = None,
+                     domains: Iterable[str] = ()) -> dict | None:
         for _ in range(2):
             try:
                 reply = self.post(f"{self.base_url}/api/chat", self.payload(text, url))
-            except (OSError, ValueError):
+            except (OSError, ValueError) as exc:
+                self.failures.append(f"{url}: {type(exc).__name__}: {exc}")
                 return None
             parsed = parse_reply(reply)
             if parsed is not None:
-                parsed = ground(parsed, text, url)
+                parsed = ground(parsed, text, url, page_html if page_html is not None else text, domains)
                 parsed["extractor"] = self.model
                 parsed["extractor_digest"] = self.digest()
                 return parsed
+        self.failures.append(f"{url}: invalid JSON twice")
         return None
 
-    def extract(self, page_html: str, url: str) -> dict | None:
-        return self.extract_text(clean_text(page_html), url)
+    def extract(self, page_html: str, url: str, domains: Iterable[str] = ()) -> dict | None:
+        return self.extract_text(clean_text(page_html), url, page_html, domains)
 
-    def extract_many(self, pages: Iterable[tuple[str, str]]) -> list[dict | None]:
+    def extract_many(self, pages: Iterable[tuple[str, str]], domains: Iterable[str] = ()) -> list[dict | None]:
         items = list(pages)
+        doms = tuple(domains)
         with ThreadPoolExecutor(self.workers) as pool:
-            return list(pool.map(lambda p: self.extract(p[0], p[1]), items))
+            return list(pool.map(lambda p: self.extract(p[0], p[1], doms), items))
 
 
 def parse_reply(reply: dict) -> dict | None:
@@ -137,10 +156,28 @@ def parse_reply(reply: dict) -> dict | None:
     return out
 
 
-def grounded_email(candidate: str | None, page_html: str) -> str | None:
+def page_email_candidates(page_html: str) -> set[str]:
+    import html as htmllib
+
+    from atlas.users.extract.structured import EMAIL_RE, deobfuscate, mailto_emails, parse_html
+
+    text = htmllib.unescape(re.sub(r"<[^>]+>", " ", page_html))
+    found = mailto_emails(parse_html(page_html)) + EMAIL_RE.findall(text) + deobfuscate(page_html)
+    return {e.strip().rstrip(".").lower() for e in found}
+
+
+def verified_email(candidate: str | None, page_html: str, domains: Iterable[str]) -> str | None:
+    from atlas.users.contacts import _is_acceptable_email
+    from atlas.users.extract.structured import email_domain_ok, is_role_mailbox
+
     if not candidate:
         return None
-    return candidate if candidate.lower() in page_html.lower() else None
+    email = candidate.strip().rstrip(".").lower()
+    if email not in page_email_candidates(page_html):
+        return None
+    if not email_domain_ok(email, domains) or not _is_acceptable_email(email) or is_role_mailbox(email):
+        return None
+    return email
 
 
 ORCID_RE = re.compile(r"\d{4}-\d{4}-\d{4}-\d{3}[\dX]")
@@ -150,14 +187,14 @@ def _norm(v: str) -> str:
     return re.sub(r"\s+", " ", v).strip().lower()
 
 
-def ground(parsed: dict, text: str, url: str) -> dict:
+def ground(parsed: dict, text: str, url: str, page_html: str = "", domains: Iterable[str] = ()) -> dict:
     hay = _norm(text)
     out = dict(parsed)
     for k in ("name", "title", "school", "research_areas"):
         if out.get(k) and _norm(out[k]) not in hay:
             out[k] = None
     out["departments"] = [d for d in out.get("departments") or [] if _norm(d) in hay]
-    out["email"] = grounded_email(out.get("email"), text)
+    out["email"] = verified_email(out.get("email"), page_html or text, domains)
     m = ORCID_RE.search(out.get("orcid") or "")
     out["orcid"] = m.group(0) if m and m.group(0) in text and not m.group(0).startswith("0000-0000") else None
     out["profile_url"] = url
