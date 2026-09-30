@@ -16,6 +16,7 @@ from atlas.users.directories.base import (
 )
 from atlas.users.directories.domains import normalize_ror
 from atlas.users.directories.stevens import StevensAdapter
+from atlas.users.directories.optout import Suppression
 
 INSTITUTIONS = {"stevens": StevensAdapter}
 
@@ -55,16 +56,25 @@ def main(argv: list[str] | None = None) -> int:
                             budget=args.max_pages,
                             log=(lambda m: print(m, file=sys.stderr, flush=True)) if args.verbose else None)
     adapter, platform = build_adapter(args, fetcher)
-    records, stats = crawl(adapter, fetcher)
-    out = root / "faculty.jsonl"
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with out.open("w") as f:
-        for r in records:
-            f.write(json.dumps(r.as_dict(), sort_keys=True) + "\n")
+    suppression = Suppression.load()
+    records, stats = crawl(adapter, fetcher, suppression)
+    stats["suppressed_at_write"] = write_records(root / "faculty.jsonl", records, suppression)
     stats.update(ror_id=ror, adapter=platform, elapsed_s=round(time.monotonic() - started, 1),
                  discovery=getattr(adapter, "discovery", {}))
     print(json.dumps(stats, indent=1, sort_keys=True))
     return exit_code(stats)
+
+
+def write_records(out: Path, records, suppression: Suppression) -> int:
+    out.parent.mkdir(parents=True, exist_ok=True)
+    skipped = 0
+    with out.open("w") as f:
+        for r in records:
+            if suppression.blocks_record(r):
+                skipped += 1
+                continue
+            f.write(json.dumps(r.as_dict(), sort_keys=True) + "\n")
+    return skipped
 
 
 def exit_code(stats: dict) -> int:

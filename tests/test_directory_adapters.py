@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import gzip
+import json
 from pathlib import Path
 
 import pytest
@@ -342,3 +343,76 @@ def test_default_delay_spaces_same_host_only(tmp_path):
     assert len(slept) == 1
     f._wait("www.example.edu")
     assert len(slept) == 2 and 0.8 < slept[1] <= 1.0
+
+
+def suppression(tmp_path, rows):
+    import csv
+    from atlas.users.directories.optout import OPT_OUT_COLUMNS, Suppression
+    p = tmp_path / "private" / "opt_out.csv"
+    p.parent.mkdir(parents=True, exist_ok=True)
+    with p.open("w", newline="") as f:
+        w = csv.DictWriter(f, OPT_OUT_COLUMNS)
+        w.writeheader()
+        w.writerows(rows)
+    return Suppression.load(p, tmp_path / "private" / "tombstones.csv")
+
+
+def test_suppressed_seed_makes_no_request(tmp_path):
+    from atlas.users.directories.stevens import StevensAdapter
+    from tests.test_official_directory import SITE as STEVENS, FakeSite as SFake
+    site = SFake(STEVENS)
+    sup = suppression(tmp_path, [{"name": "Di Listed", "ror_id": "02z43xh36", "reason": "request"}])
+    records, stats = crawl(StevensAdapter(), fetcher(tmp_path, site), sup)
+    assert "https://www.stevens.edu/profile/ddd4" not in site.calls
+    assert stats["suppressed_seeds"] == 1 and "ddd4" not in {r.slug for r in records}
+
+
+def test_suppressed_record_is_never_written(tmp_path):
+    import scripts.crawl_official_directory as cli
+    sup = suppression(tmp_path, [{"email": "ada.testperson@example.edu"}])
+    [rec] = adapter().parse(page("https://www.example.edu/people/ada-testperson", "generic_jsonld.html"))
+    [other] = adapter().parse(page("https://www.example.edu/people/bo-fixture", "generic_microdata.html"))
+    out = tmp_path / "faculty.jsonl"
+    assert cli.write_records(out, [rec, other], sup) == 1
+    text = out.read_text()
+    assert "Ada Testperson" not in text and "Bo Fixture" in text
+    assert "dropped_emails" not in text and "org_mailbox" not in text
+
+
+def test_crawl_drops_suppressed_records(tmp_path):
+    sup = suppression(tmp_path, [{"orcid": "", "name": "Bo Fixture", "ror_id": ROR}])
+    records, stats = crawl(adapter(), fetcher(tmp_path, FakeSite(SITE)), sup)
+    assert "Bo Fixture" not in {r.name for r in records} and stats["suppressed_records"] >= 1
+    assert all(r.retrieved_by == "generic/0.3" and r.storage == "link_only" for r in records)
+
+
+def test_removal_purges_cache_and_writes_tombstone(tmp_path):
+    import csv
+    from atlas.users.directories.optout import Suppression
+    root = tmp_path / "official"
+    f = PoliteFetcher(root / ROR / "pages", delay=0, get=FakeSite(SITE), sleep=lambda s: None)
+    records, _ = crawl(adapter(), f)
+    (root / ROR / "faculty.jsonl").write_text("".join(json.dumps(r.as_dict()) + "\n" for r in records))
+    before = len(list((root / ROR / "pages").glob("*.json")))
+    sup = Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+    purged = sup.remove(root, name="Ada Testperson", ror_id=ROR, email="ada.testperson@example.edu")
+    assert purged["records"] == 1 and purged["pages"] >= 1
+    assert len(list((root / ROR / "pages").glob("*.json"))) < before
+    assert "Ada Testperson" not in (root / ROR / "faculty.jsonl").read_text()
+    rows = list(csv.DictReader((tmp_path / "private" / "tombstones.csv").open()))
+    assert {r["kind"] for r in rows} == {"email", "name_ror"}
+    assert not any("ada" in r["sha256"] for r in rows) and all(len(r["sha256"]) == 64 for r in rows)
+    reloaded = Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+    assert reloaded.blocks(name="ada  TESTPERSON", ror_id=f"https://ror.org/{ROR}")
+
+
+def test_join_sets_t2_and_skips_suppressed(tmp_path):
+    from atlas.users.directories.join import join_records
+    sup = suppression(tmp_path, [{"name": "Bo Fixture", "ror_id": ROR}])
+    [a] = adapter().parse(page("https://www.example.edu/people/ada-testperson", "generic_jsonld.html"))
+    [b] = adapter().parse(page("https://www.example.edu/people/bo-fixture", "generic_microdata.html"))
+    people = [{"atlas_id": "p1", "name": "A. Testperson", "ror_id": ROR},
+              {"atlas_id": "p2", "name": "Bo Fixture", "ror_id": ROR}]
+    joined = join_records([a, b], people, sup)
+    assert [(r.name, pid) for r, pid in joined] == [("Ada Testperson", "p1")]
+    assert a.match_tier == "T2" and b.match_tier is None

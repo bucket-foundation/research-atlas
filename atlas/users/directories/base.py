@@ -20,6 +20,8 @@ from atlas.users.contacts import CONTACT_CACHE, UA, _is_acceptable_email
 OFFICIAL_CACHE = CONTACT_CACHE / "official"
 EMAIL_SOURCE = "official_directory"
 LICENCE = "institution-copyright"
+ADAPTER_VERSION = "0.3"
+RUN_ONLY = ("dropped_emails", "org_mailbox")
 JOIN_MATCH_TIER = "T2"
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
@@ -49,6 +51,8 @@ class FacultyRecord:
     as_of: str | None = None
     match_tier: str | None = None
     licence: str = LICENCE
+    storage: str = "link_only"
+    retrieved_by: str | None = None
 
     def __post_init__(self) -> None:
         self.source_id = self.source_id or self.slug
@@ -56,7 +60,7 @@ class FacultyRecord:
         self.as_of = self.as_of or self.fetched_at
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        return {k: v for k, v in asdict(self).items() if k not in RUN_ONLY}
 
 
 def email_domain_ok(email: str | None, domains: Iterable[str]) -> bool:
@@ -267,14 +271,25 @@ class DirectoryAdapter(Protocol):
     def parse(self, page: Page) -> list[FacultyRecord]: ...
 
 
-def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[FacultyRecord], dict]:
+def retrieved_by(adapter) -> str:
+    name = getattr(adapter, "platform", None) or type(adapter).__name__
+    return f"{name}/{getattr(adapter, 'version', ADAPTER_VERSION)}"
+
+
+def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher, suppression=None) -> tuple[list[FacultyRecord], dict]:
     stats = {"seeds": 0, "fetched": 0, "cached": 0, "robots_denied": 0, "http_errors": 0,
              "records": 0, "emails": 0, "dropped_emails": 0, "budget_exhausted": False,
-             "parse_errors": 0, "parse_error_urls": []}
+             "parse_errors": 0, "parse_error_urls": [], "suppressed_seeds": 0, "suppressed_records": 0}
     seeds = adapter.seeds(fetcher)
     stats["seeds"] = len(seeds)
     out: dict[str, FacultyRecord] = {}
+    hints = getattr(adapter, "seed_people", {}) or {}
     for url in seeds:
+        hint = hints.get(url)
+        if suppression is not None and hint and suppression.blocks(name=hint.get("name"), ror_id=adapter.ror_id,
+                                                                   orcid=hint.get("orcid"), email=hint.get("email")):
+            stats["suppressed_seeds"] += 1
+            continue
         try:
             page = fetcher.fetch(url)
         except RobotsDenied:
@@ -295,6 +310,10 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
             print(f"parse error {url}: {type(exc).__name__}: {exc}", file=sys.stderr)
             continue
         for rec in parsed:
+            rec.retrieved_by = retrieved_by(adapter)
+            if suppression is not None and suppression.blocks_record(rec):
+                stats["suppressed_records"] += 1
+                continue
             prior = out.get(rec.slug)
             if prior is None or _better(rec, prior):
                 out[rec.slug] = rec
@@ -303,6 +322,7 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
     stats["records"] = len(records)
     stats["emails"] = sum(1 for r in records if r.email)
     stats["dropped_emails"] = sum(len(r.dropped_emails) for r in records)
+    stats["org_mailboxes"] = sum(1 for r in records if r.org_mailbox)
     stats["network_errors"] = len(fetcher.errors)
     stats["challenged"] = fetcher.challenged
     stats["requests"] = fetcher.requests

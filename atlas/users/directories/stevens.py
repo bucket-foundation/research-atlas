@@ -61,6 +61,10 @@ def listing_slugs(page_text: str) -> set[str]:
 class StevensAdapter:
     ror_id = "02z43xh36"
     domains = ("stevens.edu",)
+    platform = "stevens"
+
+    def __init__(self) -> None:
+        self.seed_people: dict[str, dict] = {}
 
     def seeds(self, fetcher: PoliteFetcher) -> list[str]:
         sm = fetcher.fetch(SITEMAP)
@@ -78,6 +82,9 @@ class StevensAdapter:
                 if page.status == 200:
                     listings.append(u)
                     slugs |= listing_slugs(page.text)
+                    for o in listing_items(page.text):
+                        if o.get("title"):
+                            self.seed_people[profile_url(o["slug"])] = {"name": o["title"], "email": o.get("email")}
         return listings + [profile_url(s) for s in sorted(slugs)]
 
     def parse(self, page: Page) -> list[FacultyRecord]:

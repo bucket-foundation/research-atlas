@@ -70,3 +70,7 @@ dist/
 *.swp
 .idea/
 .vscode/
+
+# Opt-out list and tombstones: private, never commit
+data/private/*
+!data/private/.gitkeep
