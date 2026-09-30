@@ -1,0 +1,15 @@
+[Unit]
+Description=Research Atlas OpenAlex wide author pull, resumable world partitions
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@REPO@
+ExecStart=@REPO@/scripts/systemd/openalex-wide-run.sh
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=58min
+
+[Install]
+WantedBy=default.target

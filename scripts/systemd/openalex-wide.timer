@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly trigger for the OpenAlex wide author pull
+Requires=openalex-wide.service
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

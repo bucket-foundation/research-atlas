@@ -70,3 +70,5 @@ dist/
 *.swp
 .idea/
 .vscode/
+
+data/processed/openalex_authors_wide/
