@@ -49,12 +49,15 @@ def main(argv: list[str] | None = None) -> int:
 
     rows, dropped = fold(args.cache_root, Suppression.load(args.opt_out, args.tombstones))
     df = pd.DataFrame(rows)
+    folded = 0
     if not df.empty:
-        df = df.drop_duplicates(subset=["ror_id", "slug"], keep="last")
+        n = len(df)
+        df = df.sort_values("as_of", na_position="first").drop_duplicates(subset=["ror_id", "profile_url"], keep="last")
+        folded = n - len(df)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(args.out, index=False)
-    print(json.dumps({"rows": len(df), "emails": int(df["email"].notna().sum()) if len(df) else 0,
-                      "institutions": int(df["ror_id"].nunique()) if len(df) else 0, "opt_out_dropped": dropped, "out": str(args.out)}))
+    print(json.dumps({"rows": len(df), "emails": int(df["email"].notna().sum()) if "email" in df else 0,
+                      "institutions": int(df["ror_id"].nunique()) if len(df) else 0, "opt_out_dropped": dropped, "duplicates_folded": folded, "out": str(args.out)}))
     return 0
 
 

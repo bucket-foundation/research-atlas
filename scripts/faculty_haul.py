@@ -28,6 +28,7 @@ from atlas.users.directories.optout import (
 )
 from atlas.users.directories.stevens import StevensAdapter
 from atlas.users.haul import (
+    LOW_YIELD,
     BudgetExceeded,
     DiskBudget,
     HaulFetcher,
@@ -138,7 +139,7 @@ def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, budget: DiskBu
             f.write(json.dumps(provenance(r.as_dict(), by or f"haul/{VERSION}"), sort_keys=True) + "\n")
     tmp.replace(root / "records.jsonl")
     emails = sum(1 for r in records if r.email)
-    status = "done" if emails else "zero_yield"
+    status = "zero_yield" if not emails else "low_yield" if len(records) < LOW_YIELD else "done"
     state.update(ror, status=status, profiles=len(records), emails=emails, requests=fetcher.requests,
                  opt_out_skipped=stats.get("suppressed_records", 0) + stats.get("suppressed_seeds", 0)
                  + fetcher.suppressed, purged_items=purged, robots_denied=stats.get("robots_denied", 0),

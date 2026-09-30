@@ -5,8 +5,8 @@ Wants=network-online.target
 
 [Service]
 Type=oneshot
-WorkingDirectory=/home/gian/agfarms/research-atlas
-ExecStart=/usr/bin/python3 /home/gian/agfarms/research-atlas/scripts/faculty_haul.py
+WorkingDirectory=@ATLAS_DIR@
+ExecStart=/usr/bin/python3 @ATLAS_DIR@/scripts/faculty_haul.py
 Nice=10
 IOSchedulingClass=idle
 RuntimeMaxSec=50min

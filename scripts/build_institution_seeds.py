@@ -44,8 +44,10 @@ HAND_MAP = {
     "University of Oklahoma Health Sciences Center": "0457zbj98",
     "University of Oklahoma-Health Sciences Center": "0457zbj98",
 }
-FIELDS = ("name", "ror_id", "country_code", "domains", "homepage", "carnegie_class", "tier", "advisor_count",
-          "directory_entry_urls", "entry_kind", "platform_guess", "licence")
+FIELDS = ("name", "ror_id", "country_code", "domains", "homepage", "carnegie_class",
+          "directory_entry_urls", "entry_kind", "platform_guess", "licence", "source_revision",
+          "source_retrieved")
+PRIVATE_COUNTS = REPO_ROOT / "data" / "private" / "seed_advisor_counts.csv"
 LICENCES = {"wikipedia": "Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0",
             "carnegie": "Carnegie Classification terms; ROR CC0-1.0", "": "ROR CC0-1.0"}
 
@@ -59,7 +61,7 @@ def http_get(url: str, limit: int = 600_000, deadline: float = 20.0) -> tuple[in
     with requests.get(url, headers={"User-Agent": UA}, timeout=(10, 10), stream=True, allow_redirects=True) as r:
         chunks, size = [], 0
         if r.status_code == 200:
-            while chunk := r.raw.read1(65536):
+            while chunk := r.raw.read1(65536, decode_content=True):
                 chunks.append(chunk)
                 size += len(chunk)
                 if size >= limit or time.monotonic() - start > deadline:
@@ -67,15 +69,27 @@ def http_get(url: str, limit: int = 600_000, deadline: float = 20.0) -> tuple[in
         return r.status_code, b"".join(chunks).decode(r.encoding or "utf-8", "replace"), r.url
 
 
-def carnegie_lists() -> tuple[dict[str, list[tuple[str, str]]], str]:
+WIKI_API = ("https://en.wikipedia.org/w/api.php?action=query&prop=revisions&rvprop=ids|timestamp|content"
+            "&rvslots=main&format=json&formatversion=2&titles=List_of_research_universities_in_the_United_States")
+
+
+def carnegie_lists() -> tuple[dict[str, list[tuple[str, str]]], str, dict]:
     RAW.mkdir(parents=True, exist_ok=True)
-    cached = RAW / "wikipedia_research_universities.txt"
+    cached = RAW / "wikipedia_research_universities.json"
     if not cached.exists():
-        status, text, _ = http_get(WIKI, limit=5_000_000)
+        status, text, _ = http_get(WIKI_API, limit=5_000_000)
         if status != 200:
             raise SystemExit(f"wikipedia list HTTP {status}")
-        cached.write_text(text)
-    return parse_wiki_carnegie(cached.read_text()), "wikipedia"
+        data = json.loads(text)
+        rev = data["query"]["pages"][0]["revisions"][0]
+        from datetime import datetime, timezone
+
+        cached.write_text(json.dumps({"revid": rev["revid"], "rev_timestamp": rev["timestamp"],
+                                      "retrieved": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+                                      "content": rev["slots"]["main"]["content"]}))
+    meta = json.loads(cached.read_text())
+    prov = {"source_revision": f"enwiki:{meta['revid']}", "source_retrieved": meta["retrieved"]}
+    return parse_wiki_carnegie(meta["content"]), "wikipedia", prov
 
 
 def detect(ror: str, homepage: str, body: str) -> str:
@@ -216,7 +230,8 @@ def build_rows(ror_records: list[dict], lists: dict[str, list[tuple[str, str]]],
         tier, n = tiers.get(rid, ("", 0))
         out.append({"name": ror_display(rec), "ror_id": rid, "country_code": ror_country(rec),
                     "domains": ";".join(ror_domains(rec)), "homepage": ror_homepage(rec),
-                    "carnegie_class": v["carnegie_class"], "tier": tier, "advisor_count": n,
+                    "carnegie_class": v["carnegie_class"], "advisor_institution": "yes" if tier else "",
+                    "tier": tier, "advisor_count": n,
                     "directory_entry_urls": "", "entry_kind": "none", "platform_guess": ""})
     order = {"A+": 0, "A": 1, "": 2}
     out.sort(key=lambda r: (order[r["tier"]], r["carnegie_class"] or "R9", r["name"]))
@@ -232,20 +247,32 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--no-probe", action="store_true")
     ap.add_argument("--workers", type=int, default=40)
     args = ap.parse_args(argv)
-    lists, source = carnegie_lists()
+    lists, source, prov = carnegie_lists()
     tiers = advisor_tiers(read_csv(args.advisors), read_csv(args.roster))
     rows, unresolved = build_rows(json.loads(args.ror.read_text()), lists, tiers)
+    if args.no_probe and args.out.exists():
+        prior = {r["ror_id"]: r for r in read_csv(args.out)}
+        for r in rows:
+            for k in ("directory_entry_urls", "entry_kind", "platform_guess"):
+                r[k] = (prior.get(r["ror_id"]) or {}).get(k, r.get(k, ""))
     if not args.no_probe:
         bucket = TokenBucket(1.0)
         robots = RobotsCache(lambda u: http_get(u)[:2], bucket)
         rows = probe_all(rows, bucket, robots, args.workers, args.out)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=FIELDS)
+        w = csv.DictWriter(f, fieldnames=FIELDS, extrasaction="ignore")
         w.writeheader()
         for r in rows:
             r["licence"] = LICENCES[source if r["carnegie_class"] else ""]
+            r["source_revision"] = prov["source_revision"] if r["carnegie_class"] else ""
+            r["source_retrieved"] = prov["source_retrieved"] if r["carnegie_class"] else ""
             w.writerow(r)
+    PRIVATE_COUNTS.parent.mkdir(parents=True, exist_ok=True)
+    with PRIVATE_COUNTS.open("w", newline="") as f:
+        pw = csv.DictWriter(f, fieldnames=("ror_id", "tier", "advisor_count"), extrasaction="ignore")
+        pw.writeheader()
+        pw.writerows(r for r in rows if r["tier"])
     RAW.mkdir(parents=True, exist_ok=True)
     with (args.out.parent / "unresolved.csv").open("w", newline="") as f:
         uw = csv.DictWriter(f, fieldnames=("list", "name", "wiki_title", "reason"))

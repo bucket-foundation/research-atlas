@@ -152,14 +152,14 @@ def fast_bucket():
 def test_run_writes_records_and_status(tmp_path):
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=2, max_pages=50, budget_bytes=10**9,
                            get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
-    assert code == 0 and state.institutions["r1"]["status"] == "done"
+    assert code == 0 and state.institutions["r1"]["status"] == "low_yield"
     lines = (tmp_path / "r1" / "records.jsonl").read_text().splitlines()
     assert len(lines) == 3 and json.loads(lines[0])["email_source"] == "official_directory"
     first = json.loads(lines[0])
     assert first["licence"] == "institution-copyright" and first["match_tier"] is None
     assert first["source_url"] == first["profile_url"] and first["as_of"] == first["fetched_at"]
     assert list((tmp_path / "r1" / "pages").glob("*.html.gz"))
-    assert "done=1" in status_line(state, tmp_path) and "emails=3" in status_line(state, tmp_path)
+    assert "low_yield=1" in status_line(state, tmp_path) and "emails=3" in status_line(state, tmp_path)
 
 
 def test_resume_from_state_file(tmp_path):
@@ -176,7 +176,7 @@ def test_resume_from_state_file(tmp_path):
     code, state = haul.run(rows("r1", "r2", "r3"), cache_root=tmp_path, workers=1, max_pages=50,
                            budget_bytes=10**9, get=fake_get, bucket=fast_bucket(), adapter_factory=factory)
     assert sorted(seen) == ["r2", "r3"]
-    assert {k: v["status"] for k, v in state.institutions.items()} == {"r1": "done", "r2": "done", "r3": "done"}
+    assert {k: v["status"] for k, v in state.institutions.items()} == {"r1": "done", "r2": "low_yield", "r3": "low_yield"}
     assert HaulState.load(tmp_path / "_state.json").counts()["profiles"] == 10
 
 
@@ -216,7 +216,7 @@ def test_no_adapter_marks_failed(tmp_path):
     assert state.institutions["r1"]["status"] == "pending_adapter" and state.institutions["r1"]["error"] == "no_adapter"
     assert "r1" in state.todo()
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"], n=6))
     assert state.institutions["r1"]["status"] == "done"
 
 
@@ -338,3 +338,42 @@ def test_private_dir_is_gitignored():
 
     out = subprocess.run(["git", "check-ignore", "-q", "data/private/opt_out.csv"], cwd=REPO)
     assert out.returncode == 0
+
+
+def test_low_yield_below_five_profiles(tmp_path):
+    code, state = haul.run(rows("r1", "r2"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9,
+                           get=fake_get, bucket=fast_bucket(),
+                           adapter_factory=lambda r, f: FakeAdapter(r["ror_id"], n=1 if r["ror_id"] == "r1" else 5))
+    assert state.institutions["r1"]["status"] == "low_yield" and state.institutions["r2"]["status"] == "done"
+    assert code == 0 and "low_yield=1" in status_line(state, tmp_path)
+
+
+def test_fold_dedupes_on_profile_url_keeping_newest(tmp_path):
+    import pytest
+
+    pytest.importorskip("pandas")
+    d = tmp_path / "r1"
+    d.mkdir()
+    recs = [{"ror_id": "r1", "slug": "a", "profile_url": "https://x.test/a", "as_of": "2026-09-01T00:00:00Z", "name": "old"},
+            {"ror_id": "r1", "slug": "a2", "profile_url": "https://x.test/a", "as_of": "2026-09-29T00:00:00Z", "name": "new"}]
+    (d / "records.jsonl").write_text("".join(json.dumps(r) + "\n" for r in recs))
+    build = _load("build_official_contacts")
+    out = tmp_path / "o.parquet"
+    build.main(["--cache-root", str(tmp_path), "--out", str(out), "--opt-out", str(tmp_path / "n.csv"),
+                "--tombstones", str(tmp_path / "t.csv")])
+    import pandas as pd
+
+    df = pd.read_parquet(out)
+    assert list(df["name"]) == ["new"]
+
+
+def test_tracked_seeds_hold_no_advisor_counts():
+    header = (REPO / "data" / "seeds" / "institutions.csv").read_text().splitlines()[0].split(",")
+    assert "tier" not in header and "advisor_count" not in header
+    assert "source_revision" in header and "source_retrieved" in header
+
+
+def test_service_dir_is_templated():
+    svc = (REPO / "scripts" / "systemd" / "faculty-haul.service").read_text()
+    inst = (REPO / "scripts" / "systemd" / "install-faculty-haul.sh").read_text()
+    assert "@ATLAS_DIR@" in svc and ".wt-atlas-ops" in inst and "--now" not in inst

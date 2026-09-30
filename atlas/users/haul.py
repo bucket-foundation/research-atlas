@@ -16,7 +16,8 @@ from urllib.parse import unquote, urlparse
 from atlas.users.contacts import UA
 from atlas.users.directories.base import Page, PoliteFetcher, RobotsDenied
 
-STATUSES = ("pending", "pending_adapter", "running", "done", "failed", "zero_yield")
+STATUSES = ("pending", "pending_adapter", "running", "done", "failed", "zero_yield", "low_yield")
+LOW_YIELD = 5
 TIER_RANK = {"A+": 2, "A": 1}
 
 
@@ -358,4 +359,4 @@ def status_line(state: HaulState, cache_root: Path) -> str:
     c = state.counts()
     size = cache_bytes(cache_root)
     return (f"institutions done={c['done']} running={c['running']} pending={c['pending']} pending_adapter={c['pending_adapter']} failed={c['failed']} "
-            f"zero_yield={c['zero_yield']} profiles={c['profiles']} emails={c['emails']} opt_out_skipped={c['opt_out_skipped']} cache={size / 1e9:.2f}GB")
+            f"zero_yield={c['zero_yield']} low_yield={c['low_yield']} profiles={c['profiles']} emails={c['emails']} opt_out_skipped={c['opt_out_skipped']} cache={size / 1e9:.2f}GB")
