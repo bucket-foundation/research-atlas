@@ -500,3 +500,46 @@ PINNED = {
     "name_ror": "9e9e145782e20fb29062e8f793bdc69e9059cfee61d30a720acaddbe08ce0fa0",
     "url": "d0b8917f4da5061e9bf64b69bd303673a6fad2c1dd82ef91c5a0bfa31dae6717",
 }
+
+
+def test_concurrent_key_creation_yields_one_key(tmp_path, monkeypatch):
+    import threading
+    from atlas.users.directories.optout import load_key
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(tmp_path / "k" / "tombstone.key"))
+    got, start = [], threading.Barrier(8)
+
+    def worker():
+        start.wait()
+        got.append(load_key())
+
+    threads = [threading.Thread(target=worker) for _ in range(8)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(got) == 8 and len(set(got)) == 1 and len(got[0]) == 32
+    assert list((tmp_path / "k").iterdir()) == [tmp_path / "k" / "tombstone.key"]
+
+
+def test_short_key_file_is_rejected(tmp_path, monkeypatch):
+    from atlas.users.directories.optout import load_key
+    bad = tmp_path / "short.key"
+    bad.write_bytes(b"abc")
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(bad))
+    with pytest.raises(RuntimeError, match="32 bytes"):
+        load_key(pause=0)
+
+
+@pytest.mark.parametrize("path", ["data/private/opt_out.csv", "data/private/tombstones.csv",
+                                  "data/private/tombstones_legacy.csv", "data/private/any/nested.txt"])
+def test_private_files_are_gitignored(path):
+    import subprocess
+    repo = Path(__file__).resolve().parents[1]
+    assert subprocess.run(["git", "check-ignore", "-q", path], cwd=repo).returncode == 0
+
+
+def test_only_gitkeep_is_tracked_under_private():
+    import subprocess
+    repo = Path(__file__).resolve().parents[1]
+    tracked = subprocess.run(["git", "ls-files", "data/private"], cwd=repo, capture_output=True, text=True).stdout.split()
+    assert tracked == ["data/private/.gitkeep"]

@@ -50,15 +50,32 @@ def key_path() -> Path:
     return Path(os.environ[KEY_ENV]) if os.environ.get(KEY_ENV) else DEFAULT_KEY
 
 
-def load_key() -> bytes:
+KEY_BYTES = 32
+
+
+def load_key(attempts: int = 3, pause: float = 0.05) -> bytes:
+    import time
+
     path = key_path()
-    if not path.exists():
-        path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(fd, "wb") as f:
-            f.write(os.urandom(32))
-    os.chmod(path, 0o600)
-    return path.read_bytes()
+    for _ in range(attempts):
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+            tmp = path.with_name(f".{path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "wb") as f:
+                f.write(os.urandom(KEY_BYTES))
+            try:
+                os.link(tmp, path)
+            except FileExistsError:
+                pass
+            finally:
+                tmp.unlink()
+        data = path.read_bytes() if path.exists() else b""
+        if len(data) == KEY_BYTES:
+            os.chmod(path, 0o600)
+            return data
+        time.sleep(pause)
+    raise RuntimeError(f"tombstone key at {path} is not {KEY_BYTES} bytes")
 
 
 def keyed(value: str, key: bytes | None = None) -> str:
