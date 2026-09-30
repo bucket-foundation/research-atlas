@@ -59,7 +59,11 @@ def _get(url: str) -> dict:
 def clean_text(page_html: str, max_tokens: int = MAX_TOKENS) -> str:
     import trafilatura
 
-    text = trafilatura.extract(page_html, include_links=False, include_comments=False, favor_recall=True) or ""
+    from atlas.users.extract.structured import context_lines
+
+    body = trafilatura.extract(page_html, include_links=False, include_comments=False, favor_recall=True) or ""
+    context = context_lines(page_html)
+    text = ("Page context:\n" + "\n".join(context) + "\n\n" if context else "") + body
     mailtos = sorted(set(re.findall(r'href="mailto:([^"?]+)', page_html)))
     if mailtos:
         text += "\n\nLinked addresses: " + ", ".join(mailtos)

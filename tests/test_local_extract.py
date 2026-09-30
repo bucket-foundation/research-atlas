@@ -200,10 +200,73 @@ def test_extract_local_walks_cache_and_scores_gold(tmp_path):
                                                 "research_areas": None, "email": None, "orcid": None,
                                                 "profile_url": None})}}
     recs, stats = run("0abcde123", tmp_path, use_llm=True, extractor=extractor([reply]))
-    assert stats["pages"] == 2 and stats["structured_hits"] == 1 and stats["llm_pages"] == 1
+    assert stats["pages"] == 1 and stats["structured_hits"] == 1 and stats["invalid_pages"] == 1
     [r] = recs
     assert r["extractor"] == "structured" and r["licence"] == "institution-copyright" and r["match_tier"] is None
     assert r["source_id"] == URL and r["as_of"] == "2026-09-29T00:00:00Z"
     gold = [{"name": "Ada Testperson", "email": "ada.testperson@example.edu", "profile_url": URL, "title": None}]
     s = score(recs, gold, {URL})
     assert s["email"] == {"precision": 1.0, "recall": 1.0, "predicted": 1, "gold": 1}
+
+
+SEARCH_PAGE = ('<html><head><title>Search | Example University</title></head><body><h1>Search</h1>'
+               '<script id="__NEXT_DATA__" type="application/json">'
+               '{"props":{"pageProps":{"pageData":{"__typename":"Search"}}}}</script></body></html>')
+LISTING_PAGE = ('<html><head><title>Faculty</title><script type="application/ld+json">[{"@type":"Person","name":"Ada One",'
+                '"jobTitle":"Professor"},{"@type":"Person","name":"Bo Two","jobTitle":"Lecturer"}]</script></head></html>')
+
+
+def test_profile_validity_rejects_search_and_listing_pages():
+    from atlas.users.extract.structured import profile_invalid_reason
+    assert profile_invalid_reason(SEARCH_PAGE, URL, DOMAINS) == "search page"
+    assert profile_invalid_reason(LISTING_PAGE, URL, DOMAINS) == "listing page"
+    assert profile_invalid_reason("<html><h1>Kim</h1></html>", URL, DOMAINS) == "no title"
+    assert profile_invalid_reason(fx("profile.html"), URL, DOMAINS) is None
+
+
+def test_validator_marks_cache_entry_at_write(tmp_path):
+    from atlas.users.directories.base import PoliteFetcher, crawl
+    from atlas.users.extract.structured import profile_validator
+    from scripts.extract_local import is_profile, load_pages, run
+
+    site = {"https://www.example.edu/robots.txt": (200, ""), URL: (200, SEARCH_PAGE)}
+    f = PoliteFetcher(tmp_path / "0abcde123" / "pages", delay=0, get=lambda u: site.get(u, (404, "")),
+                      sleep=lambda s: None, validator=profile_validator(is_profile, DOMAINS))
+    page = f.fetch(URL)
+    assert page.invalid == "search page" and f.invalid == 1
+    [(meta, _)] = load_pages(tmp_path / "0abcde123")
+    assert meta["invalid"] == "search page"
+    assert f.fetch(URL).invalid == "search page"
+    _, stats = run("0abcde123", tmp_path, use_llm=False)
+    assert stats["invalid_pages"] == 1 and stats["invalid_reasons"] == {"search page": 1}
+
+    class One:
+        ror_id, domains = "0abcde123", DOMAINS
+
+        def seeds(self, fetcher):
+            return [URL]
+
+        def parse(self, page):
+            raise AssertionError("invalid pages are not parsed")
+
+    _, cstats = crawl(One(), f)
+    assert cstats["invalid_pages"] == 1
+
+
+def test_structured_maps_next_data_positions_and_jsonld_school():
+    from atlas.users.extract.structured import context_lines
+    nd = ('<html><head><title>P</title></head><script id="__NEXT_DATA__" type="application/json">'
+          '{"props":{"pageProps":{"pageData":{"__typename":"PageProfile","title":"Cy Synthetic",'
+          '"email":"cy.synthetic@example.edu","school":{"title":"School of Pretend Science"},'
+          '"positionsCollection":{"items":[{"department":{"title":"Imaginary Biology"}}]}}}}}</script></html>')
+    [p] = page_people(nd, URL, DOMAINS)
+    assert p["departments"] == ["Imaginary Biology"] and p["school"] == "School of Pretend Science"
+    ld = ('<html><script type="application/ld+json">{"@type":"Person","name":"Di Madeup","affiliation":'
+          '[{"@type":"CollegeOrUniversity","name":"College of Fake Arts"},{"@type":"Organization",'
+          '"name":"Department of Mock Music"}]}</script></html>')
+    [q] = page_people(ld, URL, DOMAINS)
+    assert q["school"] == "College of Fake Arts" and q["departments"] == ["Department of Mock Music"]
+    ctx = context_lines('<html><nav class="breadcrumb">Home / School of X / Dept of Y</nav>'
+                        '<div class="profile-department">Dept of Y</div></html>')
+    assert ctx == ["Home / School of X / Dept of Y", "Dept of Y"]
+    assert "Page context:" in clean_text('<html><div id="school-name">School of X</div><p>body</p></html>')

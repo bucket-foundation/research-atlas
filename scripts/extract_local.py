@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from atlas.users.directories.base import OFFICIAL_CACHE  # noqa: E402
 from atlas.users.extract.local_llm import LocalExtractor  # noqa: E402
-from atlas.users.extract.structured import page_people  # noqa: E402
+from atlas.users.extract.structured import page_people, profile_invalid_reason  # noqa: E402
 from atlas.users.extract.synthesize import Synthesizer  # noqa: E402
 
 LICENCE = "institution-copyright"
@@ -35,6 +35,28 @@ def load_pages(ror_dir: Path) -> list[tuple[dict, str]]:
         raw = body.read_bytes()
         out.append((meta, (gzip.decompress(raw) if body.suffix == ".gz" else raw).decode("utf-8", "replace")))
     return out
+
+
+def split_invalid(pages: list[tuple[dict, str]], doms: tuple[str, ...],
+                  ror_dir: Path) -> tuple[list[tuple[dict, str]], dict[str, int]]:
+    keep, reasons = [], defaultdict(int)
+    for meta, html in pages:
+        reason = meta.get("invalid") or (profile_invalid_reason(html, meta["url"], doms) if is_profile(meta["url"]) else None)
+        if reason:
+            reasons[reason] += 1
+            if not meta.get("invalid"):
+                mark_invalid(ror_dir, meta, reason)
+        else:
+            keep.append((meta, html))
+    return keep, reasons
+
+
+def mark_invalid(ror_dir: Path, meta: dict, reason: str) -> None:
+    import hashlib
+
+    path = ror_dir / "pages" / f"{hashlib.sha256(meta['url'].encode()).hexdigest()}.json"
+    if path.exists():
+        path.write_text(json.dumps({**meta, "invalid": reason}))
 
 
 def domains_for(ror: str, pages: list[tuple[dict, str]]) -> tuple[str, ...]:
@@ -71,7 +93,7 @@ def is_miss(url: str, people: list[dict]) -> bool:
 def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = None,
         limit: int | None = None) -> tuple[list[dict], dict]:
     ror_dir = root / ror
-    pages = load_pages(ror_dir)[:limit]
+    pages, invalid = split_invalid(load_pages(ror_dir)[:limit], domains_for(ror, load_pages(ror_dir)[:limit]), ror_dir)
     doms = domains_for(ror, pages)
     out, misses = [], []
     started = time.monotonic()
@@ -96,7 +118,7 @@ def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = 
     else:
         for meta, _, people in misses:
             out += [record(ror, meta, p, "structured") for p in people]
-    stats = {"pages": len(pages), "structured_hits": len(pages) - len(misses), "llm_pages": len(misses) if use_llm else 0,
+    stats = {"invalid_pages": sum(invalid.values()), "invalid_reasons": dict(invalid), "pages": len(pages), "structured_hits": len(pages) - len(misses), "llm_pages": len(misses) if use_llm else 0,
              "records": len(out), "emails": sum(1 for r in out if r["email"]),
              "structured_pages_per_min": round(len(pages) / structured_s * 60, 1) if structured_s else None,
              "llm_pages_per_min": round(len(misses) / llm_s * 60, 1) if llm_s else None}
@@ -146,7 +168,8 @@ def score(pred: list[dict], gold: list[dict], page_urls: set[str]) -> dict:
 
 def gold_eval(ror: str, root: Path, limit: int | None, synth: bool) -> dict:
     gold = [json.loads(line) for line in (root / ror / "faculty.jsonl").open()]
-    pages = load_pages(root / ror)[:limit]
+    loaded = load_pages(root / ror)[:limit]
+    pages, _ = split_invalid(loaded, domains_for(ror, loaded), root / ror)
     urls = {m["url"] for m, _ in pages}
     s_only, s_stats = run(ror, root, use_llm=False, limit=limit)
     s_llm, l_stats = run(ror, root, use_llm=True, limit=limit)
@@ -192,6 +215,8 @@ def main(argv: list[str] | None = None) -> int:
         with (args.root / ror / "extracted.jsonl").open("w") as f:
             for r in recs:
                 f.write(json.dumps(r, sort_keys=True) + "\n")
+        print(f"{ror}: {stats['pages']} pages, {stats['invalid_pages']} invalid {stats['invalid_reasons']}, "
+              f"{stats['records']} records, {stats['emails']} emails", file=sys.stderr)
         print(json.dumps({"ror_id": ror, **stats}))
     return 0
 

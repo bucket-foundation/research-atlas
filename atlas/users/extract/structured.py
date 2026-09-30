@@ -158,7 +158,7 @@ def _text_list(value) -> list[str]:
     if isinstance(value, str):
         return [value.strip()] if value.strip() else []
     if isinstance(value, dict):
-        return _text_list(value.get("name") or value.get("@value") or value.get("value"))
+        return _text_list(value.get("name") or value.get("@value") or value.get("value") or value.get("title"))
     if isinstance(value, list):
         return [t for v in value for t in _text_list(v)]
     return []
@@ -180,6 +180,14 @@ class Person:
     url: str | None = None
 
 
+SCHOOL_TYPES = {"collegeoruniversity", "educationalorganization"}
+SCHOOL_NAME = re.compile(r"\b(school|college|faculty) of\b", re.I)
+
+
+def _is_school(o: dict) -> bool:
+    return bool(_types(o) & SCHOOL_TYPES) or bool(SCHOOL_NAME.search(_first(o) or ""))
+
+
 def _person_from_schema(obj: dict) -> Person | None:
     name = _first(obj.get("name"))
     if not name and (obj.get("givenName") or obj.get("familyName")):
@@ -187,10 +195,17 @@ def _person_from_schema(obj: dict) -> Person | None:
     if not name:
         return None
     emails = [e.removeprefix("mailto:") for e in _text_list(obj.get("email"))]
-    orgs = _text_list(obj.get("worksFor")) + _text_list(obj.get("affiliation")) + _text_list(obj.get("memberOf"))
+    org_objs = [o for k in ("worksFor", "affiliation", "memberOf", "department")
+                for o in (obj.get(k) if isinstance(obj.get(k), list) else [obj.get(k)]) if o]
+    for o in list(org_objs):
+        if isinstance(o, dict):
+            org_objs += [x for x in (o.get("department") if isinstance(o.get("department"), list)
+                                     else [o.get("department")]) if x]
+    school = next((_first(o) for o in org_objs if isinstance(o, dict) and _is_school(o)), None)
+    orgs = [t for o in org_objs if not (isinstance(o, dict) and _is_school(o)) for t in _text_list(o)]
     areas = _text_list(obj.get("knowsAbout"))
     return Person(name=html_to_text(name) or name, title=_first(obj.get("jobTitle")),
-                  departments=orgs, research_areas="; ".join(areas) or None,
+                  departments=orgs, school=school, research_areas="; ".join(areas) or None,
                   emails=emails, url=_first(obj.get("url")) if isinstance(obj.get("url"), (str, list)) else None)
 
 
@@ -263,7 +278,13 @@ def next_data_people(page_text: str) -> list[Person]:
             return
         title = next((o[k] for k in ("jobTitle", "position", "status") if isinstance(o.get(k), str)), None)
         depts = _text_list(o.get("department")) + _text_list(o.get("departments"))
-        out.append(Person(name=name.strip(), title=title, departments=depts, emails=[email],
+        positions = (o.get("positionsCollection") or {}).get("items") if isinstance(o.get("positionsCollection"), dict) \
+            else o.get("positions")
+        for pos in positions or []:
+            if isinstance(pos, dict):
+                depts += _text_list(pos.get("department"))
+        school = _first(o.get("school")) or _first(o.get("college"))
+        out.append(Person(name=name.strip(), title=title, departments=depts, school=school, emails=[email],
                           url=o.get("url") if isinstance(o.get("url"), str) else None))
 
     _walk(data, visit)
@@ -336,3 +357,54 @@ ORCID_RE = re.compile(r"orcid\.org/(\d{4}-\d{4}-\d{4}-\d{3}[\dX])")
 def orcid_in(page_text: str) -> str | None:
     found = set(ORCID_RE.findall(page_text))
     return found.pop() if len(found) == 1 else None
+
+
+SEARCH_TITLE = re.compile(r"^\s*(search|search results)\b|\bsearch results\b", re.I)
+SEARCH_TYPES = {"search", "searchresultspage", "pagesearch"}
+
+
+def profile_invalid_reason(page_text: str, url: str, domains: Iterable[str] = ()) -> str | None:
+    m = re.search(r"<title[^>]*>(.*?)</title>", page_text, re.S | re.I)
+    title = htmllib.unescape(m.group(1)).strip() if m else ""
+    if not title:
+        return "no title"
+    data = next_data(page_text) or {}
+    page_type = str(((data.get("props") or {}).get("pageProps") or {}).get("pageData", {}).get("__typename", "")
+                    if isinstance(((data.get("props") or {}).get("pageProps") or {}).get("pageData"), dict) else "")
+    if SEARCH_TITLE.search(title) or page_type.lower() in SEARCH_TYPES:
+        return "search page"
+    people = [p for p in page_people(page_text, url, domains, profile=True) if p.get("name")]
+    if not people:
+        return "no person name"
+    if len({p["name"] for p in people}) > 1:
+        return "listing page"
+    p = people[0]
+    if not any(p.get(k) for k in ("title", "email", "departments", "research_areas", "school", "orcid")):
+        return "no schema field"
+    return None
+
+
+def profile_validator(is_profile, domains: Iterable[str] = ()):
+    def check(page_text: str, url: str) -> str | None:
+        return profile_invalid_reason(page_text, url, domains) if is_profile(url) else None
+
+    return check
+
+
+CONTEXT_KEY = re.compile(r"department|school|college|unit|affiliation|breadcrumb", re.I)
+
+
+def context_lines(page_text: str, limit: int = 20) -> list[str]:
+    root = parse_html(page_text)
+    lines: list[str] = []
+    for n in root.iter():
+        key = f"{n.attrs.get('class', '')} {n.attrs.get('id', '')} {n.attrs.get('aria-label', '')}"
+        if n.tag == "nav" and "breadcrumb" not in key.lower() and n.parent is not None and n.parent.tag == "header":
+            continue
+        if CONTEXT_KEY.search(key) or (n.tag == "nav" and "breadcrumb" in key.lower()):
+            t = n.text()
+            if t and len(t) < 300 and t not in lines:
+                lines.append(t)
+        if len(lines) >= limit:
+            break
+    return lines
