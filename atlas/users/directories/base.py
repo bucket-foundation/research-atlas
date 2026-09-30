@@ -128,6 +128,10 @@ class Page:
     fetched_at: str
     sha256: str
     from_cache: bool
+    invalid: str | None = None
+    source: str = "official_directory"
+    source_url: str | None = None
+    crawl_id: str | None = None
 
 
 class PoliteFetcher:
@@ -135,7 +139,9 @@ class PoliteFetcher:
                  get: Callable[[str], tuple[int, str]] | None = None,
                  now: Callable[[], datetime] | None = None,
                  sleep: Callable[[float], None] = time.sleep, attempts: int = 3,
-                 budget: int | None = None, log: Callable[[str], None] | None = None) -> None:
+                 budget: int | None = None, log: Callable[[str], None] | None = None,
+                 validator: Callable[[str, str], str | None] | None = None,
+                 archive: Callable[[str], object] | None = None) -> None:
         self.cache_dir = cache_dir
         self.delay = delay
         self.max_age = timedelta(days=max_age_days)
@@ -148,6 +154,10 @@ class PoliteFetcher:
         self.attempts = attempts
         self.errors: list[str] = []
         self.budget = budget
+        self.validator = validator
+        self.archive = archive
+        self.invalid = 0
+        self.archived = 0
         self.log = log
         self.challenged = 0
         self._host_delay: dict[str, float] = {}
@@ -207,7 +217,8 @@ class PoliteFetcher:
                 if age > timedelta(days=1) and not self.allowed(url):
                     raise RobotsDenied(url)
                 text = gzip.decompress(body_path.read_bytes()).decode()
-                return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True)
+                return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True, meta.get("invalid"),
+                            meta.get("source", "official_directory"), meta.get("source_url"), meta.get("crawl_id"))
         if not self.allowed(url):
             raise RobotsDenied(url)
         if self.budget is not None and self.requests >= self.budget:
@@ -228,14 +239,35 @@ class PoliteFetcher:
                 break
             self._sleep(self.delay * 5 * (attempt + 1))
         fetched_at = self._now().strftime("%Y-%m-%dT%H:%M:%SZ")
-        digest = hashlib.sha256(text.encode()).hexdigest()
         if status in (403, 503) and CHALLENGE_RE.search(text[:4000]):
             self.challenged += 1
+        source, source_url, crawl_id = "official_directory", None, None
+        if self.archive is not None and _needs_archive(status, text):
+            rec = self.archive(url)
+            if rec is not None:
+                self.archived += 1
+                status, text = 200, rec.html
+                source, source_url, crawl_id = "commoncrawl", rec.location, rec.crawl_id
+        digest = hashlib.sha256(text.encode()).hexdigest()
+        invalid = self.validator(text, url) if self.validator and status == 200 else None
+        if invalid:
+            self.invalid += 1
         if status == 200:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
             body_path.write_bytes(gzip.compress(text.encode()))
-            meta_path.write_text(json.dumps({"url": url, "status": status, "fetched_at": fetched_at, "sha256": digest}))
-        return Page(url, status, text, fetched_at, digest, False)
+            meta = {"url": url, "status": status, "fetched_at": fetched_at, "sha256": digest, "source": source}
+            if source_url:
+                meta.update(source_url=source_url, crawl_id=crawl_id)
+            if invalid:
+                meta["invalid"] = invalid
+            meta_path.write_text(json.dumps(meta))
+        return Page(url, status, text, fetched_at, digest, False, invalid, source, source_url, crawl_id)
+
+
+def _needs_archive(status: int, text: str) -> bool:
+    from atlas.users.extract.commoncrawl import needs_archive
+
+    return needs_archive(status, text)
 
 
 def _better(new: FacultyRecord, old: FacultyRecord) -> bool:
@@ -305,6 +337,9 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher, suppression=None) -
         stats["cached" if page.from_cache else "fetched"] += 1
         if page.status != 200:
             stats["http_errors"] += 1
+            continue
+        if page.invalid:
+            stats["invalid_pages"] = stats.get("invalid_pages", 0) + 1
             continue
         try:
             parsed = adapter.parse(page)

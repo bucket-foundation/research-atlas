@@ -178,7 +178,7 @@ def _text_list(value) -> list[str]:
     if isinstance(value, str):
         return [value.strip()] if value.strip() else []
     if isinstance(value, dict):
-        return _text_list(value.get("name") or value.get("@value") or value.get("value"))
+        return _text_list(value.get("name") or value.get("@value") or value.get("value") or value.get("title"))
     if isinstance(value, list):
         return [t for v in value for t in _text_list(v)]
     return []
@@ -200,6 +200,14 @@ class Person:
     url: str | None = None
 
 
+SCHOOL_TYPES = {"collegeoruniversity", "educationalorganization"}
+SCHOOL_NAME = re.compile(r"\b(school|college|faculty) of\b", re.I)
+
+
+def _is_school(o: dict) -> bool:
+    return bool(_types(o) & SCHOOL_TYPES) or bool(SCHOOL_NAME.search(_first(o) or ""))
+
+
 def _person_from_schema(obj: dict) -> Person | None:
     name = _first(obj.get("name"))
     if not name and (obj.get("givenName") or obj.get("familyName")):
@@ -207,10 +215,17 @@ def _person_from_schema(obj: dict) -> Person | None:
     if not name:
         return None
     emails = [e.removeprefix("mailto:") for e in _text_list(obj.get("email"))]
-    orgs = _text_list(obj.get("worksFor")) + _text_list(obj.get("affiliation")) + _text_list(obj.get("memberOf"))
+    org_objs = [o for k in ("worksFor", "affiliation", "memberOf", "department")
+                for o in (obj.get(k) if isinstance(obj.get(k), list) else [obj.get(k)]) if o]
+    for o in list(org_objs):
+        if isinstance(o, dict):
+            org_objs += [x for x in (o.get("department") if isinstance(o.get("department"), list)
+                                     else [o.get("department")]) if x]
+    school = next((_first(o) for o in org_objs if isinstance(o, dict) and _is_school(o)), None)
+    orgs = [t for o in org_objs if not (isinstance(o, dict) and _is_school(o)) for t in _text_list(o)]
     areas = _text_list(obj.get("knowsAbout"))
     return Person(name=html_to_text(name) or name, title=_first(obj.get("jobTitle")),
-                  departments=orgs, research_areas="; ".join(areas) or None,
+                  departments=orgs, school=school, research_areas="; ".join(areas) or None,
                   emails=emails, url=_first(obj.get("url")) if isinstance(obj.get("url"), (str, list)) else None)
 
 
@@ -283,7 +298,13 @@ def next_data_people(page_text: str) -> list[Person]:
             return
         title = next((o[k] for k in ("jobTitle", "position", "status") if isinstance(o.get(k), str)), None)
         depts = _text_list(o.get("department")) + _text_list(o.get("departments"))
-        out.append(Person(name=name.strip(), title=title, departments=depts, emails=[email],
+        positions = (o.get("positionsCollection") or {}).get("items") if isinstance(o.get("positionsCollection"), dict) \
+            else o.get("positions")
+        for pos in positions or []:
+            if isinstance(pos, dict):
+                depts += _text_list(pos.get("department"))
+        school = _first(o.get("school")) or _first(o.get("college"))
+        out.append(Person(name=name.strip(), title=title, departments=depts, school=school, emails=[email],
                           url=o.get("url") if isinstance(o.get("url"), str) else None))
 
     _walk(data, visit)
@@ -329,6 +350,7 @@ def pick_email(candidates: Iterable[str], domains: Iterable[str], name: str) -> 
     if len(named) == 1:
         return named[0], dropped + [e for e in good if e != named[0]]
     return None, dropped + good
+
 
 
 def slug_for(url: str) -> str:
