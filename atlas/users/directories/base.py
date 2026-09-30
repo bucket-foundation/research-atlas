@@ -218,7 +218,8 @@ class PoliteFetcher:
                     raise RobotsDenied(url)
                 text = gzip.decompress(body_path.read_bytes()).decode()
                 return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True, meta.get("invalid"),
-                            meta.get("source", "official_directory"), meta.get("source_url"), meta.get("crawl_id"))
+                            meta.get("source", "official_directory"), meta.get("source_url"),
+                            (meta.get("provenance") or {}).get("crawl_id"))
         if not self.allowed(url):
             raise RobotsDenied(url)
         if self.budget is not None and self.requests >= self.budget:
@@ -247,7 +248,7 @@ class PoliteFetcher:
             if rec is not None:
                 self.archived += 1
                 status, text = 200, rec.html
-                source, source_url, crawl_id = "commoncrawl", rec.location, rec.crawl_id
+                source_url, crawl_id = rec.location, rec.crawl_id
         digest = hashlib.sha256(text.encode()).hexdigest()
         invalid = self.validator(text, url) if self.validator and status == 200 else None
         if invalid:
@@ -257,7 +258,7 @@ class PoliteFetcher:
             body_path.write_bytes(gzip.compress(text.encode()))
             meta = {"url": url, "status": status, "fetched_at": fetched_at, "sha256": digest, "source": source}
             if source_url:
-                meta.update(source_url=source_url, crawl_id=crawl_id)
+                meta.update(source_url=source_url, provenance={"crawl_id": crawl_id, "archive": "commoncrawl"})
             if invalid:
                 meta["invalid"] = invalid
             meta_path.write_text(json.dumps(meta))

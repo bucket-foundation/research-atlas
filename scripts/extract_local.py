@@ -15,7 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from atlas.users.directories.base import OFFICIAL_CACHE  # noqa: E402
 from atlas.users.extract.commoncrawl import CommonCrawl, needs_archive, same_host  # noqa: E402
-from atlas.users.extract.local_llm import LocalExtractor, verified_email  # noqa: E402
+from atlas.users.directories.optout import Suppression  # noqa: E402
+from atlas.users.extract.local_llm import LocalExtractor, page_email_candidates, verified_email  # noqa: E402
 from atlas.users.extract.structured import page_people, profile_invalid_reason  # noqa: E402
 from atlas.users.extract.synthesize import Synthesizer, apply_selectors, load_selectors  # noqa: E402
 
@@ -92,7 +93,8 @@ def record(ror: str, meta: dict, person: dict, extractor: str, digest: str | Non
     url = person.get("profile_url") or meta["url"]
     rec = {k: person.get(k) for k in ("name", "title", "departments", "school", "research_areas", "email", "orcid")}
     rec.update(profile_url=url, page_url=meta["url"], ror_id=ror, source=meta.get("source", "official_directory"),
-               source_id=url, source_url=meta.get("source_url") or meta["url"], crawl_id=meta.get("crawl_id"),
+               source_id=url, source_url=meta.get("source_url") or meta["url"],
+               provenance={"crawl_id": (meta.get("provenance") or {}).get("crawl_id")},
                as_of=meta.get("fetched_at"), match_tier=None, licence=LICENCE, storage="link_only",
                retrieved_by=f"{RETRIEVED_BY}+{extractor}", extractor=extractor, extractor_digest=digest,
                html_sha256=meta.get("sha256"))
@@ -115,23 +117,43 @@ def selector_person(html: str, url: str, selectors: dict, doms: tuple[str, ...])
 
 def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = None,
         limit: int | None = None, domains: tuple[str, ...] | None = None,
-        table: Path | None = None) -> tuple[list[dict], dict]:
+        table: Path | None = None, suppression: Suppression | None = None) -> tuple[list[dict], dict]:
     ror_dir = root / ror
+    sup = suppression if suppression is not None else Suppression.load()
     doms = domains if domains is not None else domains_for(ror, table)
-    pages, invalid = split_invalid(load_pages(ror_dir)[:limit], doms, ror_dir)
+    loaded = load_pages(ror_dir)[:limit]
+    blocked_pages = [m for m, _ in loaded if sup.blocks_url(m["url"])]
+    loaded = [(m, h) for m, h in loaded if not sup.blocks_url(m["url"])]
+    pages, invalid = split_invalid(loaded, doms, ror_dir)
+    suppressed = {"pages": len(blocked_pages), "records": 0, "llm_pages": 0}
+
+    def allowed(person: dict) -> bool:
+        if sup.blocks(person.get("name"), ror, person.get("orcid"), person.get("email")):
+            suppressed["records"] += 1
+            return False
+        return True
+
     out, misses = [], []
     started = time.monotonic()
     for meta, html in pages:
         people = page_people(html, meta["url"], doms, profile=is_profile(meta["url"]))
         if people and not is_miss(meta["url"], people):
-            out += [record(ror, meta, p, "structured") for p in people]
+            out += [record(ror, meta, p, "structured") for p in people if allowed(p)]
         else:
             misses.append((meta, html, people))
+    safe = []
+    for meta, html, people in misses:
+        emails = page_email_candidates(html)
+        if any(not allowed(p) for p in people) or any(sup.blocks(email=e) for e in emails):
+            suppressed["llm_pages"] += 1
+            continue
+        safe.append((meta, html, people))
+    misses = safe
     selector_hits, still = 0, []
     for meta, html, people in misses:
         sel = load_selectors(root / "_selectors", urlparse(meta["url"]).netloc)
         got = selector_person(html, meta["url"], sel, doms) if sel else None
-        if got and got.get("email"):
+        if got and got.get("email") and allowed(got):
             out.append(record(ror, meta, got, "selectors"))
             selector_hits += 1
         else:
@@ -147,16 +169,17 @@ def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = 
         failures = list(ex.failures)
         for (meta, _, people), res in zip(misses, results):
             if res and res.get("name"):
-                out.append(record(ror, meta, res, res["extractor"], res.get("extractor_digest")))
+                if allowed(res):
+                    out.append(record(ror, meta, res, res["extractor"], res.get("extractor_digest")))
             else:
-                out += [record(ror, meta, p, "structured") for p in people]
+                out += [record(ror, meta, p, "structured") for p in people if allowed(p)]
     else:
         for meta, _, people in misses:
-            out += [record(ror, meta, p, "structured") for p in people]
-    stats = {"invalid_pages": sum(invalid.values()), "invalid_reasons": dict(invalid), "pages": len(pages),
+            out += [record(ror, meta, p, "structured") for p in people if allowed(p)]
+    stats = {"suppressed": suppressed, "invalid_pages": sum(invalid.values()), "invalid_reasons": dict(invalid), "pages": len(pages),
              "structured_hits": len(pages) - len(misses) - selector_hits, "selector_hits": selector_hits,
              "llm_pages": len(misses) if use_llm else 0, "llm_failures": len(failures), "llm_failure_urls": failures,
-             "archived_pages": sum(1 for m, _ in pages if m.get("source") == "commoncrawl"),
+             "archived_pages": sum(1 for m, _ in pages if (m.get("provenance") or {}).get("crawl_id")),
              "records": len(out), "emails": sum(1 for r in out if r["email"]),
              "structured_pages_per_min": round(len(pages) / structured_s * 60, 1) if structured_s else None,
              "llm_pages_per_min": round(len(misses) / llm_s * 60, 1) if llm_s else None}
@@ -164,14 +187,18 @@ def run(ror: str, root: Path, use_llm: bool, extractor: LocalExtractor | None = 
 
 
 def archive_host(ror: str, host: str, root: Path, cc: CommonCrawl, live_status: tuple[int, str],
-                 limit: int = 400) -> dict:
+                 limit: int = 400, suppression: Suppression | None = None) -> dict:
+    sup = suppression if suppression is not None else Suppression.load()
     if not needs_archive(*live_status):
         return {"host": host, "archived": 0, "reason": "live host is reachable; fetch it live"}
     pages = root / ror / "pages"
     pages.mkdir(parents=True, exist_ok=True)
     rows = cc.profile_urls(host, PROFILE_PATH, limit)[:limit]
-    written = rejected = 0
+    written = rejected = blocked = 0
     for row in rows:
+        if sup.blocks_url(row["url"]):
+            blocked += 1
+            continue
         rec = cc.record(row)
         if rec is None or rec.status != 200 or not same_host(rec.url, f"https://{host}/"):
             rejected += 1
@@ -180,10 +207,11 @@ def archive_host(ror: str, host: str, root: Path, cc: CommonCrawl, live_status: 
         (pages / f"{key}.html.gz").write_bytes(gzip.compress(rec.html.encode()))
         (pages / f"{key}.json").write_text(json.dumps({
             "url": row["url"], "status": 200, "fetched_at": rec.warc_date,
-            "sha256": hashlib.sha256(rec.html.encode()).hexdigest(), "source": "commoncrawl",
-            "source_url": rec.location, "crawl_id": rec.crawl_id}))
+            "sha256": hashlib.sha256(rec.html.encode()).hexdigest(), "source": "official_directory",
+            "source_url": rec.location, "provenance": {"crawl_id": rec.crawl_id, "archive": "commoncrawl"}}))
         written += 1
-    return {"host": host, "archived": written, "rejected": rejected, "crawl_id": cc.collection}
+    return {"host": host, "archived": written, "rejected": rejected, "suppressed": blocked,
+            "crawl_id": cc.collection}
 
 
 def _norm(v) -> str:

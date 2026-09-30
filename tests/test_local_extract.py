@@ -347,11 +347,12 @@ def test_fetcher_falls_back_to_archive_on_challenge(tmp_path):
     f = PoliteFetcher(tmp_path / "pages", delay=0, get=lambda u: site.get(u, (404, "")), sleep=lambda s: None,
                       archive=cc.archive_for)
     page = f.fetch(URL)
-    assert page.status == 200 and page.source == "commoncrawl" and page.crawl_id == "CC-MAIN-2026-39"
+    assert page.status == 200 and page.source == "official_directory" and page.crawl_id == "CC-MAIN-2026-39"
     assert page.source_url.startswith("https://data.commoncrawl.org/crawl-data/CC-MAIN-2026-39/")
     assert f.archived == 1 and "Ada Testperson" in page.text
     meta = json.loads(next((tmp_path / "pages").glob("*.json")).read_text())
-    assert meta["source"] == "commoncrawl" and meta["crawl_id"] == "CC-MAIN-2026-39"
+    assert meta["source"] == "official_directory"
+    assert meta["provenance"] == {"crawl_id": "CC-MAIN-2026-39", "archive": "commoncrawl"}
 
 
 def test_archive_rejects_a_record_from_another_host():
@@ -368,9 +369,10 @@ def test_archive_host_writes_provenance_and_extracts(tmp_path):
     live_ok = archive_host("0abcde123", "www.example.edu", tmp_path, cc, (200, "<html>hi</html>"))
     assert live_ok["archived"] == 0 and "live" in live_ok["reason"]
     res = archive_host("0abcde123", "www.example.edu", tmp_path, cc, (403, ""))
-    assert res == {"host": "www.example.edu", "archived": 1, "rejected": 0, "crawl_id": "CC-MAIN-2026-39"}
+    assert res == {"host": "www.example.edu", "archived": 1, "rejected": 0, "suppressed": 0,
+                   "crawl_id": "CC-MAIN-2026-39"}
     [rec], stats = run("0abcde123", tmp_path, use_llm=False, domains=DOMAINS)
-    assert rec["source"] == "commoncrawl" and rec["crawl_id"] == "CC-MAIN-2026-39"
+    assert rec["source"] == "official_directory" and rec["provenance"] == {"crawl_id": "CC-MAIN-2026-39"}
     assert rec["source_url"].startswith("https://data.commoncrawl.org/") and rec["page_url"] == URL
     assert rec["storage"] == "link_only" and rec["retrieved_by"] == "extract_local/0.2+structured"
     assert stats["archived_pages"] == 1
@@ -405,3 +407,90 @@ def test_synthesis_gate_is_per_field(tmp_path):
     from atlas.users.extract.synthesize import load_selectors
     assert load_selectors(tmp_path / "sel", "www.example.edu") == {"name": "h1.person-name"}
     assert json.loads(q.read_text())["rejected_fields"] == ["email"]
+
+
+def sup_for(tmp_path, **person):
+    from atlas.users.directories.optout import Suppression
+    sup = Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+    (tmp_path / "scratch").mkdir(exist_ok=True)
+    sup.remove(tmp_path / "scratch", **person)
+    return Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+
+
+def cache_page(root, url, html, name="k"):
+    pages = root / "0abcde123" / "pages"
+    pages.mkdir(parents=True, exist_ok=True)
+    (pages / f"{name}.json").write_text(json.dumps({"url": url, "status": 200, "fetched_at": "t", "sha256": "0"}))
+    (pages / f"{name}.html").write_text(html)
+
+
+def test_suppressed_url_is_never_parsed(tmp_path, monkeypatch):
+    import scripts.extract_local as xl
+    root = tmp_path / "official"
+    cache_page(root, URL, fx("profile.html"))
+    sup = sup_for(tmp_path, ror_id="0abcde123", profile_url=URL)
+    parsed = []
+    monkeypatch.setattr(xl, "page_people", lambda *a, **k: parsed.append(a) or [])
+    recs, stats = xl.run("0abcde123", root, use_llm=False, domains=DOMAINS, suppression=sup)
+    assert recs == [] and parsed == [] and stats["suppressed"]["pages"] == 1
+
+
+def test_suppressed_structured_record_is_not_appended(tmp_path):
+    from scripts.extract_local import run
+    root = tmp_path / "official"
+    cache_page(root, URL, fx("profile.html"))
+    sup = sup_for(tmp_path, name="Ada Testperson", ror_id="0abcde123")
+    recs, stats = run("0abcde123", root, use_llm=False, domains=DOMAINS, suppression=sup)
+    assert recs == [] and stats["suppressed"]["records"] == 1
+
+
+def test_suppressed_selector_record_is_not_appended(tmp_path):
+    from scripts.extract_local import run
+    root = tmp_path / "official"
+    sel = root / "_selectors"
+    sel.mkdir(parents=True)
+    (sel / "www.example.edu.json").write_text(json.dumps({
+        "selectors": {"name": "h1.who", "email": "a.m"}, "accepted_fields": ["name", "email"]}))
+    html = ("<html><head><title>T</title></head><body><h1 class='who'>Gil Fakeson</h1>"
+            "<a class='m' href='mailto:gf12@example.edu'>m</a><a href='mailto:lab77@example.edu'>l</a></body></html>")
+    cache_page(root, "https://www.example.edu/people/gil", html)
+    sup = sup_for(tmp_path, email="gf12@example.edu")
+    ex = extractor([])
+    recs, stats = run("0abcde123", root, use_llm=True, extractor=ex, domains=DOMAINS, suppression=sup)
+    assert recs == [] and ex.post.payloads == [] and stats["selector_hits"] == 0
+
+
+def test_suppressed_page_is_never_sent_to_the_llm(tmp_path):
+    from scripts.extract_local import run
+    root = tmp_path / "official"
+    html = ("<html><head><title>T</title></head><body><h1>Hal Invented</h1><p>Lab</p>"
+            "<a href='mailto:hinv@example.edu'>a</a><a href='mailto:lab9@example.edu'>b</a></body></html>")
+    cache_page(root, "https://www.example.edu/people/hal", html)
+    sup = sup_for(tmp_path, name="Hal Invented", ror_id="0abcde123")
+    ex = extractor([])
+    recs, stats = run("0abcde123", root, use_llm=True, extractor=ex, domains=DOMAINS, suppression=sup)
+    assert recs == [] and ex.post.payloads == [] and stats["suppressed"]["llm_pages"] == 1
+
+
+def test_suppressed_llm_output_is_not_appended(tmp_path):
+    from scripts.extract_local import run
+    root = tmp_path / "official"
+    html = ("<html><head><title>T</title></head><body><h1>Profile</h1><p>Ada Testperson, Professor</p>"
+            "<a href='mailto:ada.testperson@example.edu'>a</a><a href='mailto:lab9@example.edu'>b</a></body></html>")
+    cache_page(root, "https://www.example.edu/people/ada", html)
+    reply = llm_reply(email="lab9@example.edu", orcid=None)
+    ex = extractor([reply])
+    sup2 = sup_for(tmp_path, name="Ada Testperson", ror_id="0abcde123")
+    recs, stats = run("0abcde123", root, use_llm=True, extractor=ex, domains=DOMAINS, suppression=sup2)
+    assert len(ex.post.payloads) == 1 and recs == [] and stats["suppressed"]["records"] >= 1
+
+
+def test_suppressed_url_is_not_fetched_from_common_crawl(tmp_path):
+    from scripts.extract_local import archive_host
+    blob = warc_blob(URL, fx("profile.html"))
+    get, calls = cc_site(blob)
+    sup = sup_for(tmp_path, ror_id="0abcde123", profile_url=URL)
+    res = archive_host("0abcde123", "www.example.edu", tmp_path / "official", CommonCrawl(get=get, sleep=lambda s: None),
+                       (403, ""), suppression=sup)
+    assert res["archived"] == 0 and res["suppressed"] == 1
+    assert not [c for c in calls if "data.commoncrawl.org" in c]
