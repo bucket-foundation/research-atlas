@@ -53,10 +53,36 @@ def key_path() -> Path:
 KEY_BYTES = 32
 
 
+_KEYS: dict[str, tuple[tuple[int, int], bytes]] = {}
+
+
+def _stamp(path: Path) -> tuple[int, int] | None:
+    try:
+        st = path.stat()
+    except FileNotFoundError:
+        return None
+    return st.st_mtime_ns, st.st_size
+
+
 def load_key(attempts: int = 3, pause: float = 0.05) -> bytes:
+    path = key_path()
+    cached = _KEYS.get(str(path))
+    stamp = _stamp(path)
+    if cached is not None and stamp == cached[0]:
+        return cached[1]
+    key = _read_or_create_key(path, attempts, pause)
+    _KEYS[str(path)] = (_stamp(path), key)
+    return key
+
+
+def reload_key() -> bytes:
+    _KEYS.pop(str(key_path()), None)
+    return load_key()
+
+
+def _read_or_create_key(path: Path, attempts: int, pause: float) -> bytes:
     import time
 
-    path = key_path()
     for _ in range(attempts):
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -226,6 +252,9 @@ class Suppression:
         keys = person_keys(name, ror_id, orcid, email)
         probe = Suppression(set(keys))
         all_urls: set[str] = {profile_url} if profile_url else set()
+        written = set(keys) | {url_key(u) for u in all_urls}
+        self.hashes.update(written)
+        self._write_tombstones(sorted(written))
         purged = {"records": 0, "pages": 0}
         dirs = [cache_root / normalize_ror(ror_id)] if ror_id else [p for p in cache_root.iterdir() if p.is_dir()]
         for d in dirs:
@@ -245,9 +274,10 @@ class Suppression:
                 _atomic_write(path, "".join(k + "\n" for k in kept))
             all_urls |= urls
             purged["pages"] += _purge_pages(d / "pages", urls | all_urls, email, name)
-        keys += list(dict.fromkeys(url_key(u) for u in all_urls))
-        self.hashes.update(keys)
-        self._write_tombstones(keys)
+        late = [k for k in dict.fromkeys(url_key(u) for u in all_urls) if k not in written]
+        self.hashes.update(late)
+        if late:
+            self._write_tombstones(late)
         purged["urls"] = len(all_urls)
         return purged
 
