@@ -11,11 +11,19 @@ from urllib.parse import urlparse
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from atlas.connectors.base import REPO_ROOT  # noqa: E402
-from atlas.users.contacts import UA  # noqa: E402
-from atlas.users.haul import (  # noqa: E402
-    RobotsCache, RorIndex, TokenBucket, advisor_tiers, parse_wiki_carnegie, ror_country, ror_display,
-    ror_domains, ror_homepage, ror_short,
+from atlas.connectors.base import REPO_ROOT
+from atlas.users.contacts import UA
+from atlas.users.haul import (
+    RobotsCache,
+    RorIndex,
+    TokenBucket,
+    advisor_tiers,
+    parse_wiki_carnegie,
+    ror_country,
+    ror_display,
+    ror_domains,
+    ror_homepage,
+    ror_short,
 )
 
 ROR_DUMP = REPO_ROOT / "data" / "raw" / "ror" / "v2.8-2026-06-02-ror-data.json"
@@ -37,7 +45,7 @@ HAND_MAP = {
     "University of Oklahoma-Health Sciences Center": "0457zbj98",
 }
 FIELDS = ("name", "ror_id", "country_code", "domains", "homepage", "carnegie_class", "tier", "advisor_count",
-          "directory_entry_urls", "platform_guess", "licence")
+          "directory_entry_urls", "entry_kind", "platform_guess", "licence")
 LICENCES = {"wikipedia": "Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0",
             "carnegie": "Carnegie Classification terms; ROR CC0-1.0", "": "ROR CC0-1.0"}
 
@@ -90,6 +98,13 @@ def detect(ror: str, homepage: str, body: str) -> str:
     return ""
 
 
+def entry_kind(urls: str) -> str:
+    items = [u for u in urls.split(";") if u]
+    if any(not u.rstrip("/").endswith("sitemap.xml") for u in items):
+        return "directory"
+    return "sitemap_only" if items else "none"
+
+
 def probe(row: dict, bucket: TokenBucket, robots: RobotsCache) -> dict:
     home = row["homepage"]
     if not home:
@@ -113,6 +128,7 @@ def probe(row: dict, bucket: TokenBucket, robots: RobotsCache) -> dict:
         body = body or text
         keep.append(final)
     row["directory_entry_urls"] = ";".join(dict.fromkeys(keep))
+    row["entry_kind"] = entry_kind(row["directory_entry_urls"])
     row["platform_guess"] = detect(row["ror_id"], home, body)
     return row
 
@@ -201,7 +217,7 @@ def build_rows(ror_records: list[dict], lists: dict[str, list[tuple[str, str]]],
         out.append({"name": ror_display(rec), "ror_id": rid, "country_code": ror_country(rec),
                     "domains": ";".join(ror_domains(rec)), "homepage": ror_homepage(rec),
                     "carnegie_class": v["carnegie_class"], "tier": tier, "advisor_count": n,
-                    "directory_entry_urls": "", "platform_guess": ""})
+                    "directory_entry_urls": "", "entry_kind": "none", "platform_guess": ""})
     order = {"A+": 0, "A": 1, "": 2}
     out.sort(key=lambda r: (order[r["tier"]], r["carnegie_class"] or "R9", r["name"]))
     return out, unresolved
@@ -240,7 +256,9 @@ def main(argv: list[str] | None = None) -> int:
                "advisor_institutions": sum(1 for r in rows if r["tier"]),
                "advisor_only": sum(1 for r in rows if r["tier"] and not r["carnegie_class"]),
                "unresolved": len(unresolved), "rows": len(rows),
-               "with_entry_urls": sum(1 for r in rows if r["directory_entry_urls"])}
+               "with_entry_urls": sum(1 for r in rows if r["directory_entry_urls"]),
+               "directory": sum(1 for r in rows if r.get("entry_kind") == "directory"),
+               "sitemap_only": sum(1 for r in rows if r.get("entry_kind") == "sitemap_only")}
     for line in unresolved:
         print("unresolved", line, file=sys.stderr)
     summary["probe_timeouts"] = STRAGGLERS

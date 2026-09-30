@@ -5,7 +5,13 @@ from pathlib import Path
 
 from atlas.users.directories.base import FacultyRecord, Page, accept_email
 from atlas.users.haul import (
-    DiskBudget, HaulFetcher, HaulState, RobotsCache, RorIndex, TokenBucket, advisor_tiers, parse_wiki_carnegie,
+    DiskBudget,
+    HaulFetcher,
+    HaulState,
+    RorIndex,
+    TokenBucket,
+    advisor_tiers,
+    parse_wiki_carnegie,
     status_line,
 )
 
@@ -145,7 +151,7 @@ def fast_bucket():
 
 def test_run_writes_records_and_status(tmp_path):
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=2, max_pages=50, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]))
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
     assert code == 0 and state.institutions["r1"]["status"] == "done"
     lines = (tmp_path / "r1" / "records.jsonl").read_text().splitlines()
     assert len(lines) == 3 and json.loads(lines[0])["email_source"] == "official_directory"
@@ -163,7 +169,7 @@ def test_resume_from_state_file(tmp_path):
         "r3": {"name": "r3", "status": "pending", "profiles": 0, "emails": 0}}}))
     seen = []
 
-    def factory(r):
+    def factory(r, f):
         seen.append(r["ror_id"])
         return FakeAdapter(r["ror_id"])
 
@@ -176,20 +182,20 @@ def test_resume_from_state_file(tmp_path):
 
 def test_disk_budget_stops_cleanly(tmp_path):
     code, state = haul.run(rows("r1", "r2"), cache_root=tmp_path, workers=1, max_pages=500, budget_bytes=1500,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"], n=20))
-    assert code == 0
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"], n=20))
+    assert code == 3
     assert state.institutions["r1"]["status"] == "pending" and state.institutions["r1"]["error"] == "disk_budget"
     assert state.institutions["r2"]["status"] == "pending"
     assert len(list(tmp_path.rglob("*.html.gz"))) == 1
     code2, _ = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=500, budget_bytes=1500,
-                        get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]))
-    assert code2 == 0 and len(list(tmp_path.rglob("*.html.gz"))) == 1
+                        get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
+    assert code2 == 3 and len(list(tmp_path.rglob("*.html.gz"))) == 1
 
 
 def test_zero_yield_exit_code(tmp_path):
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9,
                            get=fake_get, bucket=fast_bucket(),
-                           adapter_factory=lambda r: FakeAdapter(r["ror_id"], with_email=False))
+                           adapter_factory=lambda r, f: FakeAdapter(r["ror_id"], with_email=False))
     assert code == 2 and state.institutions["r1"]["status"] == "zero_yield"
 
 
@@ -199,18 +205,18 @@ def test_page_cap_and_robots(tmp_path):
             return [f"https://www.{DOMAIN}/private/x"] + super().seeds(fetcher)
 
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=3, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: Private(r["ror_id"], n=10))
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: Private(r["ror_id"], n=10))
     rec = state.institutions["r1"]
     assert rec["robots_denied"] == 1 and rec["capped"] and rec["profiles"] == 2
 
 
 def test_no_adapter_marks_failed(tmp_path):
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=5, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: None)
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: None)
     assert state.institutions["r1"]["status"] == "pending_adapter" and state.institutions["r1"]["error"] == "no_adapter"
     assert "r1" in state.todo()
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]))
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
     assert state.institutions["r1"]["status"] == "done"
 
 
@@ -222,7 +228,7 @@ def test_fetcher_cache_skips_refetch(tmp_path):
         return fake_get(url)
 
     b = fast_bucket()
-    mk = lambda: HaulFetcher(tmp_path, bucket=b, robots=RobotsCache(get, b), budget=DiskBudget(tmp_path, 10**9), get=get)
+    mk = lambda: HaulFetcher(tmp_path, bucket=b, budget=DiskBudget(tmp_path, 10**9), get=get)
     mk().fetch(f"https://www.{DOMAIN}/a")
     mk().fetch(f"https://www.{DOMAIN}/a")
     assert [c for c in calls if not c.endswith("robots.txt")] == [f"https://www.{DOMAIN}/a"]
@@ -233,10 +239,19 @@ def test_fold_into_private_parquet(tmp_path):
 
     pytest.importorskip("pandas")
     haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9, get=fake_get,
-             bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]))
+             bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
+    import hashlib
+
+    public = [REPO / "data" / "processed" / "sample" / "researchers_sample.parquet", REPO / "research_atlas.duckdb",
+              REPO / "data" / "MANIFEST.json"]
+    digest = lambda: {str(p): hashlib.sha256(p.read_bytes()).hexdigest() for p in public if p.exists()}
+    before = digest()
+    assert before
     build = _load("build_official_contacts")
     out = tmp_path / "contacts_official.parquet"
-    assert build.main(["--cache-root", str(tmp_path), "--out", str(out)]) == 0
+    assert build.main(["--cache-root", str(tmp_path), "--out", str(out), "--opt-out", str(tmp_path / "none.csv"),
+                       "--tombstones", str(tmp_path / "none-t.csv")]) == 0
+    assert digest() == before
     import pandas as pd
 
     df = pd.read_parquet(out)
@@ -245,33 +260,77 @@ def test_fold_into_private_parquet(tmp_path):
     assert "contacts_official.parquet" in (REPO / ".gitignore").read_text()
 
 
-def test_opt_out_skips_at_crawl_and_fold(tmp_path):
+def test_opt_out_skips_at_crawl_purges_and_fold(tmp_path, monkeypatch):
     import csv
 
-    from atlas.users.haul import OptOut
+    from atlas.users.directories.optout import Suppression
 
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(tmp_path / "key"))
+    cache = tmp_path / "cache"
+    haul.run(rows("r1"), cache_root=cache, workers=1, max_pages=50, budget_bytes=10**9, get=fake_get,
+             bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]))
+    assert len(list((cache / "r1" / "pages").glob("*.html.gz"))) == 3
     opt = tmp_path / "opt_out.csv"
     with opt.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=["orcid", "email", "name", "ror_id", "reason", "as_of"])
         w.writeheader()
-        w.writerow({"email": email("p0").upper(), "reason": "asked", "as_of": "2026-09-29"})
+        w.writerow({"email": email("p0").upper(), "ror_id": "r1", "reason": "asked", "as_of": "2026-09-29"})
         w.writerow({"name": "  test PERSON ", "ror_id": "https://ror.org/r2", "reason": "asked"})
-        w.writerow({"orcid": "https://orcid.org/0000-0000-0000-0001", "reason": "asked"})
-    oo = OptOut.load(opt)
-    assert oo.matches({"orcid": "0000-0000-0000-0001"})
-    assert not oo.matches({"name": "Test Person", "ror_id": "r9"})
-    cache = tmp_path / "cache"
+    sup = Suppression.load(opt, tmp_path / "tombstones.csv")
+    rows_opt = list(csv.DictReader(opt.open()))
     code, state = haul.run(rows("r1", "r2"), cache_root=cache, workers=1, max_pages=50, budget_bytes=10**9,
-                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]),
-                           opt_out=oo)
-    assert state.institutions["r1"]["opt_out_skipped"] == 1 and state.institutions["r1"]["profiles"] == 2
-    assert state.institutions["r2"]["opt_out_skipped"] == 3 and state.institutions["r2"]["status"] == "zero_yield"
-    assert "opt_out_skipped=4" in status_line(state, cache)
-    (cache / "r1" / "records.jsonl").open("a").write(json.dumps({"slug": "late", "name": "X", "ror_id": "r1",
-                                                                  "email": email("p0")}) + "\n")
+                           get=fake_get, bucket=fast_bucket(), refresh=True, only=["r1", "r2"],
+                           adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]), suppression=sup, opt_rows=rows_opt)
+    r1, r2 = state.institutions["r1"], state.institutions["r2"]
+    assert r1["purged_items"] >= 1 and r1["opt_out_skipped"] >= 1 and r1["profiles"] == 2
+    assert r2["profiles"] == 0 and r2["status"] == "zero_yield" and r2["opt_out_skipped"] == 3
+    assert "opt_out_skipped=" in status_line(state, cache)
+    tomb = (tmp_path / "tombstones.csv").read_text()
+    assert email("p0") not in tomb and "p0" not in tomb
+    urls = [json.loads(m.read_text())["url"] for m in (cache / "r1" / "pages").glob("*.json")]
+    assert not any(u.endswith("/p0") for u in urls)
+    with (cache / "r1" / "records.jsonl").open("a") as f:
+        f.write(json.dumps({"slug": "late", "name": "X", "ror_id": "r1", "email": email("p0")}) + "\n")
     build = _load("build_official_contacts")
-    got, dropped = build.fold(cache, oo)
+    got, dropped = build.fold(cache, Suppression.load(opt, tmp_path / "tombstones.csv"))
     assert dropped == 1 and len(got) == 2
+    assert all(g["storage"] == "link_only" and g["retrieved_by"] for g in got if g["slug"] != "late")
+
+
+def test_tombstoned_url_is_never_fetched_or_cached(tmp_path, monkeypatch):
+    from atlas.users.directories.optout import Suppression, url_key
+
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(tmp_path / "key"))
+    sup = Suppression(hashes={url_key(f"https://www.{DOMAIN}/r1/p1")})
+    calls = []
+
+    def get(url):
+        calls.append(url)
+        return fake_get(url)
+
+    code, state = haul.run(rows("r1"), cache_root=tmp_path / "c", workers=1, max_pages=50, budget_bytes=10**9,
+                           get=get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"]),
+                           suppression=sup)
+    assert not any(c.endswith("/p1") for c in calls)
+    assert state.institutions["r1"]["profiles"] == 2
+
+
+def test_exit_codes_all_failed_and_budget(tmp_path):
+    class Boom(FakeAdapter):
+        def seeds(self, fetcher):
+            raise ValueError("x")
+
+    code, _ = haul.run(rows("r1", "r2"), cache_root=tmp_path / "a", workers=1, max_pages=5, budget_bytes=10**9,
+                       get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: Boom(r["ror_id"]))
+    assert code == 1
+    code, _ = haul.run(rows("r1"), cache_root=tmp_path / "b", workers=1, max_pages=50, budget_bytes=1500,
+                       get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r, f: FakeAdapter(r["ror_id"], n=20))
+    assert code == 3
+
+
+def test_service_is_bounded_and_reports_zero_yield():
+    svc = (REPO / "scripts" / "systemd" / "faculty-haul.service").read_text()
+    assert "RuntimeMaxSec=" in svc and "infinity" not in svc and "SuccessExitStatus" not in svc
 
 
 def test_private_dir_is_gitignored():

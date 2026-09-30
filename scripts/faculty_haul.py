@@ -3,141 +3,148 @@ from __future__ import annotations
 import argparse
 import csv
 import fcntl
+import hashlib
 import json
 import sys
 import threading
+import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from atlas.connectors.base import REPO_ROOT  # noqa: E402
-from atlas.users.directories.base import OFFICIAL_CACHE, RobotsDenied, _better, _requests_get  # noqa: E402
-from atlas.users.directories.stevens import StevensAdapter  # noqa: E402
-from atlas.users.haul import (  # noqa: E402
-    BudgetExceeded, DiskBudget, OptOut, HaulFetcher, HaulState, PageCapReached, RobotsCache, TokenBucket, status_line,
+from atlas.connectors.base import REPO_ROOT
+from atlas.users.directories.base import (
+    OFFICIAL_CACHE,
+    crawl,
+    retrieved_by,
+)
+from atlas.users.directories.optout import (
+    OPT_OUT,
+    TOMBSTONES,
+    Suppression,
+    _opt_out_rows,
+)
+from atlas.users.directories.stevens import StevensAdapter
+from atlas.users.haul import (
+    BudgetExceeded,
+    DiskBudget,
+    HaulFetcher,
+    HaulState,
+    TokenBucket,
+    status_line,
 )
 
-OPT_OUT = REPO_ROOT / "data" / "private" / "opt_out.csv"
+VERSION = "0.2"
 SEEDS = REPO_ROOT / "data" / "seeds" / "institutions.csv"
-LICENCE = "institution-copyright"
 BUILTIN = {StevensAdapter.ror_id: StevensAdapter}
+EXIT_ZERO_YIELD = 2
+EXIT_ALL_FAILED = 1
+EXIT_BUDGET = 3
 
 
 def _now() -> str:
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-def _registry():
-    try:
-        from atlas.users import directories
-    except Exception:
-        return {}, None
-    reg = {}
-    for attr in ("REGISTRY", "ADAPTERS", "PLATFORMS"):
-        got = getattr(directories, attr, None)
-        if isinstance(got, dict):
-            reg.update(got)
-    return reg, getattr(directories, "detect_platform", None)
+def _split(value: str | None) -> list[str]:
+    return [v for v in (value or "").split(";") if v]
 
 
-def _build(cls, row: dict):
-    kw = {"ror_id": row["ror_id"], "domains": tuple(d for d in row.get("domains", "").split(";") if d),
-          "homepage": row.get("homepage") or "",
-          "entry_urls": [u for u in (row.get("directory_entry_urls") or "").split(";") if u]}
-    for keys in (tuple(kw), ("ror_id", "domains", "homepage"), ("ror_id", "domains"), ()):
-        try:
-            obj = cls(**{k: kw[k] for k in keys})
-        except TypeError:
-            continue
-        for k in ("ror_id", "domains"):
-            if not getattr(obj, k, None):
-                setattr(obj, k, kw[k])
-        return obj
-    return None
-
-
-def adapter_for(row: dict):
+def adapter_for(row: dict, fetcher: HaulFetcher):
     if row["ror_id"] in BUILTIN:
         return BUILTIN[row["ror_id"]]()
-    reg, detect = _registry()
-    platform = row.get("platform_guess") or ""
-    if detect and not platform:
-        try:
-            platform = detect(row["ror_id"], row.get("homepage") or "") or ""
-        except Exception:
-            platform = ""
-    cls = reg.get(row["ror_id"]) or reg.get(platform) or reg.get("generic")
-    return _build(cls, row) if cls else None
+    try:
+        from atlas.users.directories import REGISTRY, detect_site
+    except ImportError:
+        return None
+    domains = tuple(_split(row.get("domains")))
+    cls, base = REGISTRY.get(row.get("platform_guess") or ""), None
+    if cls is None and row.get("homepage"):
+        cls, base = detect_site(row["ror_id"], row["homepage"], fetcher, domains)
+    if cls is None:
+        return None
+    entries = list(dict.fromkeys(([base] if base else []) + _split(row.get("directory_entry_urls"))))
+    return cls(row["ror_id"], entries, domains=domains, max_pages=fetcher.budget or 400)
 
 
-def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, robots: RobotsCache, budget: DiskBudget,
-             stop: threading.Event, cache_root: Path, max_pages: int, get=None, adapter_factory=adapter_for, opt_out: OptOut | None = None) -> str:
+def purge_opt_outs(ror: str, suppression: Suppression, opt_rows: list[dict], cache_root: Path,
+                   state: HaulState) -> int:
+    done = set(state.institutions.get(ror, {}).get("purged", []))
+    purged = 0
+    for row in opt_rows:
+        row_ror = (row.get("ror_id") or "").rstrip("/").rsplit("/", 1)[-1]
+        if row_ror and row_ror != ror:
+            continue
+        if not (row_ror or row.get("orcid") or row.get("email")):
+            continue
+        tag = hashlib.sha256(json.dumps(row, sort_keys=True).encode()).hexdigest()[:16]
+        if tag in done:
+            continue
+        got = suppression.remove(cache_root, name=row.get("name") if row_ror else None, ror_id=ror,
+                                 orcid=row.get("orcid"), email=row.get("email"))
+        purged += got.get("pages", 0) + got.get("records", 0)
+        done.add(tag)
+    state.update(ror, purged=sorted(done))
+    return purged
+
+
+def provenance(d: dict, by: str) -> dict:
+    d.setdefault("source", "official_directory")
+    d["source_id"] = d.get("source_id") or d.get("slug")
+    d["source_url"] = d.get("source_url") or d.get("profile_url")
+    d["as_of"] = d.get("as_of") or d.get("fetched_at")
+    d.setdefault("match_tier", None)
+    d.setdefault("licence", "institution-copyright")
+    d["storage"] = "link_only"
+    d["retrieved_by"] = d.get("retrieved_by") or by
+    return d
+
+
+def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, budget: DiskBudget, stop: threading.Event,
+             cache_root: Path, max_pages: int, get=None, adapter_factory=adapter_for,
+             suppression: Suppression | None = None, opt_rows: list[dict] | None = None,
+             robots: dict | None = None, delays: dict | None = None) -> str:
     ror = row["ror_id"]
     if stop.is_set():
         return "pending"
-    adapter = adapter_factory(row)
-    if adapter is None:
-        state.update(ror, status="pending_adapter", error="no_adapter", finished_at=_now())
-        return "pending_adapter"
     state.update(ror, status="running", started_at=_now(), error=None)
     root = cache_root / ror
     kw = {"get": get} if get else {}
-    fetcher = HaulFetcher(root / "pages", bucket=bucket, robots=robots, budget=budget, max_pages=max_pages,
-                          stop=stop, **kw)
-    out: dict = {}
-    denied = errors = 0
-    capped = False
+    fetcher = HaulFetcher(root / "pages", bucket=bucket, budget=budget, max_pages=max_pages, stop=stop,
+                          shared_robots=robots, shared_delay=delays, suppression=suppression, **kw)
     try:
-        try:
-            seeds = adapter.seeds(fetcher)
-        except PageCapReached:
-            seeds, capped = [], True
-        for url in seeds:
-            try:
-                page = fetcher.fetch(url)
-            except RobotsDenied:
-                denied += 1
-                continue
-            except PageCapReached:
-                capped = True
-                break
-            if page.status != 200:
-                errors += 1
-                continue
-            for rec in adapter.parse(page):
-                prior = out.get(rec.slug)
-                if prior is None or _better(rec, prior):
-                    out[rec.slug] = rec
+        purged = purge_opt_outs(ror, suppression, opt_rows or [], cache_root, state) if suppression else 0
+        adapter = adapter_factory(row, fetcher)
+        if adapter is None:
+            state.update(ror, status="pending_adapter", error="no_adapter", finished_at=_now())
+            return "pending_adapter"
+        records, stats = crawl(adapter, fetcher, suppression)
     except BudgetExceeded:
-        state.update(ror, status="pending", error="disk_budget")
+        state.update(ror, status="pending", error="disk_budget" if budget.exceeded else "deadline")
         return "pending"
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001
         state.update(ror, status="failed", error=f"{type(exc).__name__}: {exc}"[:300], finished_at=_now())
         return "failed"
-    opt_out = opt_out or OptOut()
-    kept = [r for r in out.values() if not opt_out.matches(r.as_dict())]
-    skipped = len(out) - len(kept)
-    records = sorted(kept, key=lambda r: r.slug)
+    if stop.is_set():
+        state.update(ror, status="pending", error="disk_budget" if budget.exceeded else "deadline")
+        return "pending"
+    by = retrieved_by(adapter) if not isinstance(adapter, StevensAdapter) else f"stevens/{VERSION}"
     root.mkdir(parents=True, exist_ok=True)
     tmp = root / "records.jsonl.tmp"
     with tmp.open("w") as f:
         for r in records:
-            f.write(json.dumps(provenance(r.as_dict()), sort_keys=True) + "\n")
+            f.write(json.dumps(provenance(r.as_dict(), by or f"haul/{VERSION}"), sort_keys=True) + "\n")
     tmp.replace(root / "records.jsonl")
     emails = sum(1 for r in records if r.email)
     status = "done" if emails else "zero_yield"
-    state.update(ror, status=status, profiles=len(records), emails=emails, pages=fetcher.pages,
-                 requests=fetcher.requests, opt_out_skipped=skipped, robots_denied=denied, http_errors=errors, capped=capped,
-                 finished_at=_now())
+    state.update(ror, status=status, profiles=len(records), emails=emails, requests=fetcher.requests,
+                 opt_out_skipped=stats.get("suppressed_records", 0) + stats.get("suppressed_seeds", 0)
+                 + fetcher.suppressed, purged_items=purged, robots_denied=stats.get("robots_denied", 0),
+                 http_errors=stats.get("http_errors", 0), capped=stats.get("budget_exhausted", False),
+                 adapter=by, finished_at=_now())
     return status
-
-
-def provenance(d: dict) -> dict:
-    d.update(source="official_directory", source_id=d.get("slug"), source_url=d.get("profile_url"),
-             as_of=d.get("fetched_at"), match_tier=None, licence=LICENCE)
-    return d
 
 
 def load_seeds(path: Path) -> list[dict]:
@@ -147,7 +154,8 @@ def load_seeds(path: Path) -> list[dict]:
 
 def run(rows: list[dict], *, cache_root: Path, workers: int, max_pages: int, budget_bytes: int,
         only: list[str] | None = None, limit: int | None = None, get=None, bucket: TokenBucket | None = None,
-        adapter_factory=adapter_for, refresh: bool = False, opt_out: OptOut | None = None) -> tuple[int, HaulState]:
+        adapter_factory=adapter_for, refresh: bool = False, suppression: Suppression | None = None,
+        opt_rows: list[dict] | None = None, deadline: float | None = None) -> tuple[int, HaulState]:
     state = HaulState.load(cache_root / "_state.json")
     by_ror = {r["ror_id"]: r for r in rows}
     for r in rows:
@@ -162,24 +170,32 @@ def run(rows: list[dict], *, cache_root: Path, workers: int, max_pages: int, bud
     if limit:
         todo = todo[:limit]
     bucket = bucket or TokenBucket(1.0)
-    robots = RobotsCache(get or _requests_get, bucket)
     budget = DiskBudget(cache_root, budget_bytes)
     stop = threading.Event()
     if budget.exceeded:
         print(f"disk budget reached: {budget.used / 1e9:.2f}GB", file=sys.stderr)
-        return 0, state
+        return EXIT_BUDGET, state
+    if deadline:
+        timer = threading.Timer(deadline, stop.set)
+        timer.daemon = True
+        timer.start()
+    robots: dict = {}
+    delays: dict = {}
 
     def one(ror: str) -> str:
-        return haul_one(by_ror[ror], state=state, bucket=bucket, robots=robots, budget=budget, stop=stop,
-                        cache_root=cache_root, max_pages=max_pages, get=get, adapter_factory=adapter_factory,
-                        opt_out=opt_out)
+        return haul_one(by_ror[ror], state=state, bucket=bucket, budget=budget, stop=stop, cache_root=cache_root,
+                        max_pages=max_pages, get=get, adapter_factory=adapter_factory, suppression=suppression,
+                        opt_rows=opt_rows, robots=robots, delays=delays)
 
     with ThreadPoolExecutor(max(1, workers)) as ex:
         results = list(ex.map(one, todo))
     state.save()
-    if stop.is_set():
+    if budget.exceeded:
         print(f"disk budget reached: {budget.used / 1e9:.2f}GB, stopped cleanly", file=sys.stderr)
-    return (2 if "zero_yield" in results else 0), state
+        return EXIT_BUDGET, state
+    if results and all(r == "failed" for r in results):
+        return EXIT_ALL_FAILED, state
+    return (EXIT_ZERO_YIELD if "zero_yield" in results else 0), state
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -187,9 +203,11 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--seeds", type=Path, default=SEEDS)
     ap.add_argument("--cache-root", type=Path, default=OFFICIAL_CACHE)
     ap.add_argument("--opt-out", type=Path, default=OPT_OUT)
+    ap.add_argument("--tombstones", type=Path, default=TOMBSTONES)
     ap.add_argument("--workers", type=int, default=40)
     ap.add_argument("--max-pages", type=int, default=5000)
     ap.add_argument("--budget-gb", type=float, default=8.0)
+    ap.add_argument("--deadline-min", type=float, default=45.0)
     ap.add_argument("--only", nargs="*")
     ap.add_argument("--limit", type=int)
     ap.add_argument("--refresh", action="store_true")
@@ -205,10 +223,13 @@ def main(argv: list[str] | None = None) -> int:
     except BlockingIOError:
         print("another faculty haul is running", file=sys.stderr)
         return 0
+    started = time.monotonic()
     code, state = run(load_seeds(args.seeds), cache_root=args.cache_root, workers=args.workers,
                       max_pages=args.max_pages, budget_bytes=int(args.budget_gb * 1e9), only=args.only,
-                      limit=args.limit, refresh=args.refresh, opt_out=OptOut.load(args.opt_out))
-    print(status_line(state, args.cache_root))
+                      limit=args.limit, refresh=args.refresh,
+                      suppression=Suppression.load(args.opt_out, args.tombstones),
+                      opt_rows=_opt_out_rows(args.opt_out), deadline=args.deadline_min * 60)
+    print(status_line(state, args.cache_root), f"elapsed={time.monotonic() - started:.0f}s")
     return code
 
 

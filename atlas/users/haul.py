@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import gzip
-import hashlib
 import json
 import os
 import re
@@ -9,10 +7,10 @@ import threading
 import time
 import unicodedata
 import urllib.robotparser
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Iterable
 from urllib.parse import unquote, urlparse
 
 from atlas.users.contacts import UA
@@ -53,7 +51,7 @@ def _row_link(row: str) -> tuple[str, str] | None:
 
 def parse_wiki_carnegie(text: str) -> dict[str, list[tuple[str, str]]]:
     out: dict[str, list[tuple[str, str]]] = {"R1": [], "R2": []}
-    sections = re.split(r"^==([^=].*?)==\s*$", text, flags=re.M)
+    sections = re.split(r"^==([^=].*?)==\s*$", text, flags=re.MULTILINE)
     for i in range(1, len(sections) - 1, 2):
         head, body = sections[i], sections[i + 1]
         cls = "R1" if '"R1:' in head else "R2" if '"R2:' in head else None
@@ -170,36 +168,6 @@ def advisor_tiers(ranked_rows: Iterable[dict], roster_rows: Iterable[dict]) -> d
     return out
 
 
-class OptOut:
-    def __init__(self, rows: Iterable[dict] = ()) -> None:
-        self.orcids: set[str] = set()
-        self.emails: set[str] = set()
-        self.names: set[tuple[str, str]] = set()
-        for r in rows:
-            if (o := (r.get("orcid") or "").strip().rsplit("/", 1)[-1]):
-                self.orcids.add(o)
-            if (e := (r.get("email") or "").strip().lower()):
-                self.emails.add(e)
-            n, rid = norm_name(r.get("name")), ror_short((r.get("ror_id") or "").strip())
-            if n and rid:
-                self.names.add((n, rid))
-
-    @classmethod
-    def load(cls, path: Path) -> "OptOut":
-        import csv
-
-        if not path.exists():
-            return cls()
-        with path.open(newline="") as f:
-            return cls(csv.DictReader(f))
-
-    def matches(self, rec: dict) -> bool:
-        orcid = (rec.get("orcid") or "").rsplit("/", 1)[-1]
-        email = (rec.get("email") or "").lower()
-        return bool((orcid and orcid in self.orcids) or (email and email in self.emails)
-                    or (norm_name(rec.get("name")), rec.get("ror_id") or "") in self.names)
-
-
 class TokenBucket:
     def __init__(self, interval: float = 1.0, clock: Callable[[], float] = time.monotonic,
                  sleep: Callable[[float], None] = time.sleep) -> None:
@@ -262,10 +230,6 @@ class RobotsCache:
         return rp.can_fetch(UA, url)
 
 
-class PageCapReached(Exception):
-    pass
-
-
 class BudgetExceeded(Exception):
     pass
 
@@ -291,67 +255,44 @@ class DiskBudget:
         return self.used >= self.limit
 
 
-class HaulFetcher(PoliteFetcher):
-    def __init__(self, cache_dir: Path, *, bucket: TokenBucket, robots: RobotsCache, budget: DiskBudget,
-                 max_pages: int = 2000, stop: threading.Event | None = None, **kw) -> None:
-        super().__init__(cache_dir, delay=bucket.interval, **kw)
-        self.bucket = bucket
-        self.robots = robots
-        self.budget = budget
-        self.max_pages = max_pages
-        self.pages = 0
-        self.stop = stop or threading.Event()
+class Suppressed(Exception):
+    pass
 
-    def _paths(self, url: str) -> tuple[Path, Path]:
-        key = hashlib.sha256(url.encode()).hexdigest()
-        return self.cache_dir / f"{key}.html.gz", self.cache_dir / f"{key}.json"
+
+class HaulFetcher(PoliteFetcher):
+    def __init__(self, cache_dir: Path, *, bucket: TokenBucket, budget: DiskBudget, max_pages: int = 2000,
+                 stop: threading.Event | None = None, shared_robots: dict | None = None,
+                 shared_delay: dict | None = None, suppression=None, **kw) -> None:
+        super().__init__(cache_dir, delay=bucket.interval, budget=max_pages, **kw)
+        self.bucket = bucket
+        self.disk = budget
+        self.stop = stop or threading.Event()
+        self.suppression = suppression
+        self.suppressed = 0
+        if shared_robots is not None:
+            self._robots = shared_robots
+        if shared_delay is not None:
+            self._host_delay = shared_delay
 
     def _wait(self, host: str) -> None:
+        if host in self._host_delay:
+            self.bucket.set_interval(host, self._host_delay[host])
         self.bucket.acquire(host)
-
-    def allowed(self, url: str) -> bool:
-        return self.robots.allowed(url)
 
     def fetch(self, url: str) -> Page:
         if self.stop.is_set():
             raise BudgetExceeded(url)
-        if self.pages >= self.max_pages:
-            raise PageCapReached(url)
-        self.pages += 1
-        body_path, meta_path = self._paths(url)
-        if body_path.exists() and meta_path.exists():
-            meta = json.loads(meta_path.read_text())
-            fetched = datetime.fromisoformat(meta["fetched_at"].replace("Z", "+00:00"))
-            if self._now() - fetched < self.max_age:
-                text = gzip.decompress(body_path.read_bytes()).decode("utf-8", "replace")
-                return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True)
-        if self.budget.exceeded:
-            self.stop.set()
-            raise BudgetExceeded(url)
-        if not self.allowed(url):
+        if self.suppression is not None and self.suppression.blocks_url(url):
+            self.suppressed += 1
             raise RobotsDenied(url)
-        status, text = 599, ""
-        for attempt in range(self.attempts):
-            self._wait(urlparse(url).netloc)
-            self.requests += 1
-            try:
-                status, text = self._get(url)
-            except OSError as exc:
-                self.errors.append(f"{url}: {type(exc).__name__}")
-                status, text = 599, ""
-            if status < 500 and status != 429:
-                break
-            self._sleep(self.delay * 5 * (attempt + 1))
-        fetched_at = self._now().strftime("%Y-%m-%dT%H:%M:%SZ")
-        digest = hashlib.sha256(text.encode()).hexdigest()
-        if status == 200:
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-            blob = gzip.compress(text.encode())
-            meta = json.dumps({"url": url, "status": status, "fetched_at": fetched_at, "sha256": digest})
-            body_path.write_bytes(blob)
-            meta_path.write_text(meta)
-            self.budget.add(len(blob) + len(meta))
-        return Page(url, status, text, fetched_at, digest, False)
+        before = self.requests
+        page = super().fetch(url)
+        if self.requests > before and page.status == 200:
+            body, meta = self._paths(url)
+            self.disk.add(sum(p.stat().st_size for p in (body, meta) if p.exists()))
+            if self.disk.exceeded:
+                self.stop.set()
+        return page
 
 
 @dataclass
@@ -361,7 +302,7 @@ class HaulState:
     _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     @classmethod
-    def load(cls, path: Path, reset_running: bool = True) -> "HaulState":
+    def load(cls, path: Path, reset_running: bool = True) -> HaulState:
         st = cls(path)
         if path.exists():
             st.institutions = json.loads(path.read_text()).get("institutions", {})
