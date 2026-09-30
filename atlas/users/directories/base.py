@@ -50,6 +50,7 @@ class FacultyRecord:
     source_url: str | None = None
     as_of: str | None = None
     match_tier: str | None = None
+    match_candidates: int | None = None
     licence: str = LICENCE
     storage: str = "link_only"
     retrieved_by: str | None = None
@@ -286,6 +287,9 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher, suppression=None) -
     hints = getattr(adapter, "seed_people", {}) or {}
     for url in seeds:
         hint = hints.get(url)
+        if suppression is not None and suppression.blocks_url(url):
+            stats["suppressed_seeds"] += 1
+            continue
         if suppression is not None and hint and suppression.blocks(name=hint.get("name"), ror_id=adapter.ror_id,
                                                                    orcid=hint.get("orcid"), email=hint.get("email")):
             stats["suppressed_seeds"] += 1
@@ -322,6 +326,7 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher, suppression=None) -
     stats["records"] = len(records)
     stats["emails"] = sum(1 for r in records if r.email)
     stats["dropped_emails"] = sum(len(r.dropped_emails) for r in records)
+    stats["legacy_tombstones"] = len(getattr(suppression, "legacy", ()) or ())
     stats["org_mailboxes"] = sum(1 for r in records if r.org_mailbox)
     stats["network_errors"] = len(fetcher.errors)
     stats["challenged"] = fetcher.challenged

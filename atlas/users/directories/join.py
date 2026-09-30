@@ -29,6 +29,7 @@ def join_records(records: Iterable[FacultyRecord], people: Iterable[dict],
             continue
         k = name_key(rec.name, rec.ror_id)
         cands = index.get(k, []) if k else []
+        rec.match_candidates = len(cands)
         if len(cands) == 1:
             rec.match_tier = JOIN_MATCH_TIER
             joined.append((rec, cands[0]["atlas_id"]))

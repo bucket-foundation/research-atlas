@@ -400,7 +400,8 @@ def test_removal_purges_cache_and_writes_tombstone(tmp_path):
     assert len(list((root / ROR / "pages").glob("*.json"))) < before
     assert "Ada Testperson" not in (root / ROR / "faculty.jsonl").read_text()
     rows = list(csv.DictReader((tmp_path / "private" / "tombstones.csv").open()))
-    assert {r["kind"] for r in rows} == {"email", "name_ror"}
+    assert {r["kind"] for r in rows} == {"email", "name_ror", "url"}
+    assert all(r["scheme"] == "hmac-sha256" for r in rows)
     assert not any("ada" in r["sha256"] for r in rows) and all(len(r["sha256"]) == 64 for r in rows)
     reloaded = Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
     assert reloaded.blocks(name="ada  TESTPERSON", ror_id=f"https://ror.org/{ROR}")
@@ -416,3 +417,86 @@ def test_join_sets_t2_and_skips_suppressed(tmp_path):
     joined = join_records([a, b], people, sup)
     assert [(r.name, pid) for r, pid in joined] == [("Ada Testperson", "p1")]
     assert a.match_tier == "T2" and b.match_tier is None
+
+
+def test_removed_url_is_never_requested_again(tmp_path):
+    from atlas.users.directories.optout import Suppression
+    root = tmp_path / "official"
+    tomb = tmp_path / "private" / "tombstones.csv"
+    target = "https://www.example.edu/people/cy-synthetic"
+    crawl(adapter(), PoliteFetcher(root / ROR / "pages", delay=0, get=FakeSite(SITE), sleep=lambda s: None))
+    Suppression.load(tmp_path / "none.csv", tomb).remove(root, ror_id=ROR, profile_url=target)
+    site = FakeSite(SITE)
+    sup = Suppression.load(tmp_path / "none.csv", tomb)
+    _, stats = crawl(adapter(), PoliteFetcher(root / ROR / "pages", delay=0, get=site, sleep=lambda s: None,
+                                              max_age_days=0), sup)
+    assert target not in site.calls and stats["suppressed_seeds"] >= 1
+    assert sup.blocks_url("http://example.edu/people/cy-synthetic/")
+
+
+def test_hash_digests_are_stable_under_the_test_key():
+    from atlas.users.directories.optout import keyed, person_keys, url_key
+    k = b"k" * 32
+    assert keyed("ada.testperson@example.edu", k) == PINNED["email"]
+    assert person_keys("Ada Testperson", ROR, key=k) == [("name_ror", PINNED["name_ror"])]
+    assert url_key("https://www.example.edu/people/ada-testperson/", k) == ("url", PINNED["url"])
+    assert keyed("x", b"j" * 32) != keyed("x", k)
+
+
+def test_key_file_is_created_private(tmp_path, monkeypatch):
+    import os
+    import stat
+    from atlas.users.directories.optout import load_key
+    path = tmp_path / "cfg" / "tombstone.key"
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(path))
+    key = load_key()
+    assert len(key) == 32 and load_key() == key
+    assert stat.S_IMODE(os.stat(path).st_mode) == 0o600
+
+
+def test_plain_tombstones_migrate_or_move_to_legacy(tmp_path):
+    import csv
+    from atlas.users.directories.optout import Suppression, sha
+    priv = tmp_path / "private"
+    priv.mkdir()
+    (priv / "opt_out.csv").write_text("orcid,email,name,ror_id,reason,as_of\n,ada.testperson@example.edu,,,r,t\n")
+    (priv / "tombstones.csv").write_text(
+        "kind,sha256,as_of\n"
+        f"email,{sha('ada.testperson@example.edu')},t\n"
+        f"email,{sha('gone.person@example.edu')},t\n")
+    sup = Suppression.load(priv / "opt_out.csv", priv / "tombstones.csv")
+    assert sup.migration == {"kept": 0, "rewritten": 1, "legacy": 1}
+    rows = list(csv.DictReader((priv / "tombstones.csv").open()))
+    assert len(rows) == 1 and rows[0]["scheme"] == "hmac-sha256" and rows[0]["sha256"] != sha("ada.testperson@example.edu")
+    assert sup.blocks(email="gone.person@example.edu") and sup.blocks(email="ada.testperson@example.edu")
+    assert len(list(csv.DictReader((priv / "tombstones_legacy.csv").open()))) == 1
+
+
+def test_purge_removes_listing_pages_that_name_the_person(tmp_path):
+    from atlas.users.directories.optout import Suppression
+    root = tmp_path / "official"
+    f = PoliteFetcher(root / ROR / "pages", delay=0, get=FakeSite(SITE), sleep=lambda s: None)
+    f.fetch("https://www.example.edu/people")
+    f.fetch("https://www.example.edu/people?page=2")
+    sup = Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+    sup.remove(root, name="Cy Synthetic", ror_id=ROR)
+    left = [json.loads(p.read_text())["url"] for p in (root / ROR / "pages").glob("*.json")]
+    assert "https://www.example.edu/people?page=2" not in left
+    assert "https://www.example.edu/people" in left
+
+
+def test_join_records_candidate_count(tmp_path):
+    from atlas.users.directories.join import join_records
+    sup = suppression(tmp_path, [])
+    [a] = adapter().parse(page("https://www.example.edu/people/ada-testperson", "generic_jsonld.html"))
+    people = [{"atlas_id": "p1", "name": "Ada Testperson", "ror_id": ROR},
+              {"atlas_id": "p2", "name": "Alan Testperson", "ror_id": ROR}]
+    assert join_records([a], people, sup) == []
+    assert a.match_tier is None and a.match_candidates == 2
+
+
+PINNED = {
+    "email": "fe0f5f981171ce1cf8f1b4a94302d95c57a62a3deee0ed0e62d1fd86d4985630",
+    "name_ror": "9e9e145782e20fb29062e8f793bdc69e9059cfee61d30a720acaddbe08ce0fa0",
+    "url": "d0b8917f4da5061e9bf64b69bd303673a6fad2c1dd82ef91c5a0bfa31dae6717",
+}
