@@ -18,7 +18,7 @@ from urllib.parse import unquote, urlparse
 from atlas.users.contacts import UA
 from atlas.users.directories.base import Page, PoliteFetcher, RobotsDenied
 
-STATUSES = ("pending", "running", "done", "failed", "zero_yield")
+STATUSES = ("pending", "pending_adapter", "running", "done", "failed", "zero_yield")
 TIER_RANK = {"A+": 2, "A": 1}
 
 
@@ -136,6 +136,10 @@ class RorIndex:
         roots = [c for c in uniq.values() if not any(r.get("type") == "parent" for r in c.get("relationships", []))]
         pool = roots or list(uniq.values())
         return pool[0] if len(pool) == 1 else None
+
+    def ambiguous(self, name: str, wiki_title: str | None = None) -> bool:
+        keys = ((wiki_key(wiki_title), self.by_wiki), (norm_name(name), self.by_name), (norm_name(wiki_title), self.by_name))
+        return any(k and len({c["id"] for c in idx.get(k, [])}) > 1 for k, idx in keys)
 
     def resolve(self, name: str, wiki_title: str | None = None) -> dict | None:
         for key, idx in ((wiki_key(wiki_title), self.by_wiki), (norm_name(name), self.by_name),
@@ -400,7 +404,7 @@ class HaulState:
         out = []
         for ror, rec in self.institutions.items():
             st = rec.get("status")
-            if st == "pending":
+            if st in ("pending", "pending_adapter"):
                 out.append(ror)
             elif st == "failed":
                 last = rec.get("finished_at")
@@ -412,5 +416,5 @@ class HaulState:
 def status_line(state: HaulState, cache_root: Path) -> str:
     c = state.counts()
     size = cache_bytes(cache_root)
-    return (f"institutions done={c['done']} running={c['running']} pending={c['pending']} failed={c['failed']} "
+    return (f"institutions done={c['done']} running={c['running']} pending={c['pending']} pending_adapter={c['pending_adapter']} failed={c['failed']} "
             f"zero_yield={c['zero_yield']} profiles={c['profiles']} emails={c['emails']} opt_out_skipped={c['opt_out_skipped']} cache={size / 1e9:.2f}GB")

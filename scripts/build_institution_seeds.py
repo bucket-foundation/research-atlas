@@ -25,6 +25,17 @@ COCKPIT = REPO_ROOT.parent / "biophysics-phd-review" / "data" / "processed"
 WIKI = "https://en.wikipedia.org/w/index.php?title=List_of_research_universities_in_the_United_States&action=raw"
 CARNEGIE = "https://carnegieclassifications.acenet.edu/"
 PROBE_PATHS = ("/directory", "/people", "/faculty", "/faculty-directory", "/experts", "/sitemap.xml")
+HAND_MAP = {
+    "Rutgers University\u2013New Brunswick": "05vt9qd57",
+    "Rutgers University\u2013Camden": "05vt9qd57",
+    "Rutgers University\u2013Newark": "05vt9qd57",
+    "CUNY Hunter College": "00g2xk477",
+    "LSU New Orleans": "01qv8fp92",
+    "Louisiana State University New Orleans": "01qv8fp92",
+    "Oklahoma State University Center for Health Sciences": "02mfxdp77",
+    "University of Oklahoma Health Sciences Center": "0457zbj98",
+    "University of Oklahoma-Health Sciences Center": "0457zbj98",
+}
 FIELDS = ("name", "ror_id", "country_code", "domains", "homepage", "carnegie_class", "tier", "advisor_count",
           "directory_entry_urls", "platform_guess", "licence")
 LICENCES = {"wikipedia": "Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0",
@@ -169,8 +180,12 @@ def build_rows(ror_records: list[dict], lists: dict[str, list[tuple[str, str]]],
     for cls in ("R1", "R2"):
         for name, title in lists.get(cls, []):
             rec = idx.resolve(name, title)
+            hand = HAND_MAP.get(title) or HAND_MAP.get(name)
+            if not rec and hand in idx.by_id:
+                rec = idx.by_id[hand]
             if not rec:
-                unresolved.append(f"{cls}\t{name}\t{title}")
+                reason = "ambiguous ROR match" if idx.ambiguous(name, title) else "no ROR match"
+                unresolved.append({"list": cls, "name": name, "wiki_title": title, "reason": reason})
                 continue
             rid = ror_short(rec["id"])
             rows.setdefault(rid, {"rec": rec, "carnegie_class": cls})
@@ -178,7 +193,7 @@ def build_rows(ror_records: list[dict], lists: dict[str, list[tuple[str, str]]],
         if rid not in rows and rid in idx.by_id:
             rows[rid] = {"rec": idx.by_id[rid], "carnegie_class": ""}
         elif rid not in idx.by_id:
-            unresolved.append(f"advisor\t{rid}\tnot in ROR dump")
+            unresolved.append({"list": "advisor", "name": rid, "wiki_title": "", "reason": "ROR id not in dump"})
     out = []
     for rid, v in rows.items():
         rec = v["rec"]
@@ -216,7 +231,10 @@ def main(argv: list[str] | None = None) -> int:
             r["licence"] = LICENCES[source if r["carnegie_class"] else ""]
             w.writerow(r)
     RAW.mkdir(parents=True, exist_ok=True)
-    (RAW / "unresolved.tsv").write_text("\n".join(unresolved) + "\n")
+    with (args.out.parent / "unresolved.csv").open("w", newline="") as f:
+        uw = csv.DictWriter(f, fieldnames=("list", "name", "wiki_title", "reason"))
+        uw.writeheader()
+        uw.writerows(unresolved)
     summary = {"source": source, "r1_listed": len(lists["R1"]), "r2_listed": len(lists["R2"]),
                "r1": sum(r["carnegie_class"] == "R1" for r in rows), "r2": sum(r["carnegie_class"] == "R2" for r in rows),
                "advisor_institutions": sum(1 for r in rows if r["tier"]),

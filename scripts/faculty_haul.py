@@ -79,8 +79,8 @@ def haul_one(row: dict, *, state: HaulState, bucket: TokenBucket, robots: Robots
         return "pending"
     adapter = adapter_factory(row)
     if adapter is None:
-        state.update(ror, status="failed", error="no_adapter", finished_at=_now())
-        return "failed"
+        state.update(ror, status="pending_adapter", error="no_adapter", finished_at=_now())
+        return "pending_adapter"
     state.update(ror, status="running", started_at=_now(), error=None)
     root = cache_root / ror
     kw = {"get": get} if get else {}
@@ -158,7 +158,7 @@ def run(rows: list[dict], *, cache_root: Path, workers: int, max_pages: int, bud
     state.save()
     todo = [r for r in (only or state.todo()) if r in by_ror]
     if only:
-        todo = [r for r in todo if state.institutions[r]["status"] in ("pending", "failed")]
+        todo = [r for r in todo if state.institutions[r]["status"] in ("pending", "pending_adapter", "failed")]
     if limit:
         todo = todo[:limit]
     bucket = bucket or TokenBucket(1.0)

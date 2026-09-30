@@ -207,7 +207,11 @@ def test_page_cap_and_robots(tmp_path):
 def test_no_adapter_marks_failed(tmp_path):
     code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=5, budget_bytes=10**9,
                            get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: None)
-    assert state.institutions["r1"]["status"] == "failed" and state.institutions["r1"]["error"] == "no_adapter"
+    assert state.institutions["r1"]["status"] == "pending_adapter" and state.institutions["r1"]["error"] == "no_adapter"
+    assert "r1" in state.todo()
+    code, state = haul.run(rows("r1"), cache_root=tmp_path, workers=1, max_pages=50, budget_bytes=10**9,
+                           get=fake_get, bucket=fast_bucket(), adapter_factory=lambda r: FakeAdapter(r["ror_id"]))
+    assert state.institutions["r1"]["status"] == "done"
 
 
 def test_fetcher_cache_skips_refetch(tmp_path):
