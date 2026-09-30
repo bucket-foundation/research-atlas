@@ -64,7 +64,15 @@ def main(argv: list[str] | None = None) -> int:
     stats.update(ror_id=ror, adapter=platform, elapsed_s=round(time.monotonic() - started, 1),
                  discovery=getattr(adapter, "discovery", {}))
     print(json.dumps(stats, indent=1, sort_keys=True))
-    return 0 if stats["emails"] > 0 else 2
+    return exit_code(stats)
+
+
+def exit_code(stats: dict) -> int:
+    if stats.get("records", 0) == 0 or stats.get("emails", 0) == 0:
+        print(f"zero yield for {stats.get('ror_id')}: {stats.get('records', 0)} records, "
+              f"{stats.get('emails', 0)} emails", file=sys.stderr)
+        return 2
+    return 0
 
 
 if __name__ == "__main__":

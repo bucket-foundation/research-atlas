@@ -48,7 +48,11 @@ def _table(path: str) -> dict[str, tuple[str, ...]]:
 
 
 def allowed_domains(ror_id: str, table: Mapping[str, Iterable[str]] | None = None) -> tuple[str, ...]:
-    source = table if table is not None else (_table(str(ROR_DOMAINS)) if ROR_DOMAINS.exists() else {})
+    if table is None:
+        if not ROR_DOMAINS.exists():
+            raise FileNotFoundError(f"ror_domains table missing at {ROR_DOMAINS}; run scripts/build_ror_domains.py")
+        table = _table(str(ROR_DOMAINS))
+    source = table
     return tuple(source.get(normalize_ror(ror_id), ()))
 
 

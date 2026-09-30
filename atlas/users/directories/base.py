@@ -5,6 +5,7 @@ import hashlib
 import html
 import json
 import re
+import sys
 import time
 import urllib.robotparser
 from collections.abc import Callable, Iterable
@@ -41,6 +42,7 @@ class FacultyRecord:
     email_as_of: str | None = None
     dropped_emails: list[str] = field(default_factory=list)
     source_kind: str = "profile"
+    org_mailbox: str | None = None
     source: str = EMAIL_SOURCE
     source_id: str | None = None
     source_url: str | None = None
@@ -172,6 +174,8 @@ class PoliteFetcher:
             self.requests += 1
             if status >= 500:
                 rp.disallow_all = True
+            elif status in (401, 403):
+                rp.disallow_all = True
             elif status >= 400:
                 rp.allow_all = True
             else:
@@ -193,7 +197,10 @@ class PoliteFetcher:
         if body_path.exists() and meta_path.exists():
             meta = json.loads(meta_path.read_text())
             fetched = datetime.fromisoformat(meta["fetched_at"].replace("Z", "+00:00"))
-            if self._now() - fetched < self.max_age:
+            age = self._now() - fetched
+            if age < self.max_age:
+                if age > timedelta(days=1) and not self.allowed(url):
+                    raise RobotsDenied(url)
                 text = gzip.decompress(body_path.read_bytes()).decode()
                 return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True)
         if not self.allowed(url):
@@ -262,7 +269,8 @@ class DirectoryAdapter(Protocol):
 
 def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[FacultyRecord], dict]:
     stats = {"seeds": 0, "fetched": 0, "cached": 0, "robots_denied": 0, "http_errors": 0,
-             "records": 0, "emails": 0, "dropped_emails": 0, "budget_exhausted": False}
+             "records": 0, "emails": 0, "dropped_emails": 0, "budget_exhausted": False,
+             "parse_errors": 0, "parse_error_urls": []}
     seeds = adapter.seeds(fetcher)
     stats["seeds"] = len(seeds)
     out: dict[str, FacultyRecord] = {}
@@ -279,7 +287,14 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
         if page.status != 200:
             stats["http_errors"] += 1
             continue
-        for rec in adapter.parse(page):
+        try:
+            parsed = adapter.parse(page)
+        except Exception as exc:  # noqa: BLE001
+            stats["parse_errors"] += 1
+            stats["parse_error_urls"].append(f"{url}: {type(exc).__name__}: {exc}")
+            print(f"parse error {url}: {type(exc).__name__}: {exc}", file=sys.stderr)
+            continue
+        for rec in parsed:
             prior = out.get(rec.slug)
             if prior is None or _better(rec, prior):
                 out[rec.slug] = rec

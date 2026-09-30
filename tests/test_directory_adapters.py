@@ -247,3 +247,98 @@ def test_email_on_two_records_is_dropped_from_both():
     [r2] = a.parse(page("https://www.example.edu/people/ada-copy", "generic_jsonld.html"))
     assert drop_shared_emails([r1, r2]) == 1
     assert r1.email is None and r2.email is None and r1.email_source is None
+
+
+@pytest.mark.parametrize("prose", [
+    "Meet us at admissions.example.edu for a tour.",
+    "The lab is at bio.example.edu and at chem dot example dot edu.",
+    "Classes start at 9.30 and end at noon.",
+    "Contact us at the front desk dot example.",
+])
+def test_prose_yields_no_email(prose):
+    assert deobfuscate(f"<p>{prose}</p>") == []
+
+
+def test_bracketed_forms_still_decode():
+    assert deobfuscate("x.y [at] example [dot] edu") == ["x.y@example.edu"]
+    assert deobfuscate("zed at bio[dot]example[dot]edu") == ["zed@bio.example.edu"]
+    assert deobfuscate("q(at)example.edu") == ["q@example.edu"]
+
+
+def test_role_mailbox_is_kept_apart_from_person_email():
+    html = "<html><h1>Kim Sampleton</h1><a href='mailto:registrar@example.edu'>Registrar</a></html>"
+    [r] = adapter().parse(Page("https://www.example.edu/people/kim-sampleton", 200, html, "t", "0", False))
+    assert r.email is None and r.org_mailbox == "registrar@example.edu"
+
+
+def test_nested_sitemap_off_site_is_skipped(tmp_path):
+    index = """<sitemapindex><sitemap><loc>https://tracker.other.org/people.xml</loc></sitemap>
+    <sitemap><loc>https://www.example.edu/sitemap-people.xml</loc></sitemap></sitemapindex>"""
+    site = FakeSite({"https://www.example.edu/robots.txt": (200, "Sitemap: https://cdn.other.org/sm.xml\n"),
+                     "https://www.example.edu/sitemap.xml": (200, index),
+                     "https://www.example.edu/sitemap-people.xml": (200, SITEMAP_PEOPLE)})
+    found = adapter().sitemap_profiles(fetcher(tmp_path, site), "https://www.example.edu/", 50)
+    assert found == ["https://www.example.edu/people/di-madeup", "https://www.example.edu/people/secret-one"]
+    assert not [c for c in site.calls if "other.org" in c]
+
+
+class Exploding(GenericAdapter):
+    def parse(self, page):
+        raise ValueError("bad markup")
+
+
+def test_parse_failure_is_counted_with_url(tmp_path, capsys):
+    site = FakeSite(SITE)
+    a = Exploding(ROR, ["https://www.example.edu/people"], domains=DOMAINS)
+    records, stats = crawl(a, fetcher(tmp_path, site))
+    assert records == [] and stats["parse_errors"] > 0
+    assert stats["parse_error_urls"][0].startswith("https://www.example.edu/")
+    assert "parse error https://www.example.edu/" in capsys.readouterr().err
+
+
+def test_zero_yield_run_exits_non_zero(tmp_path, monkeypatch):
+    import scripts.crawl_official_directory as cli
+    from atlas.users.directories import base
+    monkeypatch.setattr(cli, "OFFICIAL_CACHE", tmp_path)
+    monkeypatch.setattr(base, "_requests_get", lambda url: (200, "<html></html>") if url.endswith("robots.txt")
+                        else (404, ""))
+    monkeypatch.setattr(cli, "allowed_domains", lambda ror: DOMAINS, raising=False)
+    code = cli.main([ROR, "--platform", "generic", "--entry", "https://www.example.edu/people", "--delay", "0"])
+    assert code == 2
+    assert cli.exit_code({"records": 3, "emails": 1}) == 0
+    assert cli.exit_code({"records": 3, "emails": 0}) == 2
+
+
+def test_missing_ror_domains_table_raises(tmp_path, monkeypatch):
+    from atlas.users.directories import domains
+    monkeypatch.setattr(domains, "ROR_DOMAINS", tmp_path / "absent.parquet")
+    with pytest.raises(FileNotFoundError, match="build_ror_domains"):
+        allowed_domains(ROR)
+
+
+def test_robots_forbidden_status_denies(tmp_path):
+    site = FakeSite({"https://www.example.edu/robots.txt": (403, "")})
+    with pytest.raises(RobotsDenied):
+        fetcher(tmp_path, site).fetch("https://www.example.edu/people")
+
+
+def test_cached_page_rechecks_robots_after_a_day(tmp_path):
+    from datetime import datetime, timedelta, timezone
+    t0 = datetime(2026, 9, 1, tzinfo=timezone.utc)
+    site = FakeSite(dict(SITE))
+    fetcher(tmp_path, site, now=lambda: t0).fetch("https://www.example.edu/people/ada-testperson")
+    site.pages["https://www.example.edu/robots.txt"] = (200, "User-agent: *\nDisallow: /people/\n")
+    later = fetcher(tmp_path, site, now=lambda: t0 + timedelta(days=2))
+    with pytest.raises(RobotsDenied):
+        later.fetch("https://www.example.edu/people/ada-testperson")
+
+
+def test_default_delay_spaces_same_host_only(tmp_path):
+    slept = []
+    f = PoliteFetcher(tmp_path / "p", get=FakeSite(SITE), sleep=slept.append)
+    f.fetch("https://www.example.edu/people/ada-testperson")
+    assert len(slept) == 1 and 0.8 < slept[0] <= 1.0
+    f._wait("other.example.edu")
+    assert len(slept) == 1
+    f._wait("www.example.edu")
+    assert len(slept) == 2 and 0.8 < slept[1] <= 1.0

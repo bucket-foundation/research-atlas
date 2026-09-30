@@ -32,10 +32,19 @@ LISTING_HINT = re.compile(
     r"faculty-directory|faculty-and-staff)/?(\?.*)?$", re.IGNORECASE)
 PAGINATION = re.compile(r"[?&](page|pageNumber|p)=\d+|/page/\d+/?$", re.IGNORECASE)
 SKIP_EXT = re.compile(r"\.(pdf|jpe?g|png|gif|svg|webp|docx?|xlsx?|pptx?|zip|ics|css|js|mp4|mp3)(\?|$)", re.IGNORECASE)
+LABEL = r"[A-Za-z0-9-]+"
+BRACKET_AT = r"\s*(?:\[at\]|\(at\)|\{at\}|<at>|\[@\]|\(@\))\s*"
+BRACKET_DOT = r"\s*(?:\[dot\]|\(dot\)|\{dot\}|<dot>)\s*"
 OBFUSCATED = re.compile(
-    r"([A-Za-z0-9._%+-]+)\s*(?:\[at\]|\(at\)|\{at\}|<at>|\s+at\s+|&#64;|\[@\])\s*"
-    r"([A-Za-z0-9-]+(?:\s*(?:\.|\[dot\]|\(dot\)|\{dot\}|\s+dot\s+)\s*[A-Za-z0-9-]+)+)", re.IGNORECASE)
-DOT = re.compile(r"\s*(?:\[dot\]|\(dot\)|\{dot\}|\s+dot\s+|\.)\s*", re.IGNORECASE)
+    rf"([A-Za-z0-9._%+-]+){BRACKET_AT}({LABEL}(?:(?:\.|{BRACKET_DOT}){LABEL})+)", re.IGNORECASE)
+SPACED_AT = re.compile(
+    rf"([A-Za-z0-9._%+-]+)\s+at\s+({LABEL}(?:{BRACKET_DOT}{LABEL})+)(?![A-Za-z0-9.-])", re.IGNORECASE)
+DOT = re.compile(rf"{BRACKET_DOT}|\.", re.IGNORECASE)
+ROLE_LOCAL = re.compile(
+    r"^(registrar|info|information|admissions?|office|department|dept|contact|contactus|help|helpdesk|"
+    r"support|webmaster|web|admin|administrator|reception|frontdesk|general|inquiries|enquiries|hr|"
+    r"media|press|news|communications|events|alumni|dean|chair|staff|faculty|grad|graduate|undergrad|"
+    r"secretary|mail|postmaster|noreply|no-reply)([._-][a-z0-9]+)*$", re.IGNORECASE)
 PERSON_TYPES = {"person", "http://schema.org/person", "https://schema.org/person", "foaf:person"}
 
 
@@ -129,7 +138,7 @@ def deobfuscate(text: str) -> list[str]:
         if (e := decode_cfemail(m.group(1))) and EMAIL_RE.fullmatch(e):
             found.append(e)
     plain = htmllib.unescape(re.sub(r"<[^>]+>", " ", text))
-    for m in OBFUSCATED.finditer(plain):
+    for m in [*OBFUSCATED.finditer(plain), *SPACED_AT.finditer(plain)]:
         domain = DOT.sub(".", m.group(2)).strip(".")
         candidate = f"{m.group(1)}@{domain}"
         if EMAIL_RE.fullmatch(candidate):
@@ -301,13 +310,17 @@ def _name_tokens(name: str) -> set[str]:
     return {t.lower() for t in re.split(r"[\s,.'-]+", name) if len(t) > 1}
 
 
+def is_role_mailbox(email: str) -> bool:
+    return bool(ROLE_LOCAL.match(email.split("@", 1)[0]))
+
+
 def pick_email(candidates: Iterable[str], domains: Iterable[str], name: str) -> tuple[str | None, list[str]]:
     seen: list[str] = []
     for c in candidates:
         c = c.strip().rstrip(".").lower()
         if c and c not in seen:
             seen.append(c)
-    good = [e for e in seen if email_domain_ok(e, domains) and _is_acceptable_email(e)]
+    good = [e for e in seen if email_domain_ok(e, domains) and _is_acceptable_email(e) and not is_role_mailbox(e)]
     dropped = [e for e in seen if e not in good]
     if len(good) == 1:
         return good[0], dropped
@@ -381,9 +394,13 @@ class GenericAdapter:
             return None
         return page if page.status == 200 else None
 
+    def same_origin(self, url: str, base: str) -> bool:
+        return same_site(url, self.domains) or urlparse(url).netloc == urlparse(base).netloc
+
     def sitemap_profiles(self, fetcher: PoliteFetcher, base: str, limit: int) -> list[str]:
         root = f"{urlparse(base).scheme}://{urlparse(base).netloc}"
-        queue = list(dict.fromkeys(fetcher.sitemaps(base) + [root + "/sitemap.xml"]))
+        listed = [u for u in fetcher.sitemaps(base) if self.same_origin(u, base)]
+        queue = list(dict.fromkeys(listed + [root + "/sitemap.xml"]))
         seen, found = set(), []
         while queue and len(seen) < self.max_sitemaps and len(found) < limit:
             sm = queue.pop(0)
@@ -394,6 +411,7 @@ class GenericAdapter:
             if page is None:
                 continue
             nested, urls = sitemap_locs(page.text)
+            nested = [u for u in nested if self.same_origin(u, base)]
             queue += sorted(nested, key=lambda u: 0 if re.search(r"people|person|profile|faculty|expert", u, re.IGNORECASE) else 1)
             found += [u for u in urls if self.is_profile(u)]
         return list(dict.fromkeys(found))[:limit]
@@ -467,5 +485,6 @@ class GenericAdapter:
                 source_kind="profile" if own else "listing",
             )
             rec.dropped_emails.extend(dropped)
+            rec.org_mailbox = next((e for e in dropped if is_role_mailbox(e) and email_domain_ok(e, self.domains)), None)
             out.append(accept_email(rec, email, self.domains))
         return out
