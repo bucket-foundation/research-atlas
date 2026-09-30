@@ -1,0 +1,10 @@
+[Unit]
+Description=Six-hourly trigger for the people atlas export
+
+[Timer]
+OnBootSec=15min
+OnUnitActiveSec=6h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Bucket Foundation people atlas export for the advisor dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ATLAS_DIR@
+ExecStart=/usr/bin/python3 @ATLAS_DIR@/scripts/export_people_atlas.py --works-budget 5400
+Nice=10
+IOSchedulingClass=idle
+RuntimeMaxSec=2h
+
+[Install]
+WantedBy=default.target
