@@ -76,3 +76,4 @@ data/processed/contacts_official.parquet
 # Opt-out list and tombstones: private, never commit
 data/private/*
 !data/private/.gitkeep
+data/seeds/*.partial.csv

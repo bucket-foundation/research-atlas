@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -30,12 +31,21 @@ LICENCES = {"wikipedia": "Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0"
             "carnegie": "Carnegie Classification terms; ROR CC0-1.0", "": "ROR CC0-1.0"}
 
 
-def http_get(url: str, limit: int = 600_000) -> tuple[int, str, str]:
+def http_get(url: str, limit: int = 600_000, deadline: float = 20.0) -> tuple[int, str, str]:
+    import time
+
     import requests
 
-    with requests.get(url, headers={"User-Agent": UA}, timeout=(5, 8), stream=True, allow_redirects=True) as r:
-        body = r.raw.read(limit, decode_content=True) if r.status_code == 200 else b""
-        return r.status_code, body.decode(r.encoding or "utf-8", "replace"), r.url
+    start = time.monotonic()
+    with requests.get(url, headers={"User-Agent": UA}, timeout=(10, 10), stream=True, allow_redirects=True) as r:
+        chunks, size = [], 0
+        if r.status_code == 200:
+            while chunk := r.raw.read1(65536):
+                chunks.append(chunk)
+                size += len(chunk)
+                if size >= limit or time.monotonic() - start > deadline:
+                    break
+        return r.status_code, b"".join(chunks).decode(r.encoding or "utf-8", "replace"), r.url
 
 
 def carnegie_lists() -> tuple[dict[str, list[tuple[str, str]]], str]:
@@ -77,7 +87,7 @@ def probe(row: dict, bucket: TokenBucket, robots: RobotsCache) -> dict:
     base = f"{p.scheme or 'https'}://{p.netloc}"
     doms = row["domains"].split(";") if row["domains"] else []
     keep, body = [], ""
-    for path in ("/",) + PROBE_PATHS:
+    for path in PROBE_PATHS:
         url = base + path
         try:
             if not robots.allowed(url):
@@ -89,13 +99,59 @@ def probe(row: dict, bucket: TokenBucket, robots: RobotsCache) -> dict:
         host = urlparse(final).netloc.lower()
         if status != 200 or not any(host == d or host.endswith("." + d) for d in doms):
             continue
-        if path == "/":
-            body = text
-        else:
-            keep.append(final)
+        body = body or text
+        keep.append(final)
     row["directory_entry_urls"] = ";".join(dict.fromkeys(keep))
     row["platform_guess"] = detect(row["ror_id"], home, body)
     return row
+
+
+STRAGGLERS = 0
+
+
+def probe_all(rows: list[dict], bucket: TokenBucket, robots: RobotsCache, workers: int, out: Path,
+              timeout: float = 900.0) -> list[dict]:
+    import time
+    from concurrent.futures import as_completed
+
+    RAW.mkdir(parents=True, exist_ok=True)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    partial = out.with_suffix(".partial.csv")
+    start = time.monotonic()
+    done = []
+    global STRAGGLERS
+    ex = ThreadPoolExecutor(workers)
+    with partial.open("w", newline="") as pf, (RAW / "probe.log").open("a") as log:
+        w = csv.DictWriter(pf, fieldnames=FIELDS, extrasaction="ignore")
+        w.writeheader()
+        futs = {ex.submit(probe, dict(r), bucket, robots): r for r in rows}
+        left = set(futs)
+        try:
+            finished = list(as_completed(futs, timeout=timeout))
+        except TimeoutError:
+            finished = [f for f in futs if f.done()]
+        left -= set(finished)
+        for fut in left:
+            STRAGGLERS += 1
+            fut.cancel()
+            done.append(futs[fut])
+            log.write(f"timeout {futs[fut]['ror_id']} {futs[fut]['homepage']}\n")
+        for fut in finished:
+            try:
+                row = fut.result()
+            except Exception as exc:
+                row = futs[fut]
+                log.write(f"error {row['ror_id']} {type(exc).__name__}\n")
+            done.append(row)
+            w.writerow(row)
+            pf.flush()
+            n = len(row["directory_entry_urls"].split(";")) if row["directory_entry_urls"] else 0
+            log.write(f"{time.monotonic() - start:.0f}s {len(done)}/{len(rows)} {row['ror_id']} "
+                      f"{urlparse(row['homepage']).netloc} entries={n}\n")
+            log.flush()
+    order = {r["ror_id"]: i for i, r in enumerate(rows)}
+    partial.unlink()
+    return sorted(done, key=lambda r: order[r["ror_id"]])
 
 
 def read_csv(path: Path) -> list[dict]:
@@ -151,8 +207,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_probe:
         bucket = TokenBucket(1.0)
         robots = RobotsCache(lambda u: http_get(u)[:2], bucket)
-        with ThreadPoolExecutor(args.workers) as ex:
-            rows = list(ex.map(lambda r: probe(r, bucket, robots), rows))
+        rows = probe_all(rows, bucket, robots, args.workers, args.out)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     with args.out.open("w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=FIELDS)
@@ -170,7 +225,11 @@ def main(argv: list[str] | None = None) -> int:
                "with_entry_urls": sum(1 for r in rows if r["directory_entry_urls"])}
     for line in unresolved:
         print("unresolved", line, file=sys.stderr)
+    summary["probe_timeouts"] = STRAGGLERS
     print(json.dumps(summary, indent=1))
+    sys.stdout.flush()
+    if STRAGGLERS:
+        os._exit(0)
     return 0
 
 
