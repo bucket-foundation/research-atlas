@@ -1,0 +1,16 @@
+[Unit]
+Description=Bucket Foundation research-atlas faculty directory haul
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/gian/agfarms/research-atlas
+ExecStart=/usr/bin/python3 /home/gian/agfarms/research-atlas/scripts/faculty_haul.py
+SuccessExitStatus=2
+Nice=10
+IOSchedulingClass=idle
+TimeoutStartSec=infinity
+
+[Install]
+WantedBy=default.target

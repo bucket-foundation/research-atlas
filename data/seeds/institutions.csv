@@ -1,0 +1,457 @@
+name,ror_id,country_code,domains,homepage,carnegie_class,tier,advisor_count,directory_entry_urls,platform_guess,licence
+Arizona State University,03efmqc40,US,asu.edu,https://www.asu.edu,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Baylor College of Medicine,02pttbw34,US,bcm.edu,https://www.bcm.edu/,R1,A+,6,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+California Institute of Technology,05dxps055,US,caltech.edu,https://www.caltech.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Columbia University,00hj8s172,US,columbia.edu,https://www.columbia.edu,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Dartmouth College,049s0rh22,US,dartmouth.edu;home.dartmouth.edu,https://home.dartmouth.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Florida State University,05g3dte14,US,fsu.edu,https://www.fsu.edu/,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Georgia Institute of Technology,01zkghx44,US,gatech.edu,https://www.gatech.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Georgia State University,03qt6ba18,US,gsu.edu,https://www.gsu.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Harvard University,03vek6s52,US,harvard.edu,https://www.harvard.edu,R1,A+,8,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Iowa State University,04rswrd78,US,iastate.edu,https://www.iastate.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Johns Hopkins University,00za53h95,US,jhu.edu,https://www.jhu.edu/,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Massachusetts Institute of Technology,042nb2s44,US,mit.edu;web.mit.edu,https://web.mit.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Michigan State University,05hs6h993,US,msu.edu,https://msu.edu/,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+New York University,0190ak572,US,nyu.edu,https://www.nyu.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Oregon State University,00ysfqy60,US,oregonstate.edu,https://oregonstate.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Pennsylvania State University,04p491231,US,psu.edu,https://www.psu.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Princeton University,00hx57361,US,princeton.edu,https://www.princeton.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rice University,008zs3103,US,rice.edu,https://www.rice.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Stanford University,00f54p054,US,stanford.edu,https://www.stanford.edu,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Stony Brook University,05qghxh33,US,stonybrook.edu,https://www.stonybrook.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas A&M University,01f5ytq51,US,tamu.edu,https://www.tamu.edu/,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The Ohio State University,00rs6vg23,US,osu.edu,http://www.osu.edu/,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas Southwestern Medical Center,05byvp690,US,utsouthwestern.edu,https://www.utsouthwestern.edu,R1,A+,6,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at Austin,00hj54h04,US,utexas.edu,http://www.utexas.edu/,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Alabama at Birmingham,008s83205,US,uab.edu,https://www.uab.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of California San Diego,0168r3w48,US,ucsd.edu,https://ucsd.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Berkeley",01an7q238,US,berkeley.edu,https://www.berkeley.edu,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Davis",05rrcem69,US,ucdavis.edu,https://www.ucdavis.edu,R1,A+,10,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Irvine",04gyf1771,US,uci.edu,http://uci.edu/,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, San Francisco",043mz5j54,US,ucsf.edu,https://www.ucsf.edu/,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Chicago,024mw5h28,US,uchicago.edu,https://www.uchicago.edu,R1,A+,6,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Illinois Urbana-Champaign,047426m28,US,illinois.edu,https://illinois.edu,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Iowa,036jqmy94,US,uiowa.edu,https://uiowa.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of Maryland, Baltimore",04rq5mt64,US,umaryland.edu,https://www.umaryland.edu,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of Maryland, College Park",047s2c258,US,umd.edu,https://umd.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Miami,02dgjyy92,US,miami.edu;welcome.miami.edu,https://welcome.miami.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Michigan,00jmfr291,US,umich.edu,https://www.umich.edu,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Carolina at Chapel Hill,0130frc33,US,unc.edu,https://www.unc.edu,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Pittsburgh,01an3r305,US,pitt.edu,http://www.pitt.edu/,R1,A+,3,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Rochester,022kthw22,US,rochester.edu,https://www.rochester.edu,R1,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Southern California,03taz7m60,US,usc.edu,https://usc.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Utah,03r0ha626,US,utah.edu,https://www.utah.edu,R1,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Vermont,0155zta11,US,uvm.edu,https://www.uvm.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Washington,00cvxb145,US,washington.edu,https://www.washington.edu,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Wyoming,01485tq96,US,uwyo.edu,https://www.uwyo.edu,R1,A+,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Vanderbilt University,02vm5rt34,US,vanderbilt.edu,http://www.vanderbilt.edu/,R1,A+,9,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Washington University in St. Louis,01yc7t268,US,wustl.edu,http://wustl.edu/,R1,A+,7,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Yale University,03v76x132,US,yale.edu,https://www.yale.edu,R1,A+,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Albert Einstein College of Medicine,05cf8a891,US,einsteinmed.edu,https://einsteinmed.edu,R2,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Chapman University,0452jzg20,US,chapman.edu,https://www.chapman.edu/,R2,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+City College of New York,00wmhkr98,US,ccny.cuny.edu,http://www.ccny.cuny.edu/,R2,A+,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rockefeller University,0420db125,US,rockefeller.edu,https://www.rockefeller.edu,R2,A+,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Aarhus University,01aj84f44,DK,au.dk,https://www.au.dk,,A+,2,,,ROR CC0-1.0
+Australian National University,019wvm592,AU,anu.edu.au,https://www.anu.edu.au,,A+,2,,,ROR CC0-1.0
+Brookhaven National Laboratory,02ex6cf31,US,bnl.gov,http://www.bnl.gov/world/,,A+,1,,,ROR CC0-1.0
+Canadian Institute for Advanced Research,01sdtdd95,CA,cifar.ca,https://cifar.ca,,A+,1,,,ROR CC0-1.0
+Charité - Universitätsmedizin Berlin,001w7jn25,DE,charite.de,https://www.charite.de,,A+,3,,,ROR CC0-1.0
+European Molecular Biology Laboratory,050589e39,DE,embl-hamburg.de,http://www.embl-hamburg.de/,,A+,3,,,ROR CC0-1.0
+Forschungszentrum Jülich,02nv7yv05,DE,fz-juelich.de,https://www.fz-juelich.de,,A+,5,,,ROR CC0-1.0
+Freie Universität Berlin,046ak2485,DE,fu-berlin.de,https://www.fu-berlin.de,,A+,5,,,ROR CC0-1.0
+Friedrich Schiller University Jena,05qpz1x62,DE,uni-jena.de,https://www.uni-jena.de/en,,A+,3,,,ROR CC0-1.0
+Goethe University Frankfurt,04cvxnb49,DE,uni-frankfurt.de,https://www.uni-frankfurt.de,,A+,9,,,ROR CC0-1.0
+Heinrich Heine University Düsseldorf,024z2rq82,DE,uni-duesseldorf.de,http://www.uni-duesseldorf.de/home/en/home.html,,A+,3,,,ROR CC0-1.0
+Helmholtz Zentrum München,00cfam450,DE,helmholtz-muenchen.de,http://www.helmholtz-muenchen.de,,A+,1,,,ROR CC0-1.0
+Howard Hughes Medical Institute,006w34k90,US,hhmi.org,https://www.hhmi.org,,A+,7,,,ROR CC0-1.0
+Humboldt-Universität zu Berlin,01hcx6992,DE,hu-berlin.de,https://www.hu-berlin.de/?set_language=en&cl=en,,A+,1,,,ROR CC0-1.0
+IBM (United States),05hh8d621,US,ibm.com,http://www.ibm.com/,,A+,1,,,ROR CC0-1.0
+Imperial College London,041kmwe10,GB,imperial.ac.uk,https://www.imperial.ac.uk,,A+,6,,,ROR CC0-1.0
+Karlsruhe Institute of Technology,04t3en479,DE,kit.edu,https://www.kit.edu,,A+,2,,,ROR CC0-1.0
+King's College London,0220mzb33,GB,kcl.ac.uk,http://www.kcl.ac.uk/index.aspx,,A+,3,,,ROR CC0-1.0
+Leibniz Institute of Photonic Technology,02se0t636,DE,leibniz-ipht.de,https://www.leibniz-ipht.de,,A+,3,,,ROR CC0-1.0
+Ludwig-Maximilians-Universität München,05591te55,DE,lmu.de,https://www.lmu.de,,A+,6,,,ROR CC0-1.0
+MRC Laboratory of Molecular Biology,00tw3jy02,GB,mrc-lmb.cam.ac.uk,http://www2.mrc-lmb.cam.ac.uk/,,A+,1,,,ROR CC0-1.0
+Max Planck Institute for Biophysical Chemistry,03e76ya46,DE,mpibpc.mpg.de,http://www.mpibpc.mpg.de/en,,A+,7,,,ROR CC0-1.0
+Max Planck Institute for Brain Research,02h1nk258,DE,brain.mpg.de,http://brain.mpg.de/home.html,,A+,2,,,ROR CC0-1.0
+Max Planck Institute of Biochemistry,04py35477,DE,biochem.mpg.de,https://www.biochem.mpg.de,,A+,3,,,ROR CC0-1.0
+Max Planck Society,01hhn8329,DE,mpg.de,http://www.mpg.de/en,,A+,2,,,ROR CC0-1.0
+Medical Research Council,03x94j517,GB,ukri.org,https://www.ukri.org/councils/mrc/,,A+,1,,,ROR CC0-1.0
+Monash University,02bfwt286,AU,monash.edu,https://www.monash.edu,,A+,2,,,ROR CC0-1.0
+Nanyang Technological University,02e7b5302,SG,ntu.edu.sg,https://www.ntu.edu.sg,,A+,1,,,ROR CC0-1.0
+National Cancer Institute,040gcmg81,US,cancer.gov,http://www.cancer.gov/,,A+,1,,,ROR CC0-1.0
+National Institute on Aging,049v75w11,US,nia.nih.gov,https://www.nia.nih.gov/,,A+,4,,,ROR CC0-1.0
+National Institutes of Health,01cwqze88,US,nih.gov,https://www.nih.gov,,A+,5,,,ROR CC0-1.0
+New York Proton Center,01m7v2988,US,nyproton.com,https://www.nyproton.com/,,A+,1,,,ROR CC0-1.0
+Oak Ridge National Laboratory,01qz5mb56,US,ornl.gov,https://www.ornl.gov,,A+,1,,,ROR CC0-1.0
+Philipps University of Marburg,01rdrb571,DE,uni-marburg.de,https://www.uni-marburg.de/,,A+,3,,,ROR CC0-1.0
+Research Complex at Harwell,00gqx0331,GB,rc-harwell.ac.uk,http://www.rc-harwell.ac.uk/,,A+,1,,,ROR CC0-1.0
+Ruhr University Bochum,04tsk2644,DE,ruhr-uni-bochum.de,https://www.ruhr-uni-bochum.de,,A+,3,,,ROR CC0-1.0
+"Rutgers, The State University of New Jersey",05vt9qd57,US,rutgers.edu,http://www.rutgers.edu,,A+,3,,,ROR CC0-1.0
+SLAC National Accelerator Laboratory,05gzmn429,US,slac.stanford.edu,https://www6.slac.stanford.edu/,,A+,5,,,ROR CC0-1.0
+Stockholm University,05f0yaq80,SE,su.se,https://www.su.se,,A+,7,,,ROR CC0-1.0
+Technische Universität Berlin,03v4gjf40,DE,tu.berlin,https://www.tu.berlin,,A+,5,,,ROR CC0-1.0
+The University of Melbourne,01ej9dk98,AU,unimelb.edu.au,https://www.unimelb.edu.au,,A+,1,,,ROR CC0-1.0
+The University of Queensland,00rqy9422,AU,uq.edu.au,https://www.uq.edu.au,,A+,5,,,ROR CC0-1.0
+UNSW Sydney,03r8z3t63,AU,unsw.edu.au,https://www.unsw.edu.au/,,A+,4,,,ROR CC0-1.0
+University College London,02jx3x895,GB,ucl.ac.uk,http://www.ucl.ac.uk/,,A+,5,,,ROR CC0-1.0
+University of Basel,02s6k3f65,CH,unibas.ch,https://www.unibas.ch,,A+,2,,,ROR CC0-1.0
+University of Bayreuth,0234wmv40,DE,en.uni-bayreuth.de,http://www.en.uni-bayreuth.de/home/index.html,,A+,1,,,ROR CC0-1.0
+University of British Columbia,03rmrcq20,CA,ubc.ca,https://www.ubc.ca/,,A+,3,,,ROR CC0-1.0
+University of Calgary,03yjb2x39,CA,ucalgary.ca,https://www.ucalgary.ca,,A+,5,,,ROR CC0-1.0
+University of Cambridge,013meh722,GB,cam.ac.uk,https://www.cam.ac.uk,,A+,6,,,ROR CC0-1.0
+University of Copenhagen,035b05819,DK,ku.dk,https://www.ku.dk,,A+,4,,,ROR CC0-1.0
+University of East Anglia,026k5mg93,GB,uea.ac.uk,https://www.uea.ac.uk/,,A+,2,,,ROR CC0-1.0
+University of Edinburgh,01nrxwf90,GB,ed.ac.uk,https://www.ed.ac.uk,,A+,1,,,ROR CC0-1.0
+University of Freiburg,0245cg223,DE,uni-freiburg.de,https://www.uni-freiburg.de,,A+,5,,,ROR CC0-1.0
+University of Glasgow,00vtgdb53,GB,gla.ac.uk,http://www.gla.ac.uk/,,A+,3,,,ROR CC0-1.0
+University of Gothenburg,01tm6cn81,SE,gu.se,https://www.gu.se,,A+,3,,,ROR CC0-1.0
+University of Groningen,012p63287,NL,rug.nl,https://www.rug.nl,,A+,4,,,ROR CC0-1.0
+University of Guelph,01r7awg59,CA,uoguelph.ca,https://www.uoguelph.ca,,A+,1,,,ROR CC0-1.0
+University of Göttingen,01y9bpm73,DE,uni-goettingen.de,http://www.uni-goettingen.de/en/1.html,,A+,2,,,ROR CC0-1.0
+University of Helsinki,040af2s02,FI,helsinki.fi,https://www.helsinki.fi/,,A+,4,,,ROR CC0-1.0
+University of Manchester,027m9bs27,GB,manchester.ac.uk,http://www.manchester.ac.uk/,,A+,7,,,ROR CC0-1.0
+University of Münster,00pd74e08,DE,uni-muenster.de,https://www.uni-muenster.de,,A+,2,,,ROR CC0-1.0
+University of Oxford,052gg0110,GB,ox.ac.uk,https://www.ox.ac.uk,,A+,7,,,ROR CC0-1.0
+University of Sheffield,05krs5044,GB,sheffield.ac.uk,https://www.sheffield.ac.uk,,A+,5,,,ROR CC0-1.0
+University of Toronto,03dbr7087,CA,utoronto.ca,https://www.utoronto.ca,,A+,4,,,ROR CC0-1.0
+University of Turku,05vghhr25,FI,utu.fi,https://www.utu.fi,,A+,2,,,ROR CC0-1.0
+University of Warwick,01a77tt86,GB,warwick.ac.uk,http://www2.warwick.ac.uk/,,A+,3,,,ROR CC0-1.0
+University of Würzburg,00fbnyb24,DE,uni-wuerzburg.de,http://www.uni-wuerzburg.de/en/ueber/university/,,A+,5,,,ROR CC0-1.0
+Utrecht University,04pp8hn57,NL,uu.nl,https://www.uu.nl,,A+,2,,,ROR CC0-1.0
+Vrije Universiteit Amsterdam,008xxew50,NL,vu.nl,https://vu.nl/,,A+,6,,,ROR CC0-1.0
+Wageningen University & Research,04qw24q55,NL,wur.nl,https://www.wur.nl/,,A+,3,,,ROR CC0-1.0
+Western University,02grkyz14,CA,uwo.ca,https://uwo.ca,,A+,2,,,ROR CC0-1.0
+École Polytechnique Fédérale de Lausanne,02s376052,CH,epfl.ch,http://www.epfl.ch,,A+,2,,,ROR CC0-1.0
+Boston University,05qwgg493,US,bu.edu,https://www.bu.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Case Western Reserve University,051fd9666,US,case.edu,https://case.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Cornell University,05bnh6r87,US,cornell.edu,https://www.cornell.edu,R1,A,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Duke University,00py81415,US,duke.edu,https://duke.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Emory University,03czfpz43,US,emory.edu,https://www.emory.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Indiana University Bloomington,02k40bc56,US,bloomington.iu.edu,https://bloomington.iu.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Louisiana State University,05ect4e57,US,lsu.edu,http://www.lsu.edu/,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Northwestern University,000e0be47,US,northwestern.edu,http://www.northwestern.edu/,R1,A,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Purdue University West Lafayette,02dqehb95,US,purdue.edu,http://www.purdue.edu/,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Temple University,00kx1jb78,US,temple.edu,https://www.temple.edu,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas Tech University,0405mnx93,US,ttu.edu,https://www.ttu.edu/,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas Health Science Center at Houston,03gds6c39,US,uth.edu,https://www.uth.edu/,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Tufts University,05wvpxv85,US,tufts.edu,https://www.tufts.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Arizona,03m2x1q45,US,arizona.edu,http://www.arizona.edu/,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Los Angeles",046rm7j60,US,ucla.edu,https://www.ucla.edu,R1,A,4,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Riverside",03nawhv43,US,ucr.edu,https://www.ucr.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Colorado Anschutz Medical Campus,03wmf1y16,US,cuanschutz.edu,https://www.cuanschutz.edu/,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Colorado Boulder,02ttsq026,US,colorado.edu,http://www.colorado.edu/,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Florida,02y3ad647,US,ufl.edu,https://www.ufl.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Massachusetts Amherst,0072zz521,US,umass.edu,https://www.umass.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Missouri,02ymw8z06,US,missouri.edu,http://missouri.edu/,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Texas,00v97ad02,US,unt.edu,https://www.unt.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Pennsylvania,00b30xv10,US,upenn.edu,https://www.upenn.edu,R1,A,5,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Tennessee at Knoxville,020f3ap87,US,utk.edu,https://www.utk.edu,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Virginia,0153tk833,US,virginia.edu,https://virginia.edu,R1,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Wisconsin–Madison,01y2jtd41,US,wisc.edu,http://www.wisc.edu/,R1,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Augusta University,012mef835,US,augusta.edu,https://www.augusta.edu,R2,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Bowling Green State University,00ay7va13,US,bgsu.edu,https://www.bgsu.edu,R2,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Icahn School of Medicine at Mount Sinai,04a9tmd77,US,mssm.edu;icahn.mssm.edu,https://icahn.mssm.edu,R2,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Medical College of Wisconsin,00qqv6244,US,mcw.edu,https://www.mcw.edu,R2,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Oregon Health & Science University,009avj582,US,ohsu.edu,https://www.ohsu.edu,R2,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Thomas Jefferson University,00ysqcn41,US,jefferson.edu,https://www.jefferson.edu,R2,A,2,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Massachusetts Chan Medical School,0464eyp60,US,umassmed.edu,https://www.umassmed.edu,R2,A,1,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+AstraZeneca (United Kingdom),04r9x1a08,GB,astrazeneca.com,https://www.astrazeneca.com,,A,1,,,ROR CC0-1.0
+Australian Nuclear Science and Technology Organisation,05j7fep28,AU,ansto.gov.au,http://www.ansto.gov.au/,,A,1,,,ROR CC0-1.0
+Biotechnology Institute,00s1jty20,US,biotechinstitute.org,http://www.biotechinstitute.org/,,A,1,,,ROR CC0-1.0
+Buck Institute for Research on Aging,050sv4x28,US,thebuck.org,http://www.thebuck.org/,,A,1,,,ROR CC0-1.0
+Cardiff University,03kk7td41,GB,cardiff.ac.uk,http://www.cardiff.ac.uk/,,A,1,,,ROR CC0-1.0
+Chalmers University of Technology,040wg7k59,SE,chalmers.se,https://www.chalmers.se,,A,1,,,ROR CC0-1.0
+Delft University of Technology,02e2c7k09,NL,tudelft.nl,https://www.tudelft.nl,,A,1,,,ROR CC0-1.0
+ETH Zurich,05a28rw58,CH,ethz.ch,https://ethz.ch,,A,1,,,ROR CC0-1.0
+Eindhoven University of Technology,02c2kyt77,NL,tue.nl,https://www.tue.nl,,A,1,,,ROR CC0-1.0
+European Molecular Biology Laboratory,03mstc592,DE,embl.org,https://www.embl.org/,,A,1,,,ROR CC0-1.0
+Heidelberg University,038t36y30,DE,uni-heidelberg.de,https://www.uni-heidelberg.de,,A,2,,,ROR CC0-1.0
+Indiana University – Purdue University Indianapolis,05gxnyn08,US,iupui.edu,http://www.iupui.edu,,A,2,,,ROR CC0-1.0
+Johannes Kepler University of Linz,052r2xn60,AT,jku.at,https://www.jku.at,,A,1,,,ROR CC0-1.0
+KU Leuven,05f950310,BE,kuleuven.be,https://www.kuleuven.be,,A,5,,,ROR CC0-1.0
+Karolinska Institutet,056d84691,SE,ki.se,https://ki.se,,A,1,,,ROR CC0-1.0
+Lawrence Berkeley National Laboratory,02jbv0t02,US,lbl.gov,https://www.lbl.gov/,,A,1,,,ROR CC0-1.0
+Leiden University,027bh9e22,NL,leiden.edu,http://www.leiden.edu/,,A,2,,,ROR CC0-1.0
+Leiden University Medical Center,05xvt9f17,NL,lumc.nl,https://www.lumc.nl,,A,3,,,ROR CC0-1.0
+Leipzig University,03s7gtk40,DE,uni-leipzig.de,https://www.uni-leipzig.de/en/,,A,1,,,ROR CC0-1.0
+Lund University,012a77v79,SE,lu.se,https://www.lu.se,,A,2,,,ROR CC0-1.0
+MRC Mitochondrial Biology Unit,01vdt8f48,GB,mrc-mbu.cam.ac.uk,http://www.mrc-mbu.cam.ac.uk/,,A,3,,,ROR CC0-1.0
+Massachusetts General Hospital,002pd6e78,US,massgeneral.org,http://www.massgeneral.org/,,A,1,,,ROR CC0-1.0
+Max Planck Institute of Colloids and Interfaces,00pwgnh47,DE,mpikg.mpg.de,http://www.mpikg.mpg.de/en,,A,1,,,ROR CC0-1.0
+Mayo Clinic,02qp3tb03,US,mayoclinic.edu;mayoclinic.org,https://www.mayoclinic.org,,A,2,,,ROR CC0-1.0
+McMaster University,02fa3aq29,CA,mcmaster.ca,https://www.mcmaster.ca,,A,1,,,ROR CC0-1.0
+Mount Saint Vincent University,03g3p3b82,CA,msvu.ca,https://www.msvu.ca,,A,1,,,ROR CC0-1.0
+National University of Singapore,01tgyzw49,SG,nus.edu.sg,http://www.nus.edu.sg/,,A,1,,,ROR CC0-1.0
+Osnabrück University,04qmmjx98,DE,uni-osnabrueck.de,https://www.uni-osnabrueck.de/en/home.html,,A,1,,,ROR CC0-1.0
+Paul Scherrer Institute,03eh3y714,CH,psi.ch,http://www.psi.ch/,,A,2,,,ROR CC0-1.0
+Rutherford Appleton Laboratory,03gq8fr08,GB,ukri.org,https://www.ukri.org/who-we-are/stfc/facilities/rutherford-appleton-laboratory/,,A,1,,,ROR CC0-1.0
+Saarland University,01jdpyv68,DE,uni-saarland.de,http://www.uni-saarland.de/en/home.html,,A,2,,,ROR CC0-1.0
+TU Dortmund University,01k97gp34,DE,tu-dortmund.de,https://www.tu-dortmund.de/en/,,A,1,,,ROR CC0-1.0
+Tampere University,033003e23,FI,tuni.fi,https://www.tuni.fi/en,,A,1,,,ROR CC0-1.0
+Technical University of Munich,02kkvpp62,DE,tum.de,https://www.tum.de,,A,2,,,ROR CC0-1.0
+Technische Universität Dresden,042aqky30,DE,tu-dresden.de,https://tu-dresden.de,,A,1,,,ROR CC0-1.0
+The University of Texas MD Anderson Cancer Center,04twxam07,US,mdanderson.org,https://www.mdanderson.org,,A,1,,,ROR CC0-1.0
+The University of Texas Medical Branch at Galveston,016tfm930,US,utmb.edu,https://www.utmb.edu,,A,1,,,ROR CC0-1.0
+The University of Western Australia,047272k79,AU,uwa.edu.au,https://www.uwa.edu.au,,A,2,,,ROR CC0-1.0
+University of Alberta,0160cpw27,CA,ualberta.ca,https://www.ualberta.ca,,A,1,,,ROR CC0-1.0
+University of Amsterdam,04dkp9463,NL,uva.nl,https://www.uva.nl,,A,3,,,ROR CC0-1.0
+University of Auckland,03b94tp07,NZ,auckland.ac.nz,https://www.auckland.ac.nz/en.html,,A,1,,,ROR CC0-1.0
+University of Bern,02k7v4d05,CH,unibe.ch,https://www.unibe.ch,,A,4,,,ROR CC0-1.0
+University of Birmingham,03angcq70,GB,birmingham.ac.uk,http://www.birmingham.ac.uk/index.aspx,,A,1,,,ROR CC0-1.0
+University of Bonn,041nas322,DE,uni-bonn.de,https://www.uni-bonn.de,,A,3,,,ROR CC0-1.0
+University of Bristol,0524sp257,GB,bristol.ac.uk,http://bristol.ac.uk/,,A,3,,,ROR CC0-1.0
+University of Cologne,00rcxh774,DE,portal.uni-koeln.de,http://www.portal.uni-koeln.de/,,A,2,,,ROR CC0-1.0
+University of Geneva,01swzsf04,CH,unige.ch,https://www.unige.ch/,,A,2,,,ROR CC0-1.0
+University of Konstanz,0546hnb39,DE,uni-konstanz.de,https://www.uni-konstanz.de,,A,2,,,ROR CC0-1.0
+University of Lausanne,019whta54,CH,unil.ch,https://www.unil.ch,,A,1,,,ROR CC0-1.0
+University of Leeds,024mrxd33,GB,leeds.ac.uk,https://www.leeds.ac.uk,,A,7,,,ROR CC0-1.0
+University of Liverpool,04xs57h96,GB,liv.ac.uk,http://www.liv.ac.uk/,,A,1,,,ROR CC0-1.0
+University of Liège,00afp2z80,BE,uliege.be,https://www.uliege.be,,A,1,,,ROR CC0-1.0
+University of Oslo,01xtthb56,NO,uio.no,http://www.uio.no/english/,,A,3,,,ROR CC0-1.0
+University of Ottawa,03c4mmv16,CA,uottawa.ca,https://www.uottawa.ca,,A,1,,,ROR CC0-1.0
+University of Southampton,01ryk1543,GB,southampton.ac.uk,http://www.southampton.ac.uk/,,A,1,,,ROR CC0-1.0
+University of Southern Denmark,03yrrjy16,DK,sdu.dk,https://www.sdu.dk,,A,1,,,ROR CC0-1.0
+University of St Andrews,02wn5qz54,GB,st-andrews.ac.uk,http://www.st-andrews.ac.uk/,,A,1,,,ROR CC0-1.0
+University of Twente,006hf6230,NL,utwente.nl,https://www.utwente.nl,,A,1,,,ROR CC0-1.0
+University of Tübingen,03a1kwz48,DE,uni-tuebingen.de,https://www.uni-tuebingen.de/en/university.html,,A,1,,,ROR CC0-1.0
+University of York,04m01e293,GB,york.ac.uk,https://www.york.ac.uk,,A,1,,,ROR CC0-1.0
+University of Zurich,02crff812,CH,uzh.ch,https://uzh.ch/de.html,,A,2,,,ROR CC0-1.0
+Universität Hamburg,00g30e956,DE,uni-hamburg.de,http://www.uni-hamburg.de,,A,3,,,ROR CC0-1.0
+Universität Innsbruck,054pv6659,AT,uibk.ac.at,https://www.uibk.ac.at,,A,5,,,ROR CC0-1.0
+Universität Ulm,032000t02,DE,uni-ulm.de,https://www.uni-ulm.de,,A,1,,,ROR CC0-1.0
+Universitätsmedizin Göttingen,021ft0n22,DE,umg.eu,https://www.umg.eu/,,A,1,,,ROR CC0-1.0
+Université Libre de Bruxelles,01r9htc13,BE,ulb.be,https://www.ulb.be,,A,1,,,ROR CC0-1.0
+Vrije Universiteit Brussel,006e5kg04,BE,vub.ac.be,http://www.vub.ac.be/en/,,A,1,,,ROR CC0-1.0
+American University,052w4zt36,US,american.edu,https://american.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Auburn University,02v80fc35,US,auburn.edu,https://auburn.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Baylor University,005781934,US,baylor.edu,https://www.baylor.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Binghamton University,008rmbt77,US,binghamton.edu,https://www.binghamton.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Boston College,02n2fzt79,US,bc.edu,https://www.bc.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Brandeis University,05abbep66,US,brandeis.edu,https://www.brandeis.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Brigham Young University,047rhhm47,US,byu.edu,https://www.byu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Brown University,05gq02987,US,brown.edu,https://www.brown.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Carnegie Mellon University,05x2bcf33,US,cmu.edu,https://www.cmu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Catholic University of America,047yk3s18,US,cua.edu,http://www.cua.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Clemson University,037s24f05,US,clemson.edu,https://www.clemson.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Colorado School of Mines,04raf6v53,US,mines.edu,https://www.mines.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Colorado State University,03k1gpj17,US,colostate.edu,http://www.colostate.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Drexel University,04bdffz58,US,drexel.edu,https://drexel.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+East Carolina University,01vx35703,US,ecu.edu,https://www.ecu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Florida Atlantic University,05p8w6387,US,fau.edu,https://www.fau.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Florida International University,02gz6gg07,US,fiu.edu,https://www.fiu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+George Mason University,02jqj7156,US,gmu.edu,https://www.gmu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+George Washington University,00y4zzh67,US,gwu.edu,http://www.gwu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Georgetown University,05vzafd60,US,georgetown.edu,https://www.georgetown.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Howard University,05gt1vc06,US,howard.edu,http://www2.howard.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Indiana University Indianapolis,03eftgw80,US,indianapolis.iu.edu,https://indianapolis.iu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Kansas State University,05p1j8758,US,k-state.edu,http://www.k-state.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Kent State University,049pfb863,US,kent.edu,http://www.kent.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Lehigh University,012afjb06,US,lehigh.edu,https://www2.lehigh.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Loyola University Chicago,04b6x2g63,US,luc.edu,http://www.luc.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Medical University of South Carolina,012jban78,US,musc.edu,https://musc.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Michigan Technological University,0036rpn28,US,mtu.edu,https://www.mtu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Mississippi State University,0432jq872,US,msstate.edu,https://www.msstate.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Missouri University of Science and Technology,00scwqd12,US,mst.edu,http://www.mst.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Montana State University,02w0trx84,US,montana.edu,http://www.montana.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+New Jersey Institute of Technology,05e74xb87,US,njit.edu,https://www.njit.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+New Mexico State University,00hpz7z43,US,nmsu.edu,http://www.nmsu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+North Carolina State University,04tj63d06,US,ncsu.edu,https://www.ncsu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+North Dakota State University,05h1bnb22,US,ndsu.edu,http://www.ndsu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Northeastern University,04t5xt781,US,northeastern.edu,http://www.northeastern.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Northern Arizona University,0272j5188,US,nau.edu,https://www.nau.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Nova Southeastern University,042bbge36,US,nova.edu,http://nova.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Ohio University,01jr3y717,US,ohio.edu,https://www.ohio.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Oklahoma State University,01g9vbr38,US,go.okstate.edu,http://go.okstate.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Old Dominion University,04zjtrb98,US,odu.edu,https://www.odu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rensselaer Polytechnic Institute,01rtyzb94,US,rpi.edu,https://www.rpi.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Saint Louis University,01p7jjy08,US,slu.edu,http://www.slu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+San Diego State University,0264fdx42,US,sdsu.edu,https://www.sdsu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Southern Illinois University Carbondale,049kefs16,US,siu.edu,http://www.siu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Southern Methodist University,042tdr378,US,smu.edu,https://www.smu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Syracuse University,025r5qe02,US,syr.edu;syracuse.edu,https://www.syracuse.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"The Graduate Center, CUNY",00awd9g61,US,gc.cuny.edu,http://www.gc.cuny.edu/Home,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at Arlington,019kgqr73,US,uta.edu,http://www.uta.edu/uta/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at Dallas,049emcs32,US,utdallas.edu,http://www.utdallas.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at El Paso,04d5vba33,US,utep.edu,http://www.utep.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at San Antonio,01kd65564,US,utsa.edu,http://www.utsa.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at San Antonio Health Science Center,02f6dcw23,US,uthscsa.edu,https://uthscsa.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Tulane University,04vmvtb21,US,tulane.edu,https://tulane.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University at Albany, State University of New York",012zs8222,US,albany.edu,https://www.albany.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University at Buffalo, State University of New York",01y64my43,US,buffalo.edu,https://www.buffalo.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Alabama,03xrrjk67,US,ua.edu,https://www.ua.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Arkansas at Fayetteville,05jbt9m15,US,uark.edu,http://www.uark.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Merced",00d9ah105,US,ucmerced.edu,https://www.ucmerced.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Santa Barbara",02t274463,US,ucsb.edu,https://www.ucsb.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of California, Santa Cruz",03s65by71,US,ucsc.edu,https://www.ucsc.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Central Florida,036nfer12,US,ucf.edu,https://www.ucf.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Cincinnati,01e3m7079,US,uc.edu,http://www.uc.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Connecticut,02der9h97,US,uconn.edu,http://uconn.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Dayton,021v3qy27,US,udayton.edu,https://www.udayton.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Delaware,01sbq1a82,US,udel.edu,https://www.udel.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Denver,04w7skc03,US,du.edu,http://www.du.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Georgia,00te3t702,US,uga.edu,https://www.uga.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Hawaiʻi at Mānoa,01wspgy28,US,manoa.hawaii.edu,https://manoa.hawaii.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Houston,048sx0r50,US,uh.edu,https://uh.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Idaho,03hbp5t65,US,uidaho.edu,https://uidaho.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Illinois Chicago,02mpq6x41,US,uic.edu,https://www.uic.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Kansas,001tmjg57,US,ku.edu,https://ku.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Kentucky,02k3smh20,US,uky.edu,https://www.uky.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Louisiana at Lafayette,01x8rc503,US,louisiana.edu,http://www.louisiana.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Louisville,01ckdn478,US,louisville.edu,https://louisville.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Maine,01adr0w49,US,umaine.edu,http://umaine.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of Maryland, Baltimore County",02qskvh78,US,umbc.edu,https://umbc.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Massachusetts Boston,04ydmy275,US,umb.edu,https://www.umb.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Massachusetts Lowell,03hamhx47,US,uml.edu,http://www.uml.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Memphis,01cq23130,US,memphis.edu,https://www.memphis.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Minnesota,017zqws13,US,umn.edu;twin-cities.umn.edu,https://twin-cities.umn.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Mississippi,02teq1165,US,olemiss.edu,https://olemiss.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Missouri–Kansas City,01w0d5g70,US,umkc.edu,http://www.umkc.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Montana,0078xmk34,US,umt.edu,http://www.umt.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Nebraska Medical Center,00thqtb16,US,unmc.edu,https://www.unmc.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Nebraska–Lincoln,043mer456,US,unl.edu,http://www.unl.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of Nevada, Las Vegas",0406gha72,US,unlv.edu,https://www.unlv.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"University of Nevada, Reno",01keh0577,US,unr.edu,https://www.unr.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of New Hampshire,01rmh9n78,US,unh.edu,http://www.unh.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of New Mexico,05fs6jp91,US,unm.edu,https://www.unm.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Carolina at Charlotte,04dawnj30,US,charlotte.edu;uncc.edu,https://www.charlotte.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Dakota,04a5szx83,US,und.edu,http://und.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Notre Dame,00mkhxb43,US,nd.edu,https://www.nd.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Oklahoma,02aqsxs83,US,ou.edu,https://www.ou.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Oregon,0293rh119,US,uoregon.edu,https://www.uoregon.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Rhode Island,013ckk937,US,uri.edu,https://www.uri.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of South Carolina,02b6qw903,US,sc.edu,http://www.sc.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of South Florida,032db5x82,US,usf.edu,http://www.usf.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Southern Mississippi,0270vfa57,US,usm.edu,https://www.usm.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Tennessee Health Science Center,0011qv509,US,uthsc.edu,https://www.uthsc.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Toledo,01pbdzh19,US,utoledo.edu,http://www.utoledo.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Wisconsin–Milwaukee,031q21x57,US,uwm.edu,https://uwm.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Utah State University,00h6set76,US,usu.edu,http://www.usu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Virginia Commonwealth University,02nkdxk79,US,vcu.edu,https://vcu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Virginia Tech,02smfhw86,US,vt.edu,https://www.vt.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Washington State University,05dk0ce17,US,wsu.edu,https://wsu.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Wayne State University,01070mq45,US,wayne.edu,https://wayne.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Weill Cornell Medicine,02r109517,US,med.cornell.edu;weill.cornell.edu,https://weill.cornell.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+West Virginia University,011vxgd24,US,wvu.edu,https://www.wvu.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+William & Mary,03hsf0573,US,wm.edu,https://www.wm.edu/,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Worcester Polytechnic Institute,05ejpqr48,US,wpi.edu,https://www.wpi.edu,R1,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Abilene Christian University,004srrf86,US,acu.edu,http://www.acu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Appalachian State University,051m4vc48,US,appstate.edu,https://www.appstate.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Arkansas State University,006pyvd89,US,astate.edu,https://www.astate.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Azusa Pacific University,02bmftj86,US,apu.edu,https://apu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Ball State University,00k6tx165,US,bsu.edu,https://bsu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Boise State University,02e3zdp86,US,boisestate.edu,https://www.boisestate.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+California State Polytechnic University,05by5hm18,US,cpp.edu,http://www.cpp.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+California State University Los Angeles,0294hxs80,US,calstatela.edu,https://www.calstatela.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"California State University, Fresno",03enmdz06,US,fresnostate.edu,http://www.fresnostate.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"California State University, Fullerton",02avqqw26,US,fullerton.edu,https://www.fullerton.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"California State University, Long Beach",0080fxk18,US,csulb.edu,https://www.csulb.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+"California State University, Sacramento",03e26wv14,US,csus.edu,https://www.csus.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Central Michigan University,02xawj266,US,cmich.edu,https://www.cmich.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Claremont Graduate University,0157pnt69,US,cgu.edu,https://www.cgu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Clark Atlanta University,0397tsa92,US,cau.edu,http://www.cau.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Clark University,04123ky43,US,clarku.edu,http://www.clarku.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Clarkson University,03rwgpn18,US,clarkson.edu,http://www.clarkson.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Cleveland State University,002tx1f22,US,csuohio.edu,https://csuohio.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Creighton University,05wf30g94,US,creighton.edu,https://www.creighton.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+DePaul University,04xtx5t16,US,depaul.edu,https://www.depaul.edu/Pages/default.aspx,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Delaware State University,03g35dg18,US,desu.edu,http://www.desu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Duquesne University,02336z538,US,duq.edu,https://duq.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+East Tennessee State University,05rfqv493,US,etsu.edu,http://www.etsu.edu/etsuhome/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+East Texas A&M University,01red3556,US,tamuc.edu,http://www.tamuc.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Eastern Michigan University,02ehshm78,US,emich.edu,http://www.emich.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Eastern Virginia Medical School,056hr4255,US,evms.edu,https://www.evms.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Embry-Riddle Aeronautical University Daytona Beach Florida Campus,001emy730,US,daytonabeach.erau.edu,https://daytonabeach.erau.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Florida Agricultural and Mechanical University,00c4wc133,US,famu.edu,https://www.famu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Florida Institute of Technology,04atsbb87,US,fit.edu,http://www.fit.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Fordham University,03qnxaf80,US,fordham.edu,https://www.fordham.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Georgia Southern University,04agmb972,US,georgiasouthern.edu,http://www.georgiasouthern.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Hampton University,05fde5z47,US,hamptonu.edu,http://www.hamptonu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Hofstra University,03pm18j10,US,hofstra.edu,http://www.hofstra.edu/home/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Idaho State University,0162z8b04,US,isu.edu,https://www.isu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Illinois Institute of Technology,037t3ry66,US,iit.edu,https://www.iit.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Illinois State University,050kcr883,US,illinoisstate.edu,http://illinoisstate.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Indiana University of Pennsylvania,0511cmw96,US,iup.edu,https://www.iup.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Jackson State University,01ecnnp60,US,jsums.edu,http://www.jsums.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+James Madison University,028pmsz77,US,jmu.edu,https://www.jmu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Kean University,04wzzqn13,US,kean.edu,https://www.kean.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Kennesaw State University,00jeqjx33,US,kennesaw.edu,https://www.kennesaw.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Lamar University,008ms5s18,US,lamar.edu,http://www.lamar.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Loma Linda University,04bj28v14,US,llu.edu,https://llu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Long Island University,0324fzh77,US,liu.edu,http://www.liu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Louisiana State University Health Sciences Center New Orleans,01qv8fp92,US,lsuhsc.edu,https://www.lsuhsc.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Louisiana Tech University,04q9esz89,US,latech.edu,http://www.latech.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Loyola Marymount University,00xhj8c72,US,lmu.edu,http://www.lmu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Marquette University,04gr4te78,US,marquette.edu,https://www.marquette.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Marshall University,02erqft81,US,marshall.edu,https://www.marshall.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Mercer University,04bk7v425,US,mercer.edu,http://www.mercer.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Miami University,05nbqxr67,US,miamioh.edu,https://miamioh.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Middle Tennessee State University,02n1hzn07,US,mtsu.edu,http://www.mtsu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Montclair State University,01nxc2t48,US,montclair.edu,https://www.montclair.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Morgan State University,017d8gk22,US,morgan.edu,https://www.morgan.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+New School,02tvcev59,US,newschool.edu,http://www.newschool.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+North Carolina Agricultural and Technical State University,02aze4h65,US,ncat.edu,http://www.ncat.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Northern Illinois University,012wxa772,US,niu.edu,https://www.niu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Oakland University,01ythxj32,US,oakland.edu,https://oakland.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Pepperdine University,0529ybh43,US,pepperdine.edu,https://www.pepperdine.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Portland State University,00yn2fy02,US,pdx.edu,https://www.pdx.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Prairie View A&M University,0449kf092,US,pvamu.edu,http://www.pvamu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rochester Institute of Technology,00v4yb702,US,rit.edu,http://www.rit.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rowan University,049v69k10,US,rowan.edu,http://www.rowan.edu/home/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Rush University,01k9xac83,US,rushu.rush.edu,http://www.rushu.rush.edu/sp/Pages/Home.aspx,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+SUNY College of Environmental Science and Forestry,00qv0tw17,US,esf.edu,https://www.esf.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+SUNY Upstate Medical University,040kfrw16,US,upstate.edu,http://www.upstate.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Saint Joseph's University,05q87sg56,US,sju.edu,http://www.sju.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Sam Houston State University,00yh3cz06,US,shsu.edu,https://shsu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+San Francisco State University,05ykr0121,US,sfsu.edu,https://www.sfsu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+San Jose State University,04qyvz380,US,sjsu.edu,https://sjsu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Seton Hall University,007tn5k56,US,shu.edu,http://www.shu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+South Carolina State University,00520ze08,US,scsu.edu,http://www.scsu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+South Dakota State University,015jmes13,US,sdstate.edu,https://www.sdstate.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Southern Connecticut State University,00ramkd50,US,southernct.edu,https://www.southernct.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Southern University and Agricultural and Mechanical College,04r3m2882,US,subr.edu,https://www.subr.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Stevens Institute of Technology,02z43xh36,US,stevens.edu,https://www.stevens.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Tarleton State University,0263v9e25,US,tarleton.edu,https://www.tarleton.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Tennessee State University,01fpczx89,US,tnstate.edu,https://www.tnstate.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Tennessee Technological University,05drmrq39,US,tntech.edu,https://www.tntech.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas A&M University – Corpus Christi,01mrfdz82,US,tamucc.edu,https://www.tamucc.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas A&M University – Kingsville,05abs3w97,US,tamuk.edu,http://www.tamuk.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas Christian University,054b0b564,US,tcu.edu,https://www.tcu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas Southern University,05ch0aw77,US,tsu.edu,http://www.tsu.edu/about/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas State University,05h9q1g27,US,txst.edu,https://www.txst.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas Tech University Health Sciences Center,033ztpr93,US,ttuhsc.edu,http://www.ttuhsc.edu/lubbock/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Texas Woman's University,04dyzkj40,US,twu.edu,https://twu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas Rio Grande Valley,02p5xjf12,US,utrgv.edu,http://www.utrgv.edu/en-us/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+The University of Texas at Tyler,01azfw069,US,uttyler.edu,http://www.uttyler.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+U.S. Air Force Institute of Technology,03f9f1d95,US,afit.edu,https://www.afit.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Akron,02kyckx55,US,uakron.edu,http://www.uakron.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Alabama in Huntsville,02zsxwr40,US,uah.edu,https://www.uah.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Alaska Fairbanks,01j7nq853,US,uaf.edu,http://www.uaf.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Arkansas at Little Rock,04fttyv97,US,ualr.edu,http://ualr.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Arkansas for Medical Sciences,00xcryt71,US,uams.edu,https://uams.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Colorado Colorado Springs,054spjc55,US,uccs.edu,http://www.uccs.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Massachusetts Dartmouth,00fzmm222,US,umassd.edu,https://www.umassd.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Michigan–Dearborn,035wtm547,US,umdearborn.edu,http://umdearborn.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Missouri–St. Louis,037cnag11,US,umsl.edu,http://www.umsl.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Nebraska at Omaha,04yrkc140,US,unomaha.edu,https://www.unomaha.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of New England,02n2ava60,US,une.edu,http://www.une.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Carolina Wilmington,02t0qr014,US,uncw.edu,http://uncw.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Carolina at Greensboro,04fnxsj42,US,uncg.edu,https://www.uncg.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of North Florida,01j903a45,US,unf.edu,https://www.unf.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Northern Colorado,016bysn57,US,unco.edu,https://www.unco.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Puerto Rico at Río Piedras,0453v4r20,PR,uprrp.edu,http://www.uprrp.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Puerto Rico-Mayaguez,00wek6x04,PR,uprm.edu,http://www.uprm.edu/portada/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of San Diego,03jbbze48,US,sandiego.edu,https://www.sandiego.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of San Francisco,029m7xn54,US,usfca.edu,https://www.usfca.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of South Alabama,01s7b5y08,US,southalabama.edu,https://www.southalabama.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of South Dakota,0043h8f16,US,usd.edu,https://www.usd.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of Tulsa,04wn28048,US,utulsa.edu,http://utulsa.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+University of West Florida,002w4zy91,US,uwf.edu,https://uwf.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Villanova University,02g7kd627,US,villanova.edu,https://www1.villanova.edu/university.html,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Virginia State University,04esvpn06,US,vsu.edu,http://www.vsu.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Wake Forest University,0207ad724,US,wfu.edu,https://www.wfu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+West Chester University,0053n5071,US,wcupa.edu,http://www.wcupa.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Western Michigan University,04j198w64,US,wmich.edu,https://wmich.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Wichita State University,00c4e7y75,US,wichita.edu,https://www.wichita.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Wright State University,04qk6pt94,US,wright.edu,http://www.wright.edu/,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0
+Yeshiva University,045x93337,US,yu.edu,https://www.yu.edu,R2,,0,,,Carnegie list via Wikipedia CC-BY-SA-4.0; ROR CC0-1.0

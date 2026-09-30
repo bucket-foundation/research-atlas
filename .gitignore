@@ -71,6 +71,8 @@ dist/
 .idea/
 .vscode/
 
+# Private official-directory contacts fold. Carries emails; never commit.
+data/processed/contacts_official.parquet
 # Opt-out list and tombstones: private, never commit
 data/private/*
 !data/private/.gitkeep
