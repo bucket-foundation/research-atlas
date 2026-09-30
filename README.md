@@ -254,6 +254,10 @@ which rejects unknown columns and enforces the money invariant. Add a
 no-network normalizer test (see `tests/test_nsf_normalizer.py`) with a small
 recorded sample page.
 
+## Seed Attribution
+
+`data/seeds/institutions.csv` takes its R1 and R2 Carnegie classes from the Wikipedia article [List of research universities in the United States](https://en.wikipedia.org/w/index.php?title=List_of_research_universities_in_the_United_States&oldid=1373296755), revision 1373296755, licensed CC BY-SA 4.0; institution identifiers come from ROR under CC0 1.0.
+
 ---
 
 ## How it's published to Bucket

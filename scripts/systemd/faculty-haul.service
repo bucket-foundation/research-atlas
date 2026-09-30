@@ -1,0 +1,15 @@
+[Unit]
+Description=Bucket Foundation research-atlas faculty directory haul
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=@ATLAS_DIR@
+ExecStart=/usr/bin/python3 @ATLAS_DIR@/scripts/faculty_haul.py
+Nice=10
+IOSchedulingClass=idle
+RuntimeMaxSec=50min
+
+[Install]
+WantedBy=default.target
