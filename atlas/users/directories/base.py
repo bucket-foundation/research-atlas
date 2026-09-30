@@ -231,6 +231,19 @@ def _better(new: FacultyRecord, old: FacultyRecord) -> bool:
     return rank(new) > rank(old)
 
 
+def drop_shared_emails(records: list[FacultyRecord]) -> int:
+    owners: dict[str, int] = {}
+    for r in records:
+        if r.email:
+            owners[r.email] = owners.get(r.email, 0) + 1
+    shared = {e for e, n in owners.items() if n > 1}
+    for r in records:
+        if r.email in shared:
+            r.dropped_emails.append(r.email)
+            r.email = r.email_source = r.email_source_url = r.email_as_of = None
+    return len(shared)
+
+
 def _requests_get(url: str) -> tuple[int, str]:
     import requests
 
@@ -271,6 +284,7 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
             if prior is None or _better(rec, prior):
                 out[rec.slug] = rec
     records = sorted(out.values(), key=lambda r: r.slug)
+    stats["shared_emails"] = drop_shared_emails(records)
     stats["records"] = len(records)
     stats["emails"] = sum(1 for r in records if r.email)
     stats["dropped_emails"] = sum(len(r.dropped_emails) for r in records)

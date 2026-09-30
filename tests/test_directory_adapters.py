@@ -238,3 +238,12 @@ def test_registry_and_detection(tmp_path):
     nothing = FakeSite({"https://www.example.edu/robots.txt": (200, ""),
                         "https://www.example.edu/": (200, "<html></html>")})
     assert detect_platform(ROR, "https://www.example.edu", fetcher(tmp_path / "c", nothing), DOMAINS) is None
+
+
+def test_email_on_two_records_is_dropped_from_both():
+    from atlas.users.directories.base import drop_shared_emails
+    a = adapter()
+    [r1] = a.parse(page("https://www.example.edu/people/ada-testperson", "generic_jsonld.html"))
+    [r2] = a.parse(page("https://www.example.edu/people/ada-copy", "generic_jsonld.html"))
+    assert drop_shared_emails([r1, r2]) == 1
+    assert r1.email is None and r2.email is None and r1.email_source is None
