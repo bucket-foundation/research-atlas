@@ -1,0 +1,2 @@
+{"urlkey": "edu,example)/people/ada-testperson", "timestamp": "20260920101010", "url": "https://www.example.edu/people/ada-testperson", "mime": "text/html", "status": "200", "length": "2048", "offset": "100", "filename": "crawl-data/CC-MAIN-2026-39/segments/1/warc/a.warc.gz"}
+{"urlkey": "edu,example)/people/ada-testperson", "timestamp": "20260901000000", "url": "https://www.example.edu/people/ada-testperson", "mime": "text/html", "status": "301", "length": "10", "offset": "0", "filename": "crawl-data/CC-MAIN-2026-39/segments/1/warc/b.warc.gz"}
