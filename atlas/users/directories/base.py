@@ -109,6 +109,7 @@ class BudgetExhausted(Exception):
     pass
 
 
+RETRY_STATUS = (429, 502, 503, 504, 599)
 CHALLENGE_RE = re.compile(r"<title>\s*(Just a moment|Attention Required|Access denied)", re.IGNORECASE)
 
 
@@ -127,7 +128,7 @@ class PoliteFetcher:
                  get: Callable[[str], tuple[int, str]] | None = None,
                  now: Callable[[], datetime] | None = None,
                  sleep: Callable[[float], None] = time.sleep, attempts: int = 3,
-                 budget: int | None = None) -> None:
+                 budget: int | None = None, log: Callable[[str], None] | None = None) -> None:
         self.cache_dir = cache_dir
         self.delay = delay
         self.max_age = timedelta(days=max_age_days)
@@ -140,6 +141,7 @@ class PoliteFetcher:
         self.attempts = attempts
         self.errors: list[str] = []
         self.budget = budget
+        self.log = log
         self.challenged = 0
         self._host_delay: dict[str, float] = {}
 
@@ -202,12 +204,15 @@ class PoliteFetcher:
         for attempt in range(self.attempts):
             self._wait(urlparse(url).netloc)
             self.requests += 1
+            started = time.monotonic()
             try:
                 status, text = self._get(url)
             except OSError as exc:
                 self.errors.append(f"{url}: {type(exc).__name__}")
                 status, text = 599, ""
-            if status < 500 and status != 429:
+            if self.log:
+                self.log(f"{status} {time.monotonic() - started:.1f}s {url}")
+            if status not in RETRY_STATUS:
                 break
             self._sleep(self.delay * 5 * (attempt + 1))
         fetched_at = self._now().strftime("%Y-%m-%dT%H:%M:%SZ")

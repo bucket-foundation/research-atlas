@@ -44,6 +44,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--max-pages", type=int, default=400)
     ap.add_argument("--delay", type=float, default=1.0)
     ap.add_argument("--max-age-days", type=int, default=30)
+    ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args(argv)
     if args.institution not in INSTITUTIONS and not (args.entry or args.homepage):
         ap.error("a ROR id needs --entry or --homepage")
@@ -51,7 +52,8 @@ def main(argv: list[str] | None = None) -> int:
     ror = INSTITUTIONS[args.institution].ror_id if args.institution in INSTITUTIONS else normalize_ror(args.institution)
     root = OFFICIAL_CACHE / ror
     fetcher = PoliteFetcher(root / "pages", delay=args.delay, max_age_days=args.max_age_days,
-                            budget=args.max_pages)
+                            budget=args.max_pages,
+                            log=(lambda m: print(m, file=sys.stderr, flush=True)) if args.verbose else None)
     adapter, platform = build_adapter(args, fetcher)
     records, stats = crawl(adapter, fetcher)
     out = root / "faculty.jsonl"
