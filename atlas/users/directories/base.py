@@ -1,15 +1,17 @@
 from __future__ import annotations
 
+import gzip
 import hashlib
 import html
 import json
 import re
 import time
 import urllib.robotparser
+from collections.abc import Callable, Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Callable, Iterable, Protocol
+from typing import Protocol
 from urllib.parse import urlparse
 
 from atlas.users.contacts import CONTACT_CACHE, UA, _is_acceptable_email
@@ -70,14 +72,14 @@ def accept_email(record: FacultyRecord, candidate: str | None, domains: Iterable
 def html_to_text(value: str | None) -> str | None:
     if not value:
         return None
-    text = re.sub(r"<br\s*/?>|</p>|</li>", "; ", value, flags=re.I)
+    text = re.sub(r"<br\s*/?>|</p>|</li>", "; ", value, flags=re.IGNORECASE)
     text = html.unescape(re.sub(r"<[^>]+>", " ", text))
     text = re.sub(r"\s*;\s*(;\s*)*", "; ", re.sub(r"[ \t\r\n]+", " ", text)).strip(" ;")
     return text or None
 
 
 def next_data(page: str) -> dict | None:
-    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.S)
+    m = re.search(r'<script id="__NEXT_DATA__"[^>]*>(.*?)</script>', page, re.DOTALL)
     if not m:
         return None
     try:
@@ -88,6 +90,13 @@ def next_data(page: str) -> dict | None:
 
 class RobotsDenied(Exception):
     pass
+
+
+class BudgetExhausted(Exception):
+    pass
+
+
+CHALLENGE_RE = re.compile(r"<title>\s*(Just a moment|Attention Required|Access denied)", re.IGNORECASE)
 
 
 @dataclass
@@ -104,7 +113,8 @@ class PoliteFetcher:
     def __init__(self, cache_dir: Path, *, delay: float = 1.0, max_age_days: int = 30,
                  get: Callable[[str], tuple[int, str]] | None = None,
                  now: Callable[[], datetime] | None = None,
-                 sleep: Callable[[float], None] = time.sleep, attempts: int = 3) -> None:
+                 sleep: Callable[[float], None] = time.sleep, attempts: int = 3,
+                 budget: int | None = None) -> None:
         self.cache_dir = cache_dir
         self.delay = delay
         self.max_age = timedelta(days=max_age_days)
@@ -116,17 +126,21 @@ class PoliteFetcher:
         self.requests = 0
         self.attempts = attempts
         self.errors: list[str] = []
+        self.budget = budget
+        self.challenged = 0
+        self._host_delay: dict[str, float] = {}
 
     def _paths(self, url: str) -> tuple[Path, Path]:
         key = hashlib.sha256(url.encode()).hexdigest()
-        return self.cache_dir / f"{key}.html", self.cache_dir / f"{key}.json"
+        return self.cache_dir / f"{key}.html.gz", self.cache_dir / f"{key}.json"
 
     def _wait(self, host: str) -> None:
+        delay = max(self.delay, self._host_delay.get(host, 0.0))
         last = self._last.get(host)
         if last is not None:
             gap = time.monotonic() - last
-            if gap < self.delay:
-                self._sleep(self.delay - gap)
+            if gap < delay:
+                self._sleep(delay - gap)
         self._last[host] = time.monotonic()
 
     def allowed(self, url: str) -> bool:
@@ -147,8 +161,17 @@ class PoliteFetcher:
                 rp.allow_all = True
             else:
                 rp.parse(body.splitlines())
+                cd = rp.crawl_delay(UA)
+                if cd:
+                    self._host_delay[p.netloc] = min(float(cd), 30.0)
             self._robots[base] = rp
         return rp.can_fetch(UA, url)
+
+    def sitemaps(self, url: str) -> list[str]:
+        p = urlparse(url)
+        self.allowed(url)
+        rp = self._robots.get(f"{p.scheme}://{p.netloc}")
+        return list((rp.site_maps() if rp else None) or [])
 
     def fetch(self, url: str) -> Page:
         body_path, meta_path = self._paths(url)
@@ -156,10 +179,12 @@ class PoliteFetcher:
             meta = json.loads(meta_path.read_text())
             fetched = datetime.fromisoformat(meta["fetched_at"].replace("Z", "+00:00"))
             if self._now() - fetched < self.max_age:
-                text = body_path.read_text()
+                text = gzip.decompress(body_path.read_bytes()).decode()
                 return Page(url, meta["status"], text, meta["fetched_at"], meta["sha256"], True)
         if not self.allowed(url):
             raise RobotsDenied(url)
+        if self.budget is not None and self.requests >= self.budget:
+            raise BudgetExhausted(url)
         status, text = 599, ""
         for attempt in range(self.attempts):
             self._wait(urlparse(url).netloc)
@@ -174,9 +199,11 @@ class PoliteFetcher:
             self._sleep(self.delay * 5 * (attempt + 1))
         fetched_at = self._now().strftime("%Y-%m-%dT%H:%M:%SZ")
         digest = hashlib.sha256(text.encode()).hexdigest()
+        if status in (403, 503) and CHALLENGE_RE.search(text[:4000]):
+            self.challenged += 1
         if status == 200:
             self.cache_dir.mkdir(parents=True, exist_ok=True)
-            body_path.write_text(text)
+            body_path.write_bytes(gzip.compress(text.encode()))
             meta_path.write_text(json.dumps({"url": url, "status": status, "fetched_at": fetched_at, "sha256": digest}))
         return Page(url, status, text, fetched_at, digest, False)
 
@@ -204,7 +231,7 @@ class DirectoryAdapter(Protocol):
 
 def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[FacultyRecord], dict]:
     stats = {"seeds": 0, "fetched": 0, "cached": 0, "robots_denied": 0, "http_errors": 0,
-             "records": 0, "emails": 0, "dropped_emails": 0}
+             "records": 0, "emails": 0, "dropped_emails": 0, "budget_exhausted": False}
     seeds = adapter.seeds(fetcher)
     stats["seeds"] = len(seeds)
     out: dict[str, FacultyRecord] = {}
@@ -214,6 +241,9 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
         except RobotsDenied:
             stats["robots_denied"] += 1
             continue
+        except BudgetExhausted:
+            stats["budget_exhausted"] = True
+            break
         stats["cached" if page.from_cache else "fetched"] += 1
         if page.status != 200:
             stats["http_errors"] += 1
@@ -227,6 +257,9 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher) -> tuple[list[Facul
     stats["emails"] = sum(1 for r in records if r.email)
     stats["dropped_emails"] = sum(len(r.dropped_emails) for r in records)
     stats["network_errors"] = len(fetcher.errors)
+    stats["challenged"] = fetcher.challenged
+    stats["requests"] = fetcher.requests
+    stats["departments"] = len({d for r in records for d in r.departments})
     stats["from_profile"] = sum(1 for r in records if r.source_kind == "profile")
     stats["from_listing"] = sum(1 for r in records if r.source_kind == "listing")
     return records, stats

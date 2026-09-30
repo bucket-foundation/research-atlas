@@ -175,7 +175,7 @@ def test_tracked_files_hold_no_institutional_emails():
         if f == "tests/test_official_directory.py":
             continue
         p = REPO / f
-        if p.suffix not in {".py", ".md", ".json", ".jsonl", ".csv", ".txt", ".toml", ".yml", ".yaml", ".cff"}:
+        if p.suffix not in {".py", ".md", ".json", ".jsonl", ".csv", ".txt", ".toml", ".yml", ".yaml", ".cff", ".html", ".xml"}:
             continue
         for e in EMAIL_RE.findall(p.read_text(errors="ignore")):
             e = e.lower()

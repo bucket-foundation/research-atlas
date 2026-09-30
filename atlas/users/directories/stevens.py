@@ -3,7 +3,13 @@ from __future__ import annotations
 import re
 
 from atlas.users.directories.base import (
-    FacultyRecord, Page, PoliteFetcher, RobotsDenied, accept_email, html_to_text, next_data,
+    FacultyRecord,
+    Page,
+    PoliteFetcher,
+    RobotsDenied,
+    accept_email,
+    html_to_text,
+    next_data,
 )
 
 BASE = "https://www.stevens.edu"
