@@ -87,6 +87,9 @@ def test_jsonld_profile_keeps_plan_fields_and_skips_footer_mailto():
     assert r.departments == ["Department of Placeholder Physics"]
     assert r.research_areas == "Membrane models; Toy proteins"
     d = r.as_dict()
+    assert (d["source"], d["source_id"], d["source_url"], d["as_of"], d["match_tier"], d["licence"]) == (
+        "official_directory", "www.example.edu/people/ada-testperson",
+        "https://www.example.edu/people/ada-testperson", "2026-09-29T00:00:00Z", None, "institution-copyright")
     assert not {"office", "phone", "telephone", "image", "photo"} & set(d)
 
 

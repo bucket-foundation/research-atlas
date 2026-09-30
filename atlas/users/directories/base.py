@@ -18,6 +18,8 @@ from atlas.users.contacts import CONTACT_CACHE, UA, _is_acceptable_email
 
 OFFICIAL_CACHE = CONTACT_CACHE / "official"
 EMAIL_SOURCE = "official_directory"
+LICENCE = "institution-copyright"
+JOIN_MATCH_TIER = "T2"
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 
 
@@ -39,6 +41,17 @@ class FacultyRecord:
     email_as_of: str | None = None
     dropped_emails: list[str] = field(default_factory=list)
     source_kind: str = "profile"
+    source: str = EMAIL_SOURCE
+    source_id: str | None = None
+    source_url: str | None = None
+    as_of: str | None = None
+    match_tier: str | None = None
+    licence: str = LICENCE
+
+    def __post_init__(self) -> None:
+        self.source_id = self.source_id or self.slug
+        self.source_url = self.source_url or self.profile_url
+        self.as_of = self.as_of or self.fetched_at
 
     def as_dict(self) -> dict:
         return asdict(self)
