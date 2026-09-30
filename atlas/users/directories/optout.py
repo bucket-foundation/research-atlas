@@ -53,10 +53,22 @@ def key_path() -> Path:
 KEY_BYTES = 32
 
 
+_KEYS: dict[str, bytes] = {}
+
+
 def load_key(attempts: int = 3, pause: float = 0.05) -> bytes:
+    path = key_path()
+    cached = _KEYS.get(str(path))
+    if cached is not None and path.exists():
+        return cached
+    key = _read_or_create_key(path, attempts, pause)
+    _KEYS[str(path)] = key
+    return key
+
+
+def _read_or_create_key(path: Path, attempts: int, pause: float) -> bytes:
     import time
 
-    path = key_path()
     for _ in range(attempts):
         if not path.exists():
             path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
@@ -226,6 +238,9 @@ class Suppression:
         keys = person_keys(name, ror_id, orcid, email)
         probe = Suppression(set(keys))
         all_urls: set[str] = {profile_url} if profile_url else set()
+        written = set(keys) | {url_key(u) for u in all_urls}
+        self.hashes.update(written)
+        self._write_tombstones(sorted(written))
         purged = {"records": 0, "pages": 0}
         dirs = [cache_root / normalize_ror(ror_id)] if ror_id else [p for p in cache_root.iterdir() if p.is_dir()]
         for d in dirs:
@@ -245,9 +260,10 @@ class Suppression:
                 _atomic_write(path, "".join(k + "\n" for k in kept))
             all_urls |= urls
             purged["pages"] += _purge_pages(d / "pages", urls | all_urls, email, name)
-        keys += list(dict.fromkeys(url_key(u) for u in all_urls))
-        self.hashes.update(keys)
-        self._write_tombstones(keys)
+        late = [k for k in dict.fromkeys(url_key(u) for u in all_urls) if k not in written]
+        self.hashes.update(late)
+        if late:
+            self._write_tombstones(late)
         purged["urls"] = len(all_urls)
         return purged
 

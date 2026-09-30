@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-import contextlib
 import html as htmllib
 import json
 import re
+import sys
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
+from pathlib import Path
 from urllib.parse import urldefrag, urljoin, urlparse
 
 from atlas.users.contacts import _is_acceptable_email
@@ -40,11 +41,18 @@ OBFUSCATED = re.compile(
 SPACED_AT = re.compile(
     rf"([A-Za-z0-9._%+-]+)\s+at\s+({LABEL}(?:{BRACKET_DOT}{LABEL})+)(?![A-Za-z0-9.-])", re.IGNORECASE)
 DOT = re.compile(rf"{BRACKET_DOT}|\.", re.IGNORECASE)
-ROLE_LOCAL = re.compile(
-    r"^(registrar|info|information|admissions?|office|department|dept|contact|contactus|help|helpdesk|"
-    r"support|webmaster|web|admin|administrator|reception|frontdesk|general|inquiries|enquiries|hr|"
-    r"media|press|news|communications|events|alumni|dean|chair|staff|faculty|grad|graduate|undergrad|"
-    r"secretary|mail|postmaster|noreply|no-reply)([._-][a-z0-9]+)*$", re.IGNORECASE)
+ROLE_MAILBOX_FILE = Path(__file__).with_name("role_mailboxes.txt")
+
+
+def load_role_mailboxes(path: Path = ROLE_MAILBOX_FILE) -> re.Pattern:
+    words = [w.strip().lower() for w in path.read_text().splitlines() if w.strip() and not w.startswith("#")]
+    if not words:
+        raise ValueError(f"role mailbox list at {path} is empty")
+    alts = "|".join(re.escape(w) for w in sorted(set(words), key=len, reverse=True))
+    return re.compile(rf"^({alts})([._-][a-z0-9]+)*$", re.IGNORECASE)
+
+
+ROLE_LOCAL = load_role_mailboxes()
 PERSON_TYPES = {"person", "http://schema.org/person", "https://schema.org/person", "foaf:person"}
 
 
@@ -110,12 +118,24 @@ class _TreeBuilder(HTMLParser):
         self.cur.children.append(f"&#{name};")
 
 
-def parse_html(text: str) -> Node:
+MALFORMED: list[str] = []
+
+
+def parse_html(text: str, url: str | None = None) -> Node:
     b = _TreeBuilder()
-    with contextlib.suppress(AssertionError, ValueError):
+    try:
         b.feed(text)
         b.close()
+    except (AssertionError, ValueError) as exc:
+        MALFORMED.append(f"{url or '?'}: {type(exc).__name__}: {exc}")
+        print(f"malformed html {url or '?'}: {type(exc).__name__}", file=sys.stderr)
     return b.root
+
+
+def drain_malformed() -> list[str]:
+    out = list(MALFORMED)
+    MALFORMED.clear()
+    return out
 
 
 def decode_cfemail(hexstr: str) -> str | None:
@@ -427,7 +447,7 @@ class GenericAdapter:
             if page is None:
                 continue
             listings.append(url)
-            for link in page_links(parse_html(page.text), url):
+            for link in page_links(parse_html(page.text, url), url):
                 if not same_site(link, self.domains):
                     continue
                 if self.is_profile(link) and not self.is_listing(link):
@@ -464,7 +484,7 @@ class GenericAdapter:
         return []
 
     def parse(self, page: Page) -> list[FacultyRecord]:
-        root = parse_html(page.text)
+        root = parse_html(page.text, page.url)
         people = self.people(page, root)
         profile = self.is_profile(page.url) and not self.is_listing(page.url)
         page_emails = mailto_emails(root) + deobfuscate(page.text)

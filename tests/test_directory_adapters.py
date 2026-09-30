@@ -303,7 +303,8 @@ def test_zero_yield_run_exits_non_zero(tmp_path, monkeypatch):
     monkeypatch.setattr(cli, "OFFICIAL_CACHE", tmp_path)
     monkeypatch.setattr(base, "_requests_get", lambda url: (200, "<html></html>") if url.endswith("robots.txt")
                         else (404, ""))
-    monkeypatch.setattr(cli, "allowed_domains", lambda ror: DOMAINS, raising=False)
+    import atlas.users.directories.generic as gen
+    monkeypatch.setattr(gen, "allowed_domains", lambda ror: DOMAINS)
     code = cli.main([ROR, "--platform", "generic", "--entry", "https://www.example.edu/people", "--delay", "0"])
     assert code == 2
     assert cli.exit_code({"records": 3, "emails": 1}) == 0
@@ -543,3 +544,77 @@ def test_only_gitkeep_is_tracked_under_private():
     repo = Path(__file__).resolve().parents[1]
     tracked = subprocess.run(["git", "ls-files", "data/private"], cwd=repo, capture_output=True, text=True).stdout.split()
     assert tracked == ["data/private/.gitkeep"]
+
+
+def test_legacy_hash_blocks_seed_record_and_join(tmp_path):
+    from atlas.users.directories.join import join_records
+    from atlas.users.directories.optout import Suppression, norm_url, sha
+    from atlas.users.directories.stevens import StevensAdapter
+    from tests.test_official_directory import SITE as STEVENS, FakeSite as SFake
+    priv = tmp_path / "private"
+    priv.mkdir()
+    (priv / "tombstones.csv").write_text("kind,sha256,as_of,scheme\n")
+    (priv / "tombstones_legacy.csv").write_text(
+        "kind,sha256,as_of\n"
+        f"url,{sha(norm_url('https://www.stevens.edu/profile/ddd4'))},t\n"
+        f"email,{sha('aaa1' + '@' + 'stevens.edu')},t\n"
+        f"name_ror,{sha('ada testperson|' + ROR)},t\n")
+    sup = Suppression.load(priv / "none.csv", priv / "tombstones.csv")
+    site = SFake(STEVENS)
+    records, stats = crawl(StevensAdapter(), fetcher(tmp_path, site), sup)
+    assert "https://www.stevens.edu/profile/ddd4" not in site.calls and stats["suppressed_seeds"] >= 1
+    assert "aaa1" not in {r.slug for r in records} and stats["suppressed_records"] >= 1
+    assert stats["legacy_tombstones"] == 3
+    [a] = adapter().parse(page("https://www.example.edu/people/ada-testperson", "generic_jsonld.html"))
+    assert join_records([a], [{"atlas_id": "p1", "name": "Ada Testperson", "ror_id": ROR}], sup) == []
+
+
+def test_key_is_read_once_per_process(tmp_path, monkeypatch):
+    from atlas.users.directories import optout
+    path = tmp_path / "once.key"
+    path.write_bytes(b"z" * 32)
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(path))
+    reads = []
+    real = optout._read_or_create_key
+    monkeypatch.setattr(optout, "_read_or_create_key", lambda *a: reads.append(1) or real(*a))
+    for _ in range(50):
+        optout.keyed("x")
+    assert len(reads) == 1
+
+
+def test_tombstones_are_written_before_the_purge(tmp_path, monkeypatch):
+    from atlas.users.directories import optout
+    order = []
+    monkeypatch.setattr(optout, "_purge_pages", lambda *a, **k: order.append("purge") or 0)
+    sup = optout.Suppression.load(tmp_path / "none.csv", tmp_path / "private" / "tombstones.csv")
+    real = sup._write_tombstones
+    monkeypatch.setattr(sup, "_write_tombstones", lambda keys: order.append("tombstone") or real(keys))
+    (tmp_path / "official" / ROR).mkdir(parents=True)
+    sup.remove(tmp_path / "official", name="Ada Testperson", ror_id=ROR,
+               profile_url="https://www.example.edu/people/ada-testperson")
+    assert order[0] == "tombstone" and "purge" in order
+
+
+def test_malformed_html_is_counted_by_url(tmp_path, monkeypatch, capsys):
+    from atlas.users.directories import generic
+    def boom(self, data):
+        raise AssertionError("bad tag")
+    monkeypatch.setattr(generic._TreeBuilder, "feed", boom)
+    records, stats = crawl(adapter(), fetcher(tmp_path, FakeSite(SITE)))
+    assert stats["malformed_html"] > 0
+    assert stats["malformed_html_urls"][0].startswith("https://www.example.edu/")
+    assert "malformed html https://www.example.edu/" in capsys.readouterr().err
+
+
+def test_role_mailbox_list_loads_from_config(tmp_path):
+    from atlas.users.directories.generic import ROLE_MAILBOX_FILE, is_role_mailbox, load_role_mailboxes
+    assert ROLE_MAILBOX_FILE.exists() and is_role_mailbox("registrar@example.edu")
+    assert not is_role_mailbox("ada.testperson@example.edu")
+    custom = tmp_path / "roles.txt"
+    custom.write_text("labmanager\n\nbiz\n")
+    pat = load_role_mailboxes(custom)
+    assert pat.match("labmanager") and pat.match("biz.office") and not pat.match("info")
+    empty = tmp_path / "empty.txt"
+    empty.write_text("\n")
+    with pytest.raises(ValueError, match="empty"):
+        load_role_mailboxes(empty)
