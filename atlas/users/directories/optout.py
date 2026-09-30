@@ -53,17 +53,31 @@ def key_path() -> Path:
 KEY_BYTES = 32
 
 
-_KEYS: dict[str, bytes] = {}
+_KEYS: dict[str, tuple[tuple[int, int], bytes]] = {}
+
+
+def _stamp(path: Path) -> tuple[int, int] | None:
+    try:
+        st = path.stat()
+    except FileNotFoundError:
+        return None
+    return st.st_mtime_ns, st.st_size
 
 
 def load_key(attempts: int = 3, pause: float = 0.05) -> bytes:
     path = key_path()
     cached = _KEYS.get(str(path))
-    if cached is not None and path.exists():
-        return cached
+    stamp = _stamp(path)
+    if cached is not None and stamp == cached[0]:
+        return cached[1]
     key = _read_or_create_key(path, attempts, pause)
-    _KEYS[str(path)] = key
+    _KEYS[str(path)] = (_stamp(path), key)
     return key
+
+
+def reload_key() -> bytes:
+    _KEYS.pop(str(key_path()), None)
+    return load_key()
 
 
 def _read_or_create_key(path: Path, attempts: int, pause: float) -> bytes:

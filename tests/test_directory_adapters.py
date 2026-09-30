@@ -595,15 +595,31 @@ def test_tombstones_are_written_before_the_purge(tmp_path, monkeypatch):
     assert order[0] == "tombstone" and "purge" in order
 
 
-def test_malformed_html_is_counted_by_url(tmp_path, monkeypatch, capsys):
+def test_malformed_html_is_per_crawl_and_redacted(tmp_path, capsys):
     from atlas.users.directories import generic
-    def boom(self, data):
-        raise AssertionError("bad tag")
-    monkeypatch.setattr(generic._TreeBuilder, "feed", boom)
-    records, stats = crawl(adapter(), fetcher(tmp_path, FakeSite(SITE)))
+
+    class Broken(generic._TreeBuilder):
+        def feed(self, data):
+            raise AssertionError("page text " + data[:40])
+
+    real = generic._TreeBuilder
+    generic._TreeBuilder = Broken
+    try:
+        site = FakeSite({**SITE, "https://www.example.edu/people/ada.testperson@example.edu?x=1":
+                         (200, "<html>secret body</html>")})
+        a = adapter(entries=("https://www.example.edu/people",))
+        records, stats = crawl(a, fetcher(tmp_path, site))
+        leaf = a.parse(Page("https://www.example.edu/people/ada.testperson@example.edu?x=1", 200,
+                            "<html>secret body</html>", "t", "0", False))
+    finally:
+        generic._TreeBuilder = real
     assert stats["malformed_html"] > 0
-    assert stats["malformed_html_urls"][0].startswith("https://www.example.edu/")
-    assert "malformed html https://www.example.edu/" in capsys.readouterr().err
+    assert all(u.endswith(": AssertionError") for u in stats["malformed_html_urls"])
+    assert a.malformed[-1] == "https://www.example.edu/people/[redacted]?[query]: AssertionError"
+    err = capsys.readouterr().err
+    assert "page text" not in err and "secret body" not in err and "ada.testperson@" not in err
+    fresh = adapter()
+    assert fresh.malformed == [] and leaf == []
 
 
 def test_role_mailbox_list_loads_from_config(tmp_path):
@@ -618,3 +634,44 @@ def test_role_mailbox_list_loads_from_config(tmp_path):
     empty.write_text("\n")
     with pytest.raises(ValueError, match="empty"):
         load_role_mailboxes(empty)
+    comments = tmp_path / "comments.txt"
+    comments.write_text("# only a note\n  # another\n")
+    with pytest.raises(ValueError, match="empty"):
+        load_role_mailboxes(comments)
+    with pytest.raises(FileNotFoundError, match="missing"):
+        load_role_mailboxes(tmp_path / "absent.txt")
+
+
+def test_key_rotation_reloads_in_process(tmp_path, monkeypatch):
+    import os
+    from atlas.users.directories import optout
+    path = tmp_path / "rot.key"
+    path.write_bytes(b"a" * 32)
+    monkeypatch.setenv("RESEARCH_ATLAS_TOMBSTONE_KEY", str(path))
+    first = optout.keyed("x")
+    path.write_bytes(b"b" * 32)
+    os.utime(path, ns=(1, 1))
+    assert optout.keyed("x") != first
+    assert optout.reload_key() == b"b" * 32
+
+
+def test_crash_in_purge_keeps_the_block(tmp_path, monkeypatch):
+    from atlas.users.directories import optout
+    tomb = tmp_path / "private" / "tombstones.csv"
+    (tmp_path / "official" / ROR).mkdir(parents=True)
+    sup = optout.Suppression.load(tmp_path / "none.csv", tomb)
+
+    def crash(*a, **k):
+        raise OSError("disk gone")
+
+    monkeypatch.setattr(optout, "_purge_pages", crash)
+    with pytest.raises(OSError):
+        sup.remove(tmp_path / "official", name="Ada Testperson", ror_id=ROR,
+                   profile_url="https://www.example.edu/people/ada-testperson")
+    after = optout.Suppression.load(tmp_path / "none.csv", tomb)
+    assert after.blocks(name="Ada Testperson", ror_id=ROR)
+    assert after.blocks_url("https://www.example.edu/people/ada-testperson")
+    site = FakeSite(SITE)
+    records, _ = crawl(adapter(), fetcher(tmp_path, site), after)
+    assert "https://www.example.edu/people/ada-testperson" not in site.calls
+    assert "Ada Testperson" not in {r.name for r in records}

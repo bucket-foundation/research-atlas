@@ -326,9 +326,7 @@ def crawl(adapter: DirectoryAdapter, fetcher: PoliteFetcher, suppression=None) -
     stats["records"] = len(records)
     stats["emails"] = sum(1 for r in records if r.email)
     stats["dropped_emails"] = sum(len(r.dropped_emails) for r in records)
-    from atlas.users.directories.generic import drain_malformed
-
-    malformed = drain_malformed()
+    malformed = list(getattr(adapter, "malformed", []) or [])
     stats["malformed_html"] = len(malformed)
     stats["malformed_html_urls"] = malformed
     stats["legacy_tombstones"] = len(getattr(suppression, "legacy", ()) or ())

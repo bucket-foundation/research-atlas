@@ -45,7 +45,9 @@ ROLE_MAILBOX_FILE = Path(__file__).with_name("role_mailboxes.txt")
 
 
 def load_role_mailboxes(path: Path = ROLE_MAILBOX_FILE) -> re.Pattern:
-    words = [w.strip().lower() for w in path.read_text().splitlines() if w.strip() and not w.startswith("#")]
+    if not path.exists():
+        raise FileNotFoundError(f"role mailbox list missing at {path}")
+    words = [w.strip().lower() for w in path.read_text().splitlines() if w.strip() and not w.strip().startswith("#")]
     if not words:
         raise ValueError(f"role mailbox list at {path} is empty")
     alts = "|".join(re.escape(w) for w in sorted(set(words), key=len, reverse=True))
@@ -118,24 +120,26 @@ class _TreeBuilder(HTMLParser):
         self.cur.children.append(f"&#{name};")
 
 
-MALFORMED: list[str] = []
+def redact_url(url: str | None) -> str:
+    if not url:
+        return "?"
+    p = urlparse(url)
+    segments = ["[redacted]" if "@" in seg or EMAIL_RE.search(seg) or "%40" in seg.lower() else seg
+                for seg in p.path.split("/")]
+    return f"{p.scheme}://{p.netloc}{'/'.join(segments)}" + ("?[query]" if p.query else "")
 
 
-def parse_html(text: str, url: str | None = None) -> Node:
+def parse_html(text: str, url: str | None = None, sink: list[str] | None = None) -> Node:
     b = _TreeBuilder()
     try:
         b.feed(text)
         b.close()
     except (AssertionError, ValueError) as exc:
-        MALFORMED.append(f"{url or '?'}: {type(exc).__name__}: {exc}")
-        print(f"malformed html {url or '?'}: {type(exc).__name__}", file=sys.stderr)
+        entry = f"{redact_url(url)}: {type(exc).__name__}"
+        if sink is not None:
+            sink.append(entry)
+        print(f"malformed html {entry}", file=sys.stderr)
     return b.root
-
-
-def drain_malformed() -> list[str]:
-    out = list(MALFORMED)
-    MALFORMED.clear()
-    return out
 
 
 def decode_cfemail(hexstr: str) -> str | None:
@@ -394,6 +398,7 @@ class GenericAdapter:
         self.entry_urls = list(entry_urls)
         self.domains = tuple(domains) if domains is not None else allowed_domains(self.ror_id)
         self.max_pages = max_pages
+        self.malformed: list[str] = []
         self.discovery: dict[str, int] = {"sitemap_profiles": 0, "listing_profiles": 0, "listing_pages": 0}
 
     @classmethod
@@ -447,7 +452,7 @@ class GenericAdapter:
             if page is None:
                 continue
             listings.append(url)
-            for link in page_links(parse_html(page.text, url), url):
+            for link in page_links(parse_html(page.text, url, self.malformed), url):
                 if not same_site(link, self.domains):
                     continue
                 if self.is_profile(link) and not self.is_listing(link):
@@ -484,7 +489,7 @@ class GenericAdapter:
         return []
 
     def parse(self, page: Page) -> list[FacultyRecord]:
-        root = parse_html(page.text, page.url)
+        root = parse_html(page.text, page.url, self.malformed)
         people = self.people(page, root)
         profile = self.is_profile(page.url) and not self.is_listing(page.url)
         page_emails = mailto_emails(root) + deobfuscate(page.text)
