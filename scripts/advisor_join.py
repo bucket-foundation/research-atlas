@@ -39,19 +39,31 @@ def load_advisors(ranked: Path, roster: Path | None) -> list[Advisor]:
     return out
 
 
+def connect(db: Path, person: Path | None) -> duckdb.DuckDBPyConnection:
+    if person is None:
+        return duckdb.connect(str(db), read_only=True)
+    con = duckdb.connect()
+    con.execute(f"ATTACH '{db}' AS atlas (READ_ONLY)")
+    for table in ("organization", "person_org", "grant_person"):
+        con.execute(f"CREATE VIEW {table} AS SELECT * FROM atlas.{table}")
+    con.execute(f"CREATE VIEW person AS SELECT * FROM read_parquet('{person}')")
+    return con
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Join cockpit advisors to atlas people and report match rates.")
     ap.add_argument("--advisors", type=Path, required=True)
     ap.add_argument("--roster", type=Path)
     ap.add_argument("--db", type=Path, default=REPO_ROOT / "research_atlas.duckdb")
+    ap.add_argument("--person", type=Path, help="person parquet that replaces the db person table")
     ap.add_argument("--out", type=Path)
     args = ap.parse_args(argv)
     advisors = load_advisors(args.advisors, args.roster)
-    con = duckdb.connect(str(args.db), read_only=True)
+    con = connect(args.db, args.person)
     report = summarize(match_advisors(con, advisors)).as_dict()
     report["as_of"] = now_iso()
     report["inputs"] = {"advisors": args.advisors.name, "roster": args.roster.name if args.roster else None,
-                        "db": args.db.name}
+                        "db": args.db.name, "person": args.person.name if args.person else None}
     text = json.dumps(report, indent=2, sort_keys=True)
     if args.out:
         args.out.write_text(text + "\n")
